@@ -1,11 +1,9 @@
-package com.frcteam3636.frc2024
+package com.frcteam3636.frc2025
 
-import com.frcteam3636.frc2024.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2024.utils.ElasticWidgets
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.util.PathPlannerLogging
-import edu.wpi.first.math.geometry.Translation2d
-import edu.wpi.first.units.Units.MetersPerSecond
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets

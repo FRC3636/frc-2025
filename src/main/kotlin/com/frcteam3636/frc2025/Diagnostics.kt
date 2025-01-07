@@ -1,10 +1,10 @@
-package com.frcteam3636.frc2024
+package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusCode
 import com.ctre.phoenix6.StatusSignal
-import com.frcteam3636.frc2024.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2024.utils.Elastic
-import com.frcteam3636.frc2024.utils.ElasticNotification
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.utils.Elastic
+import com.frcteam3636.frc2025.utils.ElasticNotification
 import edu.wpi.first.hal.can.CANStatus
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.RobotController

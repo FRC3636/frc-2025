@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2024
+package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.ctre.phoenix6.hardware.TalonFX

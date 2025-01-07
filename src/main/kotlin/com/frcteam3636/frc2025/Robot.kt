@@ -1,11 +1,10 @@
-package com.frcteam3636.frc2024
+package com.frcteam3636.frc2025
 
-import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
-import com.frcteam3636.frc2024.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2024.utils.Elastic
-import com.frcteam3636.frc2024.utils.ElasticNotification
-import com.frcteam3636.frc2024.utils.NotificationLevel
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.utils.Elastic
+import com.frcteam3636.frc2025.utils.ElasticNotification
+import com.frcteam3636.frc2025.utils.NotificationLevel
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH

@@ -1,25 +1,21 @@
 import edu.wpi.first.deployutils.deploy.artifact.FileTreeArtifact
+import edu.wpi.first.gradlerio.GradleRIOPlugin
 import edu.wpi.first.gradlerio.deploy.roborio.FRCJavaArtifact
 import edu.wpi.first.gradlerio.deploy.roborio.RoboRIO
 import edu.wpi.first.toolchain.NativePlatforms
 import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.net.URI
 
 plugins {
     java
-    kotlin("jvm") version "2.1.0"
-    id("edu.wpi.first.GradleRIO") version "2025.1.1"
+    kotlin("jvm")
+    id("edu.wpi.first.GradleRIO")
     idea
     id("com.peterabeles.gversion") version "1.10.3"
-    id("com.google.devtools.ksp")
 }
 
-
-val javaVersion: JavaVersion = JavaVersion.VERSION_17
-val javaLanguageVersion: JavaLanguageVersion by extra { JavaLanguageVersion.of(javaVersion.toString()) }
-val jvmVendor: JvmVendorSpec by extra { JvmVendorSpec.ADOPTIUM }
-val kotlinJvmTarget = JvmTarget.fromTarget(javaVersion.toString())
+val javaVersion by extra(17)
+val jvmVendor: JvmVendorSpec by extra { JvmVendorSpec.AMAZON }
 
 @Suppress("PropertyName")
 val ROBOT_MAIN_CLASS = "com.frcteam3636.frc2025.Main"
@@ -33,21 +29,73 @@ gversion {
     indent = "    "
 }
 
+tasks {
+    test {
+        useJUnitPlatform()
+        systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+    }
+
+    compileJava {
+        options.encoding = Charsets.UTF_8.name()
+        // Configure string concat to always inline compile
+        options.compilerArgs.add("-XDstringConcat=inline")
+    }
+
+    // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
+    // in order to make them all available at runtime. Also adding the manifest so WPILib
+    // knows where to look for our Robot Class.
+    jar {
+        group = "build"
+        manifest(GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS))
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+        // Adding this closure makes this expression lazy, allowing GradleRIO to add
+        // its dependencies before the jar task is fully configured.
+        from({
+            configurations
+                .runtimeClasspath
+                .get()
+                .map { if (it.isDirectory) it else zipTree(it) }
+        })
+    }
+}
+
+wpi {
+    with(java) {
+        // Set to true to use debug for JNI.
+        debugJni = false
+        configureExecutableTasks(tasks.jar.get())
+        configureTestTasks(tasks.test.get())
+    }
+
+    // Simulation configuration (e.g. environment variables).
+    with(sim) {
+        addGui().apply {
+            defaultEnabled = true
+        }
+        addDriverstation()
+    }
+}
+
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
 deploy {
     targets {
-        create("roborio", RoboRIO::class.java) {
+        val roborio by register<RoboRIO>("roborio") {
             // Team number is loaded either from the .wpilib/wpilib_preferences.json
             // or from command line. If not found an exception will be thrown.
             // You can use project.frc.getTeamOrDefault(####) instead of project.frc.teamNumber
             // if you want to store a team number in this file.
-            team = project.frc.teamNumber
-            debug = project.frc.getDebugOrDefault(false)
-            artifacts.create("frcJava", FRCJavaArtifact::class.java) {
+            team = frc.teamNumber
+            debug = frc.getDebugOrDefault(false)
+        }
 
+        roborio.artifacts {
+            register<FRCJavaArtifact>("frcJava") {
+                setJarTask(tasks.jar)
             }
-            artifacts.create("frcStaticFileDeploy", FileTreeArtifact::class.java) {
+
+            register<FileTreeArtifact>("frcStaticFileDeploy") {
                 files = project.fileTree("src/main/deploy")
                 directory = "/home/lvuser/deploy"
                 // Change to true to delete files on roboRIO that no longer exist in deploy directory of this project
@@ -55,39 +103,6 @@ deploy {
             }
         }
     }
-}
-val deployArtifact = deploy.targets.getByName("roborio").artifacts.getByName("frcJava") as FRCJavaArtifact
-
-// Set to true to use debug for JNI.
-wpi.java.debugJni = false
-
-// Set this to true to enable desktop support.
-val includeDesktopSupport = true
-
-repositories {
-    // Set repositories to use. In Gradle DSL builds, the GradleRIO plugin automatically configures these repos.
-    // But with a Kotlin DSL build file, they are not getting automatically configured.
-    // If anyone can determine a way to apply programmatically, please open a ticket at
-    // https://gitlab.com/Javaru/frc-intellij-idea-plugin/-/issues and I will update the template.
-    maven {
-        name = "WPILocal"
-        url = wpi.frcHome.map { it.dir("maven") }.get().asFile.toURI()
-    }
-    maven {
-        name = "WPIOfficialRelease"
-        url = URI("https://frcmaven.wpi.edu/artifactory/release")
-    }
-    maven {
-        name = "WPIFRCMavenVendorCacheRelease"
-        url = URI("https://frcmaven.wpi.edu/artifactory/vendor-mvn-release")
-    }
-    wpi.vendor.vendorRepos.forEach {
-        maven {
-            name = it.name
-            url = URI(it.url)
-        }
-    }
-    mavenCentral()
 }
 
 dependencies {
@@ -113,68 +128,36 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-
-    implementation(project(":annotation"))
-    ksp(project(":annotation"))
 }
 
-java {
-    toolchain {
-        languageVersion.set(javaLanguageVersion)
-        vendor.set(jvmVendor)
-    }
-}
+allprojects {
+    plugins.apply("java")
+    plugins.apply("org.jetbrains.kotlin.jvm")
 
-tasks.compileJava {
-    options.encoding = Charsets.UTF_8.name()
-    // Configure string concat to always inline compile
-    options.compilerArgs.add("-XDstringConcat=inline")
-}
-    
-kotlin {
-    compilerOptions {
-        jvmTarget.set(kotlinJvmTarget)
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(javaVersion)
+            vendor = jvmVendor
+        }
     }
 
-    jvmToolchain {
-        // https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support
-        languageVersion.set(javaLanguageVersion)
-        vendor.set(jvmVendor)
+    kotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.fromTarget(javaVersion.toString())
+        }
+
+        jvmToolchain {
+            // https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support
+            languageVersion = JavaLanguageVersion.of(javaVersion)
+            vendor = jvmVendor
+        }
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
     }
 }
-
-tasks.test {
-    useJUnitPlatform()
-    systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
-}
-
-// Simulation configuration (e.g. environment variables).
-wpi.sim.addGui().defaultEnabled = true
-wpi.sim.addDriverstation()
-
-
-// Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
-// in order to make them all available at runtime. Also adding the manifest so WPILib
-// knows where to look for our Robot Class.
-tasks.jar {
-    from(project.configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
-    from(sourceSets.main.get().allSource)
-    manifest(edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS))
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-}
-
-tasks {
-    register("replayWatch", type = JavaExec::class) {
-        mainClass = "org.littletonrobotics.junction.ReplayWatch"
-        classpath = sourceSets.main.get().runtimeClasspath
-    }
-}
-
-// Configure jar and deploy tasks
-deployArtifact.setJarTask(tasks.jar.get())
-wpi.java.configureExecutableTasks(tasks.jar.get())
-wpi.java.configureTestTasks(tasks.test.get())
-
 
 idea {
     project {
@@ -186,10 +169,14 @@ idea {
         isDownloadJavadoc = true
         isDownloadSources = true
         // Exclude the .vscode directory from indexing and search
-        excludeDirs.add(file(".run" ))
-        excludeDirs.add(file(".vscode" ))
+        excludeDirs.add(file(".run"))
+        excludeDirs.add(file(".vscode"))
     }
 }
+
+
+// Set this to true to enable desktop support.
+val includeDesktopSupport = true
 
 // Helper Functions to keep syntax cleaner
 // @formatter:off
@@ -202,4 +189,4 @@ fun DependencyHandler.nativeRelease(dependencies: List<Provider<String>>) = addD
 fun DependencyHandler.simulationRelease(dependencies: List<Provider<String>>) = addDependencies("simulationRelease", dependencies)
 fun DependencyHandler.implementation(dependencies: List<Provider<String>>) = dependencies.forEach{ implementation(it) }
 fun DependencyHandler.annotationProcessor(dependencies: List<Provider<String>>) = dependencies.forEach{ annotationProcessor(it) }
- // @formatter:on
+// @formatter:on

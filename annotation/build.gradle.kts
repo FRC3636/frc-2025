@@ -1,54 +1,36 @@
+import edu.wpi.first.toolchain.NativePlatforms
+
 plugins {
-    id("org.jetbrains.kotlin.jvm").version("2.1.0")
-    id("edu.wpi.first.GradleRIO").version("2025.1.1")
+    id("edu.wpi.first.GradleRIO")
 }
 
 group = "org.team9432.lib"
 
+val wpilibVersion: String by project
+
+
+
 dependencies {
-    wpi.java.deps.wpilib().forEach { implementation(it) }
-    wpi.java.vendor.java().forEach { implementation(it) }
+    // Add WPILib, vendor deps
+    annotationProcessor(wpi.java.deps.wpilibAnnotations())
+    implementation(wpi.java.deps.wpilib())
+    implementation(wpi.java.vendor.java())
 
-    wpi.java.deps.wpilibJniDebug(wpi.platforms.desktop).forEach { nativeDebug(it) }
-    wpi.java.vendor.jniDebug(wpi.platforms.desktop).forEach { nativeDebug(it) }
-    wpi.sim.enableDebug().forEach { simulationDebug(it) }
-
-    wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop).forEach { nativeRelease(it) }
-    wpi.java.vendor.jniRelease(wpi.platforms.desktop).forEach { nativeRelease(it) }
-
-    wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop).forEach { nativeRelease(it) }
-    wpi.java.vendor.jniRelease(wpi.platforms.desktop).forEach { nativeRelease(it) }
-    wpi.sim.enableRelease().forEach { simulationRelease(it) }
-
-    wpi.sim.enableRelease().forEach { simulationRelease(it) }
-
-    // Misc.
+    // Annotation Processor Dependencies
     implementation("com.squareup:kotlinpoet:1.14.2")
     implementation("com.squareup:kotlinpoet-ksp:1.14.2")
     implementation("com.google.devtools.ksp:symbol-processing-api:2.1.0-1.0.29")
 }
 
-test {
-    useJUnitPlatform()
-    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
-}
-
-repositories {
-    mavenCentral()
-    maven {
-        url = uri("https://maven.pkg.github.com/Mechanical-Advantage/AdvantageKit")
-        credentials {
-            username = "Mechanical-Advantage-Bot"
-            password = "\u0067\u0068\u0070\u005f\u006e\u0056\u0051\u006a\u0055\u004f\u004c\u0061\u0079\u0066\u006e\u0078\u006e\u0037\u0051\u0049\u0054\u0042\u0032\u004c\u004a\u006d\u0055\u0070\u0073\u0031\u006d\u0037\u004c\u005a\u0030\u0076\u0062\u0070\u0063\u0051"
-        }
-    }
-}
-
-// Set to true to use debug for JNI.
-wpi.java.debugJni = false
-
-sourceSets.main {
-    java.srcDirs("src/main/kotlin")
-}
-
-wpi.java.configureTestTasks(test)
+// Helper Functions to keep syntax cleaner
+// @formatter:off
+fun DependencyHandler.addDependencies(configurationName: String, dependencies: List<Provider<String>>) = dependencies.forEach { add(configurationName, it) }
+fun DependencyHandler.roborioDebug(dependencies: List<Provider<String>>) = addDependencies("roborioDebug", dependencies)
+fun DependencyHandler.roborioRelease(dependencies: List<Provider<String>>) = addDependencies("roborioRelease", dependencies)
+fun DependencyHandler.nativeDebug(dependencies: List<Provider<String>>) = addDependencies("nativeDebug", dependencies)
+fun DependencyHandler.simulationDebug(dependencies: List<Provider<String>>) = addDependencies("simulationDebug", dependencies)
+fun DependencyHandler.nativeRelease(dependencies: List<Provider<String>>) = addDependencies("nativeRelease", dependencies)
+fun DependencyHandler.simulationRelease(dependencies: List<Provider<String>>) = addDependencies("simulationRelease", dependencies)
+fun DependencyHandler.implementation(dependencies: List<Provider<String>>) = dependencies.forEach{ implementation(it) }
+fun DependencyHandler.annotationProcessor(dependencies: List<Provider<String>>) = dependencies.forEach{ annotationProcessor(it) }
+// @formatter:on

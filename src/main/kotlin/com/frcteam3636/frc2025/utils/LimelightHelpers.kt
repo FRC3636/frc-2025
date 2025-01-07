@@ -4,7 +4,7 @@
     "ClassName", "PropertyName"
 )
 
-package com.frcteam3636.frc2024.utils
+package com.frcteam3636.frc2025.utils
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty

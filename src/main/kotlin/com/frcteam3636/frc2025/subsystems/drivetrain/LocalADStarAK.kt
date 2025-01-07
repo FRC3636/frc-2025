@@ -1,18 +1,18 @@
-package com.frcteam3636.frc2024.subsystems.drivetrain
+package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.pathplanner.lib.path.GoalEndState
 import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.path.PathPlannerPath
 import com.pathplanner.lib.path.PathPoint
+import com.pathplanner.lib.pathfinding.LocalADStar
 import com.pathplanner.lib.pathfinding.Pathfinder
-import com.pathplanner.lib.pathfinding.RemoteADStar
 import edu.wpi.first.math.Pair
 import edu.wpi.first.math.geometry.Translation2d
 import org.littletonrobotics.junction.LogTable
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.inputs.LoggableInputs
 
-class RemoteADStarAK : Pathfinder {
+class LocalADStarAK : Pathfinder {
     private val io = ADStarIO()
 
     /**
@@ -24,14 +24,14 @@ class RemoteADStarAK : Pathfinder {
         if (!Logger.hasReplaySource()) {
             io.updateIsNewPathAvailable()
         }
-        Logger.processInputs("RemoteADStarAK", io)
+        Logger.processInputs("LocalADStarAK", io)
         return io.isNewPathAvailable
     }
 
     /**
      * Get the most recently calculated path
      *
-     * @param constraints  The path constraints to use when creating the path
+     * @param constraints The path constraints to use when creating the path
      * @param goalEndState The goal end state to use when creating the path
      * @return The PathPlannerPath created from the points calculated by the pathfinder
      */
@@ -39,7 +39,7 @@ class RemoteADStarAK : Pathfinder {
         if (!Logger.hasReplaySource()) {
             io.updateCurrentPathPoints(constraints, goalEndState)
         }
-        Logger.processInputs("RemoteADStarAK", io)
+        Logger.processInputs("LocalADStarAK", io)
         return if (io.currentPathPoints.isEmpty()) {
             null
         } else PathPlannerPath.fromPathPoints(io.currentPathPoints, constraints, goalEndState)
@@ -72,19 +72,21 @@ class RemoteADStarAK : Pathfinder {
     /**
      * Set the dynamic obstacles that should be avoided while pathfinding.
      *
-     * @param obs             A List of Translation2d pairs representing obstacles. Each Translation2d represents
+     * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d represents
      * opposite corners of a bounding box.
      * @param currentRobotPos The current position of the robot. This is needed to change the start
      * position of the path to properly avoid obstacles
      */
-    override fun setDynamicObstacles(obs: List<Pair<Translation2d, Translation2d>>, currentRobotPos: Translation2d) {
+    override fun setDynamicObstacles(
+        obs: List<Pair<Translation2d, Translation2d>>, currentRobotPos: Translation2d
+    ) {
         if (!Logger.hasReplaySource()) {
             io.adStar.setDynamicObstacles(obs, currentRobotPos)
         }
     }
 
     private class ADStarIO : LoggableInputs {
-        var adStar = RemoteADStar()
+        var adStar = LocalADStar()
         var isNewPathAvailable = false
         var currentPathPoints = emptyList<PathPoint>()
         override fun toLog(table: LogTable) {
@@ -105,9 +107,7 @@ class RemoteADStarAK : Pathfinder {
             val pathPoints: MutableList<PathPoint> = ArrayList()
             var i = 0
             while (i < pointsLogged.size) {
-                pathPoints.add(
-                    PathPoint(Translation2d(pointsLogged[i], pointsLogged[i + 1]), null)
-                )
+                pathPoints.add(PathPoint(Translation2d(pointsLogged[i], pointsLogged[i + 1]), null))
                 i += 2
             }
             currentPathPoints = pathPoints

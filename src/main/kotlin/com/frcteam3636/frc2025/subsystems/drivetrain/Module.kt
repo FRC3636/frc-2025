@@ -1,22 +1,19 @@
-package com.frcteam3636.frc2024.subsystems.drivetrain
+package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.ctre.phoenix6.configs.Slot0Configs
 import com.ctre.phoenix6.configs.TorqueCurrentConfigs
-import com.ctre.phoenix6.controls.TorqueCurrentFOC
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC
-import com.frcteam3636.frc2024.*
-import com.frcteam3636.frc2024.utils.math.*
-import com.frcteam3636.frc2024.utils.swerve.speed
+import com.frcteam3636.frc2025.*
+import com.frcteam3636.frc2025.utils.math.*
+import com.frcteam3636.frc2025.utils.swerve.speed
 import com.revrobotics.CANSparkBase
 import com.revrobotics.CANSparkLowLevel
 import com.revrobotics.SparkAbsoluteEncoder
 import com.revrobotics.spark.SparkLowLevel
-import com.revrobotics.spark.SparkMax
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Angle
 import edu.wpi.first.units.Distance
 import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Units.*

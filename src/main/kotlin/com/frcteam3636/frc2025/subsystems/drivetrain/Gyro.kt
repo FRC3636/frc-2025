@@ -1,11 +1,10 @@
-package com.frcteam3636.frc2024.subsystems.drivetrain
+package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.ctre.phoenix6.BaseStatusSignal
-import com.ctre.phoenix6.configs.Pigeon2Configuration
 import com.ctre.phoenix6.hardware.Pigeon2
-import com.frcteam3636.frc2024.Robot
-import com.frcteam3636.frc2024.utils.swerve.PerCorner
-import com.frcteam3636.frc2024.utils.swerve.translation2dPerSecond
+import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.swerve.PerCorner
+import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.kauailabs.navx.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Translation2d

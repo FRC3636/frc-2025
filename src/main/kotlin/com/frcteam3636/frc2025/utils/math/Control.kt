@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2024.utils.math
+package com.frcteam3636.frc2025.utils.math
 
 import com.ctre.phoenix6.configs.Slot0Configs
 import com.ctre.phoenix6.configs.SlotConfigs
