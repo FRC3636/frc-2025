@@ -12,6 +12,9 @@ import com.frcteam3636.version.GIT_SHA
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
@@ -20,6 +23,9 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.JoystickButton
+import org.ironmaple.simulation.SimulatedArena
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeAlgaeOnField
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoral
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -68,6 +74,7 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
+        simulationPeriodic()
     }
 
     /** Start logging or pull replay logs from a file */
@@ -156,10 +163,36 @@ object Robot : LoggedRobot() {
         Dashboard.showTeleopTab(Shuffleboard.getTab("Teleoperated"))
     }
 
+    override fun simulationPeriodic() {
+        //DON'T RUN ON ROBOT
+        SimulatedArena.getInstance().simulationPeriodic()
+        SimulatedArena.getInstance().addGamePiece(
+            ReefscapeCoral(
+                // We must specify a heading since the coral is a tube
+                Pose2d(2.0, 2.0, Rotation2d.fromDegrees(90.0))
+        ))
+        SimulatedArena.getInstance().addGamePiece(ReefscapeAlgaeOnField(Translation2d(2.0, 2.0)))
+        Logger.recordOutput("FieldSimulation/Algae",
+            SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"))
+        Logger.recordOutput("FieldSimulation/Coral",
+            SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"))
+        displaySimFieldToAdvantageScope()
+    }
+
+    fun displaySimFieldToAdvantageScope() {
+        if (Robot.model !== Robot.Model.SIMULATION) return
+
+        Logger.recordOutput("FieldSimulation/RobotPosition", Drivetrain.estimatedPose)
+        Logger.recordOutput(
+            "FieldSimulation/Notes", *SimulatedArena.getInstance().getGamePiecesArrayByType("Note")
+        )
+    }
+
     override fun robotPeriodic() {
         Dashboard.update()
         Diagnostics.collect(statusSignals).reportAlerts()
         CommandScheduler.getInstance().run()
+
     }
 
     override fun autonomousInit() {
