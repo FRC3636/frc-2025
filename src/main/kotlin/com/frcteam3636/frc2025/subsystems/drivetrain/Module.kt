@@ -22,6 +22,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Measure
+import edu.wpi.first.units.Units
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
@@ -101,18 +102,18 @@ class MAXSwerveModule(
         set(value) {
             val corrected = SwerveModuleState(value.speedMetersPerSecond, value.angle - chassisAngle)
             // optimize the state to avoid rotating more than 90 degrees
-            val optimized = SwerveModuleState.optimize(
-                corrected, Rotation2d.fromRadians(turningEncoder.position)
+            corrected.optimize(
+                Rotation2d.fromRadians(turningEncoder.position)
             )
 
-            drivingMotor.velocity = optimized.speed
+            drivingMotor.velocity = corrected.speed
 
             turningPIDController.setReference(
-                optimized.angle.radians, SparkBase.ControlType.kPosition
+                corrected.angle.radians, SparkBase.ControlType.kPosition
             )
 
 
-            field = optimized
+            field = corrected
         }
 }
 
@@ -142,10 +143,10 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     override val position: Distance
-        get() = Meters.of(inner.position.value * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
+        get() = Meters.of(inner.position.value.`in`(Rotations) * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
 
     override var velocity: LinearVelocity
-        get() = MetersPerSecond.of(inner.velocity.value * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
+        get() = MetersPerSecond.of(inner.velocity.value.`in`(RotationsPerSecond) * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
         set(value) {
             inner.setControl(VelocityTorqueCurrentFOC(value.`in`(MetersPerSecond) / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.`in`(Meters)))
         }
@@ -157,7 +158,7 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
     init {
         val innerConfig = SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
-            smartCurrentLimit(DRIVING_CURRENT_LIMIT.roundToInt())
+            smartCurrentLimit(DRIVING_CURRENT_LIMIT.`in`(Amps).toInt())
             encoder.apply {
                 positionConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO)
                 positionConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO  / 60)
@@ -230,8 +231,8 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
 
 // take the known wheel diameter, divide it by two to get the radius, then get the
 // circumference
-internal val WHEEL_RADIUS = Inches.of(3.0).`in`(Meters) / 2
-internal val WHEEL_CIRCUMFERENCE = Meters.of(WHEEL_RADIUS * TAU)
+internal val WHEEL_RADIUS = Inches.of(3.0).div(2.0)
+internal val WHEEL_CIRCUMFERENCE = WHEEL_RADIUS * TAU
 
 internal val NEO_FREE_SPEED = RPM.of(5676.0)
 
@@ -240,14 +241,14 @@ private const val DRIVING_MOTOR_PINION_TEETH = 14
 internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
 internal const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
-internal val NEO_DRIVING_FREE_SPEED = (NEO_FREE_SPEED.`in`(RotationsPerSecond) * WHEEL_CIRCUMFERENCE.`in`(Meters)) / DRIVING_GEAR_RATIO_NEO
+internal val NEO_DRIVING_FREE_SPEED = MetersPerSecond.of((NEO_FREE_SPEED.`in`(RotationsPerSecond) * WHEEL_CIRCUMFERENCE.`in`(Meters)) / DRIVING_GEAR_RATIO_NEO)
 
 internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(4.0, 0.0, 0.1)
 internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
 internal val DRIVING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(5.75, 0.0)
 internal val DRIVING_FF_GAINS_NEO: MotorFFGains =
-    MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED, 0.0) // TODO: ensure this is right
+    MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED.`in`(MetersPerSecond), 0.0) // TODO: ensure this is right
 
 internal val TURNING_PID_GAINS: PIDGains = PIDGains(1.7, 0.0, 0.125)
-internal const val DRIVING_CURRENT_LIMIT = 35.0
+internal val DRIVING_CURRENT_LIMIT = Amps.of(35.0)
 internal const val TURNING_CURRENT_LIMIT = 20.0

@@ -7,6 +7,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BRAKE_
 //import com.frcteam3636.frc2024.subsystems.drivetrain.Drivetrain.Constants.DEFAULT_PATHING_CONSTRAINTS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTICK_DEADBAND
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
 import com.frcteam3636.frc2025.utils.ElasticWidgets
@@ -15,6 +16,11 @@ import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.frcteam3636.frc2025.utils.swerve.cornerStatesToChassisSpeeds
 import com.frcteam3636.frc2025.utils.swerve.toCornerSwerveModuleStates
 import com.frcteam3636.frc2025.utils.translation2d
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.config.ModuleConfig
+import com.pathplanner.lib.config.RobotConfig
+import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.controllers.PPLTVController
 import com.pathplanner.lib.pathfinding.Pathfinding
 //import com.pathplanner.lib.util.HolonomicPathFollowerConfig
 //import com.pathplanner.lib.util.ReplanningConfig
@@ -27,10 +33,13 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.units.TimeUnit
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.Mass
+import edu.wpi.first.units.measure.MomentOfInertia
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.DriverStation
@@ -89,16 +98,24 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         // FIXME: Update for 2025
-//        AutoBuilder.configureHolonomic(
-//            this::estimatedPose,
-//            this::estimatedPose::set,
-//            this::measuredChassisSpeeds,
-//            this::desiredChassisSpeeds::set,
-//            Constants.PATH_FOLLOWER_CONFIG,
-//            // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
-//            { DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red) },
-//            this
-//        )
+        AutoBuilder.configure(
+            this::estimatedPose,
+            this::estimatedPose::set,
+            this::measuredChassisSpeeds,
+            this::desiredChassisSpeeds::set,
+            PPHolonomicDriveController(
+                when(Robot.model) {
+                    Robot.Model.SIMULATION -> DRIVING_PID_GAINS_TALON
+                    Robot.Model.COMPETITION -> DRIVING_PID_GAINS_TALON
+                    Robot.Model.PROTOTYPE -> DRIVING_PID_GAINS_NEO
+                }.toPPLib(),
+                ROTATION_PID_GAINS.toPPLib()
+            ),
+            Constants.PP_ROBOT_CONFIG,
+            // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
+            { DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red) },
+            this
+        )
 
     }
 
@@ -318,17 +335,43 @@ object Drivetrain : Subsystem, Sendable {
         private val TRANSLATION_PID_GAINS = PIDGains(0.5, 0.0, 1.0)
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
 
-        // FIXME: Update for 2025
 //        // Pathing
 //        val DEFAULT_PATHING_CONSTRAINTS =
 //            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
-//        val PATH_FOLLOWER_CONFIG = HolonomicPathFollowerConfig(
-//            TRANSLATION_PID_GAINS.toPPLib(),
-//            ROTATION_PID_GAINS.toPPLib(),
-//            FREE_SPEED.baseUnitMagnitude(),
-//            MODULE_POSITIONS.frontLeft.translation.norm,
-//            ReplanningConfig(true, true, Units.inchesToMeters(3.0), Units.inchesToMeters(1.5)),
-//        )
+        // FIXME: Update for 2025
+        val PP_ROBOT_CONFIG_COMP = RobotConfig(
+            Pounds.of(120.0),
+            KilogramSquareMeters.of(0.0),
+            ModuleConfig(
+                WHEEL_RADIUS,
+                FREE_SPEED,
+                0.0, // FIXME: Placeholder
+                DCMotor.getKrakenX60(4),
+                DRIVING_CURRENT_LIMIT,
+                1
+            )
+        )
+
+        val PP_ROBOT_CONFIG_PROTOTYPE = RobotConfig(
+            Pounds.of(120.0),
+            KilogramSquareMeters.of(0.0),
+            ModuleConfig(
+                WHEEL_RADIUS,
+                NEO_DRIVING_FREE_SPEED,
+                0.0, // FIXME: Placeholder
+                DCMotor.getNEO(4),
+                DRIVING_CURRENT_LIMIT,
+                1
+            )
+        )
+
+        val PP_ROBOT_CONFIG = when(Robot.model) {
+            Robot.Model.SIMULATION -> PP_ROBOT_CONFIG_COMP
+            Robot.Model.COMPETITION -> PP_ROBOT_CONFIG_COMP
+            Robot.Model.PROTOTYPE -> PP_ROBOT_CONFIG_PROTOTYPE
+        }
+
+
 
         // CAN IDs
         val KRAKEN_MODULE_CAN_IDS =
