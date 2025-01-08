@@ -340,8 +340,8 @@ object Drivetrain : Subsystem, Sendable {
 //            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(
-            Pounds.of(120.0),
-            KilogramSquareMeters.of(0.0),
+            Pounds.of(120.0), // FIXME: Placeholder
+            KilogramSquareMeters.of(0.0), // FIXME: Placeholder
             ModuleConfig(
                 WHEEL_RADIUS,
                 FREE_SPEED,
@@ -353,8 +353,8 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         val PP_ROBOT_CONFIG_PROTOTYPE = RobotConfig(
-            Pounds.of(120.0),
-            KilogramSquareMeters.of(0.0),
+            Pounds.of(120.0), // FIXME: Placeholder
+            KilogramSquareMeters.of(0.0), // FIXME: Placeholder
             ModuleConfig(
                 WHEEL_RADIUS,
                 NEO_DRIVING_FREE_SPEED,
