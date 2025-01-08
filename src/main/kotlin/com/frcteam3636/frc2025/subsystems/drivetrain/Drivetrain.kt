@@ -280,14 +280,13 @@ object Drivetrain : Subsystem, Sendable {
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.4
 
-        private val WHEEL_BASE: Double = Units.inchesToMeters(30.0)
+        private val WHEEL_BASE: Double = Units.inchesToMeters(28.0)
         private val TRACK_WIDTH: Double = Units.inchesToMeters(28.0)
 
         const val JOYSTICK_DEADBAND = 0.15
 
         val MODULE_POSITIONS =
-            PerCorner(
-                frontLeft =
+            PerCorner(               frontLeft =
                 Pose2d(
                     Translation2d(WHEEL_BASE, TRACK_WIDTH) / 2.0,
                     Rotation2d.fromDegrees(0.0)
