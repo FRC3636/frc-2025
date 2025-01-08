@@ -8,9 +8,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     java
-    kotlin("jvm")
-    id("edu.wpi.first.GradleRIO")
     idea
+    kotlin("jvm")
+    id("com.google.devtools.ksp")
+    id("edu.wpi.first.GradleRIO")
     id("com.peterabeles.gversion") version "1.10.3"
 }
 
@@ -32,7 +33,7 @@ gversion {
 sourceSets {
     main {
         kotlin {
-            include(gversion.srcDir)
+            srcDir(gversion.srcDir)
         }
     }
 }
@@ -140,6 +141,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+
+    implementation(project(":annotation"))
+    ksp(project(":annotation"))
 }
 
 allprojects {

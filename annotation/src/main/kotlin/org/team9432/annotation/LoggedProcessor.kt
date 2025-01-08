@@ -69,7 +69,7 @@ class LoggedProcessor(private val codeGenerator: CodeGenerator): SymbolProcessor
         file.addType(type.build())
         file.indent("    ")
         file.addImport(LogTableUtils::class, "kGet", "kPut")
-        file.addImport("com.frcteam3636.frc2024.utils.LogTableUtils", "kGet", "kPut")
+        file.addImport("com.frcteam3636.frc2025.utils.LogTableUtils", "kGet", "kPut")
         file.build().writeTo(codeGenerator, Dependencies(true, classDeclaration.containingFile!!))
     }
 }
