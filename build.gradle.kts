@@ -29,10 +29,22 @@ gversion {
     indent = "    "
 }
 
+sourceSets {
+    main {
+        kotlin {
+            include(gversion.srcDir)
+        }
+    }
+}
+
 tasks {
     test {
         useJUnitPlatform()
         systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+    }
+
+    compileKotlin {
+        dependsOn(createVersionFile);
     }
 
     compileJava {
