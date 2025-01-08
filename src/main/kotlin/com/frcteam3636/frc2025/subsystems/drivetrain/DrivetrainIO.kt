@@ -72,8 +72,8 @@ class DrivetrainIOReal(override val modules: PerCorner<out SwerveModule>) : Driv
     }
 }
 
-/** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */
-class DrivetrainIOSim : DrivetrainIO() {
-    override val modules = PerCorner.generate { SimSwerveModule() }
-    override val gyro = GyroSim(modules.map { it })
-}
+///** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */
+//class DrivetrainIOSim : DrivetrainIO() {
+//    override val modules = PerCorner.generate { SimSwerveModule() }
+//    override val gyro = GyroSim(modules.map { it })
+//}

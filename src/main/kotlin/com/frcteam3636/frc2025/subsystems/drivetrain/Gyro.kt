@@ -5,7 +5,7 @@ import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
-import com.kauailabs.navx.frc.AHRS
+import com.studica.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Translation2d
 import org.littletonrobotics.junction.Logger

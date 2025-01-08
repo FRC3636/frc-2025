@@ -28,7 +28,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.util.Units
+import edu.wpi.first.units.TimeUnit
 import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.DriverStation
@@ -45,7 +47,7 @@ import kotlin.math.abs
 /** A singleton object representing the drivetrain. */
 object Drivetrain : Subsystem, Sendable {
     private val io = when (Robot.model) {
-        Robot.Model.SIMULATION -> DrivetrainIOSim()
+        Robot.Model.SIMULATION -> TODO()
         Robot.Model.COMPETITION -> DrivetrainIOReal.fromKrakenSwerve()
         Robot.Model.PROTOTYPE -> DrivetrainIOReal.fromNeoSwerve()
     }
@@ -106,7 +108,7 @@ object Drivetrain : Subsystem, Sendable {
         io.updateInputs(inputs)
         Logger.processInputs("Drivetrain", inputs)
 
-        gyroRate = (inputs.gyroRotation.toRotation2d().angle - previousGyro).per(Seconds.of(Robot.period))
+        gyroRate = (inputs.gyroRotation.toRotation2d().angle - previousGyro) / Seconds.of(Robot.period)
 
         // Update absolute pose sensors and add their measurements to the pose estimator
         for ((name, ioPair) in absolutePoseIOs) {

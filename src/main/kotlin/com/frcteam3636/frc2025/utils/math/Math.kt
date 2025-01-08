@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.Angle
 import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Units.Radians
+import edu.wpi.first.units.measure.Angle
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -19,4 +20,4 @@ fun Translation2d.dot(other: Translation2d): Double {
     return x * other.x + y * other.y
 }
 
-val Rotation2d.angle: Measure<Angle> get() = Radians.of(radians)
+val Rotation2d.angle: Angle get() = Radians.of(radians)
