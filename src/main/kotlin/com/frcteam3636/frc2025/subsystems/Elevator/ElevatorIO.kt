@@ -30,7 +30,9 @@ interface ElevatorIO{
 
 class ElevatorIOReal: ElevatorIO{
 
-    private val elevatorMotor = TalonFX(CTREDeviceId.LeftArmMotor)
+    private val elevatorMotor = TalonFX(CTREDeviceId.LeftArmMotor).apply {
+        //pid
+    }
 
     private val absoluteEncoder = DutyCycleEncoder(DigitalInput(0))
 
@@ -38,10 +40,13 @@ class ElevatorIOReal: ElevatorIO{
         inputs.absoluteEncoderHeight = Meters.of(absoluteEncoder.absolutePosition)
         inputs.absoluteEncoderConnected = absoluteEncoder.isConnected
         inputs.height = (METERS_PER_ROTATION * elevatorMotor.position.value) as Distance
+        inputs.velocity = RotationsPerSecond.of(elevatorMotor.velocity.value)
+        inputs.current = Volts.of(elevatorMotor.motorVoltage.value)
     }
 
     override fun runToHeight(height: Distance) {
-
+            Logger.recordOutput("Elevator/Height Setpoint", height)
+            //use pid to do this
     }
 
     override fun setVoltage(volts: Voltage){
