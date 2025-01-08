@@ -330,9 +330,8 @@ object Drivetrain : Subsystem, Sendable {
 
         // Chassis Control
         val FREE_SPEED = MetersPerSecond.of(8.132)!!
-        private val ROTATION_SPEED = RadiansPerSecond.of(14.604)!!
+//        private val ROTATION_SPEED = RadiansPerSecond.of(14.604)!!
 
-        private val TRANSLATION_PID_GAINS = PIDGains(0.5, 0.0, 1.0)
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
 
 //        // Pathing
