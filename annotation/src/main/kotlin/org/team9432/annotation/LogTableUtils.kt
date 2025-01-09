@@ -80,7 +80,7 @@ object LogTableUtils {
 
     fun <E : Enum<E>> LogTable.kGet(key: String, defaultValue: E): E = get(key, defaultValue)
 
-    fun <U : Unit> LogTable.kGet(key: String, defaultValue: Measure<U>): Measure<U> = get(key, defaultValue)
+    fun <M: Measure<U>, U: Unit> LogTable.kGet(key: String, defaultValue: M): M = get(key, defaultValue)
 
     fun LogTable.kGet(key: String, defaultValue: BooleanArray): BooleanArray = get(key, defaultValue)
 

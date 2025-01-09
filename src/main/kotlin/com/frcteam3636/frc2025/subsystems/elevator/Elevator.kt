@@ -1,3 +1,5 @@
+package com.frcteam3636.frc2025.subsystems.elevator
+
 import com.frcteam3636.frc2025.Robot
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.measure.Distance
@@ -10,9 +12,9 @@ private const val SECONDS_BETWEEN_ELEVATOR_UPDATES = 0.5
 
 object Elevator: Subsystem {
     private val io: ElevatorIO = when (Robot.model) {
-        Robot.Model.SIMULATION -> ElevatorIOSim()
+        Robot.Model.SIMULATION -> TODO()
         Robot.Model.COMPETITION -> ElevatorIOReal()
-        Robot.Model.PROTOTYPE -> ElevatorIOReal()
+        Robot.Model.PROTOTYPE -> TODO()
     }
 
     var inputs = LoggedElevatorInputs()

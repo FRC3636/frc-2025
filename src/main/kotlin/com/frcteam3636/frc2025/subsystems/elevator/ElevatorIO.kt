@@ -1,3 +1,5 @@
+package com.frcteam3636.frc2025.subsystems.elevator
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
 import com.ctre.phoenix6.controls.VoltageOut
@@ -30,7 +32,6 @@ open class ElevatorInputs {
 }
 
 interface ElevatorIO{
-
     fun updateInputs(inputs: ElevatorInputs)
 
     fun runToHeight(height: Distance)
@@ -54,7 +55,7 @@ class ElevatorIOReal: ElevatorIO {
             }
 
             Slot0.apply {
-                pidGains = PID_GAIN
+                pidGains = PID_GAINS
                 motorFFGains = FF_GAINS
                 kG = GRAVITY_GAIN
             }
@@ -81,9 +82,8 @@ class ElevatorIOReal: ElevatorIO {
 
     override fun runToHeight(height: Distance) {
             Logger.recordOutput("Elevator/Height Setpoint", height)
-
-            var desiredAngle = (height / METERS_PER_ROTATION) as Angle
-            var controlRequest = MotionMagicTorqueCurrentFOC(desiredAngle)
+            var desiredMotorAngle = (height / METERS_PER_ROTATION) as Angle
+            var controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
             elevatorMotor.setControl(controlRequest)
     }
 
