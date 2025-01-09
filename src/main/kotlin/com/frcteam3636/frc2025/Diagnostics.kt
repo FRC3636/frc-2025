@@ -74,7 +74,7 @@ data class Diagnostics(
             return Diagnostics(
                 batteryFull = RobotController.getBatteryVoltage() >= FULL_BATTERY_VOLTAGE,
                 navXConnected = Drivetrain.inputs.gyroConnected,
-                camerasConnected = Drivetrain.allCamerasConnected,
+                camerasConnected = Drivetrain.allPoseProvidersConnected,
                 errorStatusCodes = errorCodes,
                 canStatus = RobotController.getCANStatus(),
             )

@@ -5,6 +5,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.MetersPerSecond
+import edu.wpi.first.units.Units.RadiansPerSecond
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 
 enum class DrivetrainCorner {
@@ -81,6 +83,12 @@ var SwerveModuleState.speed: LinearVelocity
         speedMetersPerSecond = value.`in`(MetersPerSecond)
     }
 
-/** This swerve module state as a Translation2d. */
+/** This swerve module state as a `Translation2d`. */
 val SwerveModuleState.translation2dPerSecond: Translation2d
     get() = Translation2d(speedMetersPerSecond, angle)
+
+val ChassisSpeeds.translation2dPerSecond: Translation2d
+    get() = Translation2d(vxMetersPerSecond, vyMetersPerSecond)
+
+val ChassisSpeeds.angularVelocity: AngularVelocity
+    get() = RadiansPerSecond.of(omegaRadiansPerSecond)
