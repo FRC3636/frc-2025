@@ -4,10 +4,8 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.units.Distance
-import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Units.MetersPerSecond
-import edu.wpi.first.units.Velocity
+import edu.wpi.first.units.measure.LinearVelocity
 
 enum class DrivetrainCorner {
     FRONT_LEFT,
@@ -77,7 +75,7 @@ fun SwerveDriveKinematics(translations: PerCorner<Translation2d>) =
     SwerveDriveKinematics(*translations.toList().toTypedArray())
 
 /** The speed of the swerve module. */
-var SwerveModuleState.speed: Measure<Velocity<Distance>>
+var SwerveModuleState.speed: LinearVelocity
     get() = MetersPerSecond.of(speedMetersPerSecond)
     set(value) {
         speedMetersPerSecond = value.`in`(MetersPerSecond)

@@ -2,7 +2,9 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Pigeon2
+import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
+import com.studica.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
@@ -44,8 +46,12 @@ abstract class DrivetrainIO {
 }
 
 /** Drivetrain I/O layer that uses real swerve modules along with a NavX gyro. */
-class DrivetrainIOReal(override val modules: PerCorner<out SwerveModule>) : DrivetrainIO() {
-    override val gyro = GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
+class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : DrivetrainIO() {
+    override val gyro = when(Robot.model) {
+        Robot.Model.SIMULATION -> GyroSim(modules)
+        Robot.Model.COMPETITION -> GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
+        Robot.Model.PROTOTYPE -> GyroNavX(AHRS(AHRS.NavXComType.kMXP_SPI))
+    }
 
     companion object {
         fun fromKrakenSwerve() =
@@ -72,8 +78,8 @@ class DrivetrainIOReal(override val modules: PerCorner<out SwerveModule>) : Driv
     }
 }
 
-/** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */
-class DrivetrainIOSim : DrivetrainIO() {
-    override val modules = PerCorner.generate { SimSwerveModule() }
-    override val gyro = GyroSim(modules.map { it })
-}
+///** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */
+//class DrivetrainIOSim : DrivetrainIO() {
+//    override val modules = PerCorner.generate { SimSwerveModule() }
+//    override val gyro = GyroSim(modules.map { it })
+//}
