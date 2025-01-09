@@ -6,29 +6,19 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC
 import com.frcteam3636.frc2025.*
 import com.frcteam3636.frc2025.utils.math.*
 import com.frcteam3636.frc2025.utils.swerve.speed
-import com.revrobotics.spark.SparkMax
-import com.revrobotics.spark.SparkLowLevel
-import com.revrobotics.spark.SparkAbsoluteEncoder
 import com.revrobotics.spark.SparkBase
 import com.revrobotics.spark.SparkBase.PersistMode
 import com.revrobotics.spark.SparkBase.ResetMode
+import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.ClosedLoopConfig
-import com.revrobotics.spark.config.EncoderConfig
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode
 import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.math.system.plant.LinearSystemId
-import edu.wpi.first.units.Measure
-import edu.wpi.first.units.Units
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.units.measure.Velocity
-import edu.wpi.first.wpilibj.motorcontrol.Spark
-import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.littletonrobotics.junction.Logger
 import kotlin.math.roundToInt
 
@@ -61,8 +51,9 @@ class MAXSwerveModule(
         configure(SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
             smartCurrentLimit(TURNING_CURRENT_LIMIT.roundToInt())
-            inverted(true)
-            encoder.apply {
+
+            absoluteEncoder.apply {
+                inverted(true)
                 positionConversionFactor(TAU)
                 velocityConversionFactor(TAU / 60)
             }
@@ -155,15 +146,16 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
             idleMode(IdleMode.kBrake)
             smartCurrentLimit(DRIVING_CURRENT_LIMIT.`in`(Amps).toInt())
             inverted(true)
+
             encoder.apply {
                 positionConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO)
-                positionConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO  / 60)
+                velocityConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO / 60)
             }
 
             closedLoop.apply {
                 pid(DRIVING_PID_GAINS_NEO.p, DRIVING_PID_GAINS_NEO.i, DRIVING_PID_GAINS_NEO.d)
                 velocityFF(DRIVING_FF_GAINS_NEO.v)
-                feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAbsoluteEncoder)
+                feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder)
             }
         }
         configure(innerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
