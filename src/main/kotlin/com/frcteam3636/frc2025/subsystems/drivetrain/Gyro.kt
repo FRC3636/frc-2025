@@ -8,6 +8,7 @@ import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.studica.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Translation2d
+import org.ironmaple.simulation.drivesims.GyroSimulation
 import org.littletonrobotics.junction.Logger
 import kotlin.math.sign
 
@@ -80,4 +81,14 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
 
         rotation += Rotation3d(0.0, 0.0, yawVelocity) * Robot.period
     }
+}
+
+class GyroMapleSim(val gyroSimulation : GyroSimulation): Gyro {
+    override var rotation: Rotation3d
+        get() = Rotation3d(gyroSimulation.gyroReading)
+        set(value) {
+            gyroSimulation.setRotation(value.toRotation2d())
+        }
+    override val connected: Boolean
+        get() = true
 }

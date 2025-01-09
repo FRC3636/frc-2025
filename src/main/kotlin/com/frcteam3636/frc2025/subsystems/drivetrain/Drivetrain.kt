@@ -56,7 +56,7 @@ import kotlin.math.abs
 /** A singleton object representing the drivetrain. */
 object Drivetrain : Subsystem, Sendable {
     private val io = when (Robot.model) {
-        Robot.Model.SIMULATION -> TODO()
+        Robot.Model.SIMULATION -> DrivetrainIOSim()
         Robot.Model.COMPETITION -> DrivetrainIOReal.fromKrakenSwerve()
         Robot.Model.PROTOTYPE -> DrivetrainIOReal.fromNeoSwerve()
     }
@@ -299,8 +299,11 @@ object Drivetrain : Subsystem, Sendable {
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.4
 
-        private val WHEEL_BASE: Double = Units.inchesToMeters(30.0)
-        private val TRACK_WIDTH: Double = Units.inchesToMeters(28.0)
+        val WHEEL_BASE= Inches.of(30.0)
+        val TRACK_WIDTH = Inches.of(28.0)
+
+        val BUMPER_WIDTH = Inches.of(33.5)
+        val BUMPER_LENGTH = Inches.of(35.5)
 
         const val JOYSTICK_DEADBAND = 0.15
 
