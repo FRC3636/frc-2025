@@ -57,21 +57,12 @@ interface SwerveModule {
 class MAXSwerveModule(
     private val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
 ) : SwerveModule {
-    private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless)
-
-    // whereas the turning encoder must be absolute so that
-    // we know where the wheel is pointing
-    private val turningEncoder = turningSpark.getAbsoluteEncoder()
-
-
-    private val turningPIDController = turningSpark.closedLoopController
-
-    init {
-        val turningConfig = SparkMaxConfig().apply {
+    private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless).apply {
+        configure(SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
             smartCurrentLimit(TURNING_CURRENT_LIMIT.roundToInt())
+            inverted(true)
             encoder.apply {
-                inverted(true)
                 positionConversionFactor(TAU)
                 velocityConversionFactor(TAU / 60)
             }
@@ -83,9 +74,15 @@ class MAXSwerveModule(
                 positionWrappingMinInput(0.0)
                 positionWrappingMaxInput(TAU)
             }
-        }
-        turningSpark.configure(turningConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
+        }, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
     }
+
+    // whereas the turning encoder must be absolute so that
+    // we know where the wheel is pointing
+    private val turningEncoder = turningSpark.getAbsoluteEncoder()
+
+
+    private val turningPIDController = turningSpark.closedLoopController
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
@@ -153,16 +150,14 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 }
 
 class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
-    private val inner = SparkMax(id, SparkLowLevel.MotorType.kBrushless)
-
-    init {
+    private val inner = SparkMax(id, SparkLowLevel.MotorType.kBrushless).apply {
         val innerConfig = SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
             smartCurrentLimit(DRIVING_CURRENT_LIMIT.`in`(Amps).toInt())
+            inverted(true)
             encoder.apply {
                 positionConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO)
                 positionConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO  / 60)
-                inverted(true)
             }
 
             closedLoop.apply {
@@ -171,7 +166,7 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
                 feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAbsoluteEncoder)
             }
         }
-        inner.configure(innerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
+        configure(innerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
     }
 
     override val position: Distance

@@ -344,11 +344,14 @@ object Drivetrain : Subsystem, Sendable {
             ModuleConfig(
                 WHEEL_RADIUS,
                 FREE_SPEED,
-                0.0, // FIXME: Placeholder
-                DCMotor.getKrakenX60(4),
+                1.0, // FIXME: Placeholder
+                DCMotor.getKrakenX60(1),
                 DRIVING_CURRENT_LIMIT,
                 1
-            )
+            ),
+            *MODULE_POSITIONS.map {
+                it.translation
+            }.toTypedArray()
         )
 
         val PP_ROBOT_CONFIG_PROTOTYPE = RobotConfig(
@@ -357,11 +360,14 @@ object Drivetrain : Subsystem, Sendable {
             ModuleConfig(
                 WHEEL_RADIUS,
                 NEO_DRIVING_FREE_SPEED,
-                0.0, // FIXME: Placeholder
-                DCMotor.getNEO(4),
+                1.0, // FIXME: Placeholder
+                DCMotor.getNEO(1),
                 DRIVING_CURRENT_LIMIT,
                 1
-            )
+            ),
+            *MODULE_POSITIONS.map {
+                it.translation
+            }.toTypedArray()
         )
 
         val PP_ROBOT_CONFIG = when(Robot.model) {
