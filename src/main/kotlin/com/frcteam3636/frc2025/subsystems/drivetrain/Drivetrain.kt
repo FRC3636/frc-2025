@@ -294,7 +294,7 @@ object Drivetrain : Subsystem, Sendable {
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
-        const val TRANSLATION_SENSITIVITY = 0.1
+        const val TRANSLATION_SENSITIVITY = 0.5
 
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.4
@@ -314,6 +314,11 @@ object Drivetrain : Subsystem, Sendable {
                     Translation2d(WHEEL_BASE, TRACK_WIDTH) / 2.0,
                     Rotation2d.fromDegrees(0.0)
                 ),
+                frontRight =
+                Pose2d(
+                    Translation2d(WHEEL_BASE, -TRACK_WIDTH) / 2.0,
+                    Rotation2d.fromDegrees(270.0)
+                ),
                 backLeft =
                 Pose2d(
                     Translation2d(-WHEEL_BASE, TRACK_WIDTH) / 2.0,
@@ -323,11 +328,6 @@ object Drivetrain : Subsystem, Sendable {
                 Pose2d(
                     Translation2d(-WHEEL_BASE, -TRACK_WIDTH) / 2.0,
                     Rotation2d.fromDegrees(180.0)
-                ),
-                frontRight =
-                Pose2d(
-                    Translation2d(WHEEL_BASE, -TRACK_WIDTH) / 2.0,
-                    Rotation2d.fromDegrees(270.0)
                 ),
             )
 
@@ -385,25 +385,25 @@ object Drivetrain : Subsystem, Sendable {
         val KRAKEN_MODULE_CAN_IDS =
             PerCorner(
                 frontLeft =
-                Pair(
-                    CTREDeviceId.FrontLeftDrivingMotor,
-                    REVMotorControllerId.FrontLeftTurningMotor
-                ),
+                    Pair(
+                        CTREDeviceId.FrontLeftDrivingMotor,
+                        REVMotorControllerId.FrontLeftTurningMotor
+                    ),
                 frontRight =
-                Pair(
-                    CTREDeviceId.FrontRightDrivingMotor,
-                    REVMotorControllerId.FrontRightTurningMotor
-                ),
-                backRight =
-                Pair(
-                    CTREDeviceId.BackRightDrivingMotor,
-                    REVMotorControllerId.BackRightTurningMotor
-                ),
+                    Pair(
+                        CTREDeviceId.FrontRightDrivingMotor,
+                        REVMotorControllerId.FrontRightTurningMotor
+                    ),
                 backLeft =
-                Pair(
-                    CTREDeviceId.BackLeftDrivingMotor,
-                    REVMotorControllerId.BackLeftTurningMotor
-                ),
+                    Pair(
+                        CTREDeviceId.BackLeftDrivingMotor,
+                        REVMotorControllerId.BackLeftTurningMotor
+                    ),
+                backRight =
+                    Pair(
+                        CTREDeviceId.BackRightDrivingMotor,
+                        REVMotorControllerId.BackRightTurningMotor
+                    ),
             )
 
         internal val MODULE_CAN_IDS_PRACTICE =
@@ -418,15 +418,15 @@ object Drivetrain : Subsystem, Sendable {
                     REVMotorControllerId.FrontRightDrivingMotor,
                     REVMotorControllerId.FrontRightTurningMotor
                 ),
+                backLeft =
+                    Pair(
+                        REVMotorControllerId.BackLeftDrivingMotor,
+                        REVMotorControllerId.BackLeftTurningMotor
+                    ),
                 backRight =
                 Pair(
                     REVMotorControllerId.BackRightDrivingMotor,
                     REVMotorControllerId.BackRightTurningMotor
-                ),
-                backLeft =
-                Pair(
-                    REVMotorControllerId.BackLeftDrivingMotor,
-                    REVMotorControllerId.BackLeftTurningMotor
                 ),
             )
 
