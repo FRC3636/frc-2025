@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.Timer
 import org.littletonrobotics.junction.LogTable
+import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.inputs.LoggableInputs
 import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
@@ -31,11 +32,6 @@ class AbsolutePoseProviderInputs : LoggableInputs {
      * The most recent measurement from the pose estimator.
      */
     var measurement: AbsolutePoseMeasurement? = null
-
-    /**
-     * If there is little to no ambiguity.
-     */
-    var isHighQualityReading = false
 
     /**
      * Whether the provider is connected.
@@ -58,6 +54,11 @@ class AbsolutePoseProviderInputs : LoggableInputs {
 
 interface AbsolutePoseProvider {
     fun updateInputs(inputs: AbsolutePoseProviderInputs)
+
+    /**
+     * If there is little to no ambiguity.
+     */
+    val hasHighQualityReading: Boolean
 }
 
 class LimelightPoseProvider(private val name: String) : AbsolutePoseProvider {
@@ -80,7 +81,7 @@ class LimelightPoseProvider(private val name: String) : AbsolutePoseProvider {
 
         val hasReading = (estimate?.tagCount ?: 0) >= 1
         val readingIsNearby = trackedTag.translation.norm < DISTANT_APRIL_TAG_DISTANCE.`in`(Meters)
-        inputs.isHighQualityReading = hasReading && readingIsNearby
+        hasHighQualityReading = hasReading && readingIsNearby
 
         // We assume the camera has disconnected if there's no new updates.
         inputs.connected = inputs.measurement?.let {
@@ -88,6 +89,9 @@ class LimelightPoseProvider(private val name: String) : AbsolutePoseProvider {
             timeSinceLastUpdate > Seconds.of(0.25)
         } ?: false
     }
+
+    override var hasHighQualityReading = false
+        private set
 }
 
 @Logged

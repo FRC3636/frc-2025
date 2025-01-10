@@ -1,8 +1,5 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
-//import com.frcteam3636.frc2024.subsystems.drivetrain.Drivetrain.Constants.DEFAULT_PATHING_CONSTRAINTS
-//import com.pathplanner.lib.util.HolonomicPathFollowerConfig
-//import com.pathplanner.lib.util.ReplanningConfig
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
@@ -56,7 +53,7 @@ object Drivetrain : Subsystem, Sendable {
     }
     val inputs = LoggedDrivetrainInputs()
 
-    private val questNavInactiveAlert = Alert("QuestNav is inactive.", Alert.AlertType.kInfo)
+    private val questNavInactiveAlert = Alert("QuestNav localizer is not active.", Alert.AlertType.kInfo)
 
     private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
     private val questNavInputs = LoggedQuestNavInputs()
@@ -140,6 +137,7 @@ object Drivetrain : Subsystem, Sendable {
                 Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
                 Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
+            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has High Quality Reading", sensorIO.hasHighQualityReading)
         }
 
         // Use the new measurements to update the pose estimator
@@ -223,7 +221,7 @@ object Drivetrain : Subsystem, Sendable {
      */
     private fun updateQuestNavOrigin() {
         val hasHighQualityData = absolutePoseIOs.values.any {
-            it.second.isHighQualityReading
+            it.first.hasHighQualityReading
         }
         if (!hasHighQualityData || isMoving) return
         questNavLocalizer.resetPose(poseEstimator.estimatedPosition)
