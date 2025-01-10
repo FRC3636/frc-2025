@@ -9,6 +9,8 @@ import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
+import edu.wpi.first.math.geometry.Transform2d
+import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.units.Units.Meters
@@ -101,9 +103,15 @@ open class QuestNavInputs {
     var connected = false
 }
 
-class QuestNavLocalizer {
+class QuestNavLocalizer(
+    /**
+     * The location of the QuestNav device relative to the robot chassis.
+     */
+    deviceOffset: Transform2d,
+) {
     private val questNav = QuestNav()
-    private val lowBatteryAlert = Alert("The Meta Quest battery is below 20%!", AlertType.kWarning)
+    private val lowBatteryAlert = Alert("The Meta Quest battery is below 40%!", AlertType.kWarning)
+    private val deviceToChassis = deviceOffset.inverse()
 
     fun resetPose(pose: Pose2d) {
         questNav.resetPosition(pose)
@@ -111,10 +119,10 @@ class QuestNavLocalizer {
 
     fun updateInputs(inputs: QuestNavInputs) {
         questNav.finalizeCommands()
-        lowBatteryAlert.set(questNav.batteryPercent < 20.0)
+        lowBatteryAlert.set(questNav.batteryPercent < 40.0)
 
         inputs.connected = questNav.connected
-        inputs.pose = questNav.pose
+        inputs.pose = questNav.pose.transformBy(deviceToChassis)
     }
 }
 

@@ -26,10 +26,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.pathfinding.Pathfinding
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Rotation3d
-import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
@@ -61,7 +58,7 @@ object Drivetrain : Subsystem, Sendable {
 
     private val questNavInactiveAlert = Alert("QuestNav is inactive.", Alert.AlertType.kInfo)
 
-    private val questNavLocalizer = QuestNavLocalizer()
+    private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
     private val questNavInputs = LoggedQuestNavInputs()
     private var questNavCalibrated = false
 
@@ -464,6 +461,13 @@ object Drivetrain : Subsystem, Sendable {
 
         /** A position with the modules radiating outwards from the center of the robot, preventing movement. */
         val BRAKE_POSITION = MODULE_POSITIONS.map { position -> SwerveModuleState(0.0, position.translation.angle) }
+
+        val QUESTNAV_DEVICE_OFFSET = Transform2d(
+            // TODO: find these constants
+            Inches.of(0.0),
+            Inches.of(0.0),
+            Rotation2d(Degrees.of(0.0))
+        )
     }
 
     enum class Localizer {
