@@ -15,12 +15,15 @@ import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Units.Inches
+import edu.wpi.first.units.Units.*
 import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.drivesims.COTS
+import org.ironmaple.simulation.drivesims.COTS.WHEELS
 import org.ironmaple.simulation.drivesims.GyroSimulation
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
+import org.ironmaple.simulation.drivesims.SwerveModuleSimulation
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
+import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
 import org.team9432.annotation.Logged
 
 
@@ -94,21 +97,24 @@ class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : Drivetra
 
 /** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */
 class DrivetrainIOSim : DrivetrainIO() {
-    override val modules = PerCorner.generate { SimSwerveModule() }
-    override val gyro = GyroMapleSim(GyroSimulation(.001, .05))
-
     // Create and configure a drivetrain simulation configuration
     val driveTrainSimulationConfig: DriveTrainSimulationConfig =
         DriveTrainSimulationConfig.Default() // Specify gyro type (for realistic gyro drifting and error simulation)
             .withGyro(COTS.ofPigeon2()) // Specify swerve module (for realistic swerve dynamics)
             .withSwerveModule(
-                COTS.ofMark4(
+                // FIXME: Calculate values
+                SwerveModuleSimulationConfig(
                     DCMotor.getKrakenX60(1),  // Drive motor is a Kraken X60
                     DCMotor.getNeo550(1),  // Steer motor is a Neo 550
-                    COTS.WHEELS.COLSONS.cof,  // Use the COF for Colson Wheels
-                    3
+                    DRIVING_GEAR_RATIO_TALON,
+                    5.5,
+                    Volts.of(5.0),
+                    Volts.of(0.05),
+                    WHEEL_RADIUS,
+                    KilogramSquareMeters.of(0.02),
+                    WHEELS.SLS_PRINTED_WHEELS.cof
                 )
-            ) // L3 Gear ratio
+            )
             // Configures the track length and track width (spacing between swerve modules)
             .withTrackLengthTrackWidth(
                 WHEEL_BASE,
@@ -123,6 +129,9 @@ class DrivetrainIOSim : DrivetrainIO() {
         // Specify starting pose
         Pose2d(3.0, 3.0, Rotation2d())
     )
+
+    override val modules = PerCorner.generate { SimSwerveModule(swerveDriveSimulation.modules[it.ordinal]) }
+    override val gyro = GyroMapleSim(GyroSimulation(.001, .05))
 
     init {
         SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation)

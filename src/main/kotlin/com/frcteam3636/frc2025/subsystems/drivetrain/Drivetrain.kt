@@ -299,7 +299,7 @@ object Drivetrain : Subsystem, Sendable {
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.4
 
-        val WHEEL_BASE= Inches.of(30.0)
+        val WHEEL_BASE = Inches.of(30.0)
         val TRACK_WIDTH = Inches.of(28.0)
 
         val BUMPER_WIDTH = Inches.of(33.5)
