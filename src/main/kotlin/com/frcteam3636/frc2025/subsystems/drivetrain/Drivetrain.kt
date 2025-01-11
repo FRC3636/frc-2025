@@ -4,44 +4,35 @@ import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
-//import com.frcteam3636.frc2024.subsystems.drivetrain.Drivetrain.Constants.DEFAULT_PATHING_CONSTRAINTS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTICK_DEADBAND
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
 import com.frcteam3636.frc2025.utils.ElasticWidgets
-import com.frcteam3636.frc2025.utils.math.*
-import com.frcteam3636.frc2025.utils.swerve.PerCorner
-import com.frcteam3636.frc2025.utils.swerve.cornerStatesToChassisSpeeds
-import com.frcteam3636.frc2025.utils.swerve.toCornerSwerveModuleStates
+import com.frcteam3636.frc2025.utils.math.PIDController
+import com.frcteam3636.frc2025.utils.math.PIDGains
+import com.frcteam3636.frc2025.utils.math.TAU
+import com.frcteam3636.frc2025.utils.math.toPPLib
+import com.frcteam3636.frc2025.utils.swerve.*
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
-import com.pathplanner.lib.controllers.PPLTVController
 import com.pathplanner.lib.pathfinding.Pathfinding
-//import com.pathplanner.lib.util.HolonomicPathFollowerConfig
-//import com.pathplanner.lib.util.ReplanningConfig
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Rotation3d
-import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.util.Units
-import edu.wpi.first.units.TimeUnit
 import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.measure.AngularVelocity
-import edu.wpi.first.units.measure.Mass
-import edu.wpi.first.units.measure.MomentOfInertia
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
+import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj2.command.Command
@@ -62,11 +53,15 @@ object Drivetrain : Subsystem, Sendable {
     }
     val inputs = LoggedDrivetrainInputs()
 
+    private val questNavInactiveAlert = Alert("QuestNav localizer is not active.", Alert.AlertType.kInfo)
+
+    private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
+    private val questNavInputs = LoggedQuestNavInputs()
+    private var questNavCalibrated = false
+
     private val absolutePoseIOs = mapOf(
-        "Limelight" to LimelightPoseIOReal(
-            "limelight",
-        )
-    ).mapValues { Pair(it.value, AbsolutePoseIO.Inputs()) }
+        "Limelight" to LimelightPoseProvider("limelight"),
+    ).mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
     /** Helper for converting a desired drivetrain velocity into the speeds and angles for each swerve module */
     private val kinematics =
@@ -85,12 +80,18 @@ object Drivetrain : Subsystem, Sendable {
             VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10.0))
         )
 
-    /** Whether every camera used for pose estimation is connected. */
-    val allCamerasConnected
-        get() = absolutePoseIOs.values.all { it.first.cameraConnected }
+    /** Whether every sensor used for pose estimation is connected. */
+    val allPoseProvidersConnected
+        get() = absolutePoseIOs.values.all { it.second.connected }
 
-    var gyroRate = RadiansPerSecond.zero()!!
-        private set
+    val isMoving: Boolean
+        get() {
+            val speeds = measuredChassisSpeeds
+            val translationalSpeed = MetersPerSecond.of(speeds.translation2dPerSecond.norm)
+            return translationalSpeed < MetersPerSecond.of(0.5)
+                    && speeds.angularVelocity < RotationsPerSecond.of(0.5)
+        }
+
 
     init {
         Pathfinding.setPathfinder(
@@ -120,12 +121,8 @@ object Drivetrain : Subsystem, Sendable {
     }
 
     override fun periodic() {
-        val previousGyro = inputs.gyroRotation.toRotation2d().angle
-
         io.updateInputs(inputs)
         Logger.processInputs("Drivetrain", inputs)
-
-        gyroRate = (inputs.gyroRotation.toRotation2d().angle - previousGyro) / Seconds.of(Robot.period)
 
         // Update absolute pose sensors and add their measurements to the pose estimator
         for ((name, ioPair) in absolutePoseIOs) {
@@ -140,6 +137,7 @@ object Drivetrain : Subsystem, Sendable {
                 Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
                 Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
+            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has High Quality Reading", sensorIO.hasHighQualityReading)
         }
 
         // Use the new measurements to update the pose estimator
@@ -147,8 +145,17 @@ object Drivetrain : Subsystem, Sendable {
             inputs.gyroRotation.toRotation2d(),
             inputs.measuredPositions.toTypedArray()
         )
+
+        questNavLocalizer.updateInputs(questNavInputs)
+        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
+        updateQuestNavOrigin()
+
+        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
+        Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
         Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
+        Logger.recordOutput("Drivetrain/Localizer", localizer.name)
+        questNavInactiveAlert.set(localizer != Localizer.QuestNav)
     }
 
     /** The desired speeds and angles of the swerve modules. */
@@ -182,10 +189,21 @@ object Drivetrain : Subsystem, Sendable {
             desiredModuleStates = kinematics.toCornerSwerveModuleStates(discretized)
         }
 
+    val localizer: Localizer
+        get() = if (questNavCalibrated && questNavInputs.connected) {
+            Localizer.QuestNav
+        } else {
+            Localizer.PoseEstimator
+        }
+
     /** The estimated pose of the robot on the field, using the yaw value measured by the gyro. */
     var estimatedPose: Pose2d
         get() {
-            val estimated = poseEstimator.estimatedPosition
+            val estimated = when (localizer) {
+                Localizer.QuestNav -> questNavInputs.pose
+                Localizer.PoseEstimator -> poseEstimator.estimatedPosition
+            }
+
             return Pose2d(
                 estimated.x,
                 estimated.y,
@@ -197,6 +215,18 @@ object Drivetrain : Subsystem, Sendable {
             inputs.measuredPositions.toTypedArray(),
             value
         )
+
+    /**
+     * Update the QuestNav pose to keep its origin correct.
+     */
+    private fun updateQuestNavOrigin() {
+        val hasHighQualityData = absolutePoseIOs.values.any {
+            it.first.hasHighQualityReading
+        }
+        if (!hasHighQualityData || isMoving) return
+        questNavLocalizer.resetPose(poseEstimator.estimatedPosition)
+        questNavCalibrated = true
+    }
 
     override fun initSendable(builder: SendableBuilder) {
         builder.setSmartDashboardType(ElasticWidgets.SwerveDrive.widgetName)
@@ -247,7 +277,7 @@ object Drivetrain : Subsystem, Sendable {
             drive(translationInput, rotationInput)
         }
 
-    private val rotationPIDController = PIDController(Constants.ROTATION_PID_GAINS).apply {
+    private val rotationPIDController = PIDController(ROTATION_PID_GAINS).apply {
         enableContinuousInput(0.0, TAU)
     }
 
@@ -432,5 +462,17 @@ object Drivetrain : Subsystem, Sendable {
 
         /** A position with the modules radiating outwards from the center of the robot, preventing movement. */
         val BRAKE_POSITION = MODULE_POSITIONS.map { position -> SwerveModuleState(0.0, position.translation.angle) }
+
+        val QUESTNAV_DEVICE_OFFSET = Transform2d(
+            // TODO: find these constants
+            Inches.of(0.0),
+            Inches.of(0.0),
+            Rotation2d(Degrees.of(0.0))
+        )
+    }
+
+    enum class Localizer {
+        QuestNav,
+        PoseEstimator,
     }
 }
