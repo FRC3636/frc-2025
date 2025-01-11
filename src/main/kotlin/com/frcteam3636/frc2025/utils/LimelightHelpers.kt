@@ -1,8 +1,4 @@
-//LimelightHelpers v1.9 (REQUIRES 2024.9.1)
-@file:Suppress(
-    "unused", "MemberVisibilityCanBePrivate", "LocalVariableName", "FunctionName", "PrivatePropertyName",
-    "ClassName", "PropertyName"
-)
+//LimelightHelpers v1.10 (REQUIRES LLOS 2024.9.1 OR LATER)
 
 package com.frcteam3636.frc2025.utils
 
@@ -20,13 +16,17 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
+import java.net.URI
 import java.net.URL
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * LimelightHelpers provides static methods and classes for interfacing with Limelight vision cameras in FRC.
+ * This library supports all Limelight features including AprilTag tracking, Neural Networks, and standard color/retroreflective tracking.
+ */
 object LimelightHelpers {
     private val doubleArrayEntries: MutableMap<String, DoubleArrayEntry> = ConcurrentHashMap()
-
 
     private var mapper: ObjectMapper? = null
 
@@ -42,6 +42,12 @@ object LimelightHelpers {
         return name
     }
 
+    /**
+     * Takes a 6-length array of pose data and converts it to a Pose3d object.
+     * Array format: [x, y, z, roll, pitch, yaw] where angles are in degrees.
+     * @param inData Array containing pose data [x, y, z, roll, pitch, yaw]
+     * @return Pose3d object representing the pose, or empty Pose3d if invalid data
+     */
     fun toPose3D(inData: DoubleArray): Pose3d {
         if (inData.size < 6) {
             //System.err.println("Bad LL 3D Pose Data!");
@@ -58,6 +64,13 @@ object LimelightHelpers {
         )
     }
 
+    /**
+     * Takes a 6-length array of pose data and converts it to a Pose2d object.
+     * Uses only x, y, and yaw components, ignoring z, roll, and pitch.
+     * Array format: [x, y, z, roll, pitch, yaw] where angles are in degrees.
+     * @param inData Array containing pose data [x, y, z, roll, pitch, yaw]
+     * @return Pose2d object representing the pose, or empty Pose2d if invalid data
+     */
     fun toPose2D(inData: DoubleArray): Pose2d {
         if (inData.size < 6) {
             //System.err.println("Bad LL 2D Pose Data!");
@@ -69,10 +82,11 @@ object LimelightHelpers {
     }
 
     /**
-     * Converts a Pose3d object to an array of doubles.
+     * Converts a Pose3d object to an array of doubles in the format [x, y, z, roll, pitch, yaw].
+     * Translation components are in meters, rotation components are in degrees.
      *
-     * @param pose The Pose3d object to convert.
-     * @return The array of doubles representing the pose.
+     * @param pose The Pose3d object to convert
+     * @return A 6-element array containing [x, y, z, roll, pitch, yaw]
      */
     fun pose3dToArray(pose: Pose3d): DoubleArray {
         val result = DoubleArray(6)
@@ -86,10 +100,12 @@ object LimelightHelpers {
     }
 
     /**
-     * Converts a Pose2d object to an array of doubles.
+     * Converts a Pose2d object to an array of doubles in the format [x, y, z, roll, pitch, yaw].
+     * Translation components are in meters, rotation components are in degrees.
+     * Note: z, roll, and pitch will be 0 since Pose2d only contains x, y, and yaw.
      *
-     * @param pose The Pose2d object to convert.
-     * @return The array of doubles representing the pose.
+     * @param pose The Pose2d object to convert
+     * @return A 6-element array containing [x, y, 0, 0, 0, yaw]
      */
     fun pose2dToArray(pose: Pose2d): DoubleArray {
         val result = DoubleArray(6)
@@ -109,14 +125,14 @@ object LimelightHelpers {
         return inData[position]
     }
 
-    private fun getBotPoseEstimate(limelightName: String, entryName: String): PoseEstimate? {
+    private fun getBotPoseEstimate(limelightName: String, entryName: String, isMegaTag2: Boolean): PoseEstimate? {
         val poseEntry = getLimelightDoubleArrayEntry(limelightName, entryName)
 
         val tsValue = poseEntry.atomic
         val poseArray = tsValue.value
         val timestamp = tsValue.timestamp
 
-        if (poseArray.isEmpty()) {
+        if (poseArray.size == 0) {
             // Handle the case where no data is available
             return null // or some default PoseEstimate
         }
@@ -152,10 +168,26 @@ object LimelightHelpers {
             }
         }
 
-        return PoseEstimate(pose, adjustedTimestamp, latency, tagCount, tagSpan, tagDist, tagArea, rawFiducials)
+        return PoseEstimate(
+            pose,
+            adjustedTimestamp,
+            latency,
+            tagCount,
+            tagSpan,
+            tagDist,
+            tagArea,
+            rawFiducials,
+            isMegaTag2
+        )
     }
 
-    private fun getRawFiducials(limelightName: String): Array<RawFiducial?> {
+    /**
+     * Gets the latest raw fiducial/AprilTag detection results from NetworkTables.
+     *
+     * @param limelightName Name/identifier of the Limelight
+     * @return Array of RawFiducial objects containing detection details
+     */
+    fun getRawFiducials(limelightName: String?): Array<RawFiducial?> {
         val entry = getLimelightNTTableEntry(limelightName, "rawfiducials")
         val rawFiducialArray = entry.getDoubleArray(DoubleArray(0))
         val valsPerEntry = 7
@@ -182,10 +214,16 @@ object LimelightHelpers {
         return rawFiducials
     }
 
+    /**
+     * Gets the latest raw neural detector results from NetworkTables
+     *
+     * @param limelightName Name/identifier of the Limelight
+     * @return Array of RawDetection objects containing detection details
+     */
     fun getRawDetections(limelightName: String?): Array<RawDetection?> {
         val entry = getLimelightNTTableEntry(limelightName, "rawdetections")
         val rawDetectionArray = entry.getDoubleArray(DoubleArray(0))
-        val valsPerEntry = 11
+        val valsPerEntry = 12
         if (rawDetectionArray.size % valsPerEntry != 0) {
             return arrayOfNulls(0)
         }
@@ -227,6 +265,13 @@ object LimelightHelpers {
         return rawDetections
     }
 
+    /**
+     * Prints detailed information about a PoseEstimate to standard output.
+     * Includes timestamp, latency, tag count, tag span, average tag distance,
+     * average tag area, and detailed information about each detected fiducial.
+     *
+     * @param pose The PoseEstimate object to print. If null, prints "No PoseEstimate available."
+     */
     fun printPoseEstimate(pose: PoseEstimate?) {
         if (pose == null) {
             println("No PoseEstimate available.")
@@ -240,9 +285,10 @@ object LimelightHelpers {
         System.out.printf("Tag Span: %.2f meters%n", pose.tagSpan)
         System.out.printf("Average Tag Distance: %.2f meters%n", pose.avgTagDist)
         System.out.printf("Average Tag Area: %.2f%% of image%n", pose.avgTagArea)
+        System.out.printf("Is MegaTag2: %b%n", pose.isMegaTag2)
         println()
 
-        if (pose.rawFiducials == null || pose.rawFiducials!!.isEmpty()) {
+        if (pose.rawFiducials == null || pose.rawFiducials!!.size == 0) {
             println("No RawFiducials data available.")
             return
         }
@@ -262,6 +308,10 @@ object LimelightHelpers {
         }
     }
 
+    fun validPoseEstimate(pose: PoseEstimate?): Boolean {
+        return pose?.rawFiducials != null && pose.rawFiducials!!.size != 0
+    }
+
     fun getLimelightNTTable(tableName: String?): NetworkTable {
         return NetworkTableInstance.getDefault().getTable(sanitizeName(tableName))
     }
@@ -276,7 +326,7 @@ object LimelightHelpers {
 
     fun getLimelightDoubleArrayEntry(tableName: String, entryName: String): DoubleArrayEntry {
         val key = "$tableName/$entryName"
-        return doubleArrayEntries.computeIfAbsent(key) {
+        return doubleArrayEntries.computeIfAbsent(key) { k: String? ->
             val table = getLimelightNTTable(tableName)
             table.getDoubleArrayTopic(entryName).getEntry(DoubleArray(0))
         }
@@ -308,12 +358,11 @@ object LimelightHelpers {
     }
 
 
-    @Suppress("HttpUrlsUsage")
     fun getLimelightURLString(tableName: String?, request: String): URL? {
         val urlString = "http://" + sanitizeName(tableName) + ".local:5807/" + request
         val url: URL
         try {
-            url = URL(urlString)
+            url = URI(urlString).toURL()
             return url
         } catch (e: MalformedURLException) {
             System.err.println("bad LL URL")
@@ -323,23 +372,75 @@ object LimelightHelpers {
 
     /////
     /////
+    /**
+     * Does the Limelight have a valid target?
+     * @param limelightName Name of the Limelight camera ("" for default)
+     * @return True if a valid target is present, false otherwise
+     */
+    fun getTV(limelightName: String?): Boolean {
+        return 1.0 == getLimelightNTDouble(limelightName, "tv")
+    }
+
+    /**
+     * Gets the horizontal offset from the crosshair to the target in degrees.
+     * @param limelightName Name of the Limelight camera ("" for default)
+     * @return Horizontal offset angle in degrees
+     */
     fun getTX(limelightName: String?): Double {
         return getLimelightNTDouble(limelightName, "tx")
     }
 
+    /**
+     * Gets the vertical offset from the crosshair to the target in degrees.
+     * @param limelightName Name of the Limelight camera ("" for default)
+     * @return Vertical offset angle in degrees
+     */
     fun getTY(limelightName: String?): Double {
         return getLimelightNTDouble(limelightName, "ty")
     }
 
+    /**
+     * Gets the horizontal offset from the principal pixel/point to the target in degrees.  This is the most accurate 2d metric if you are using a calibrated camera and you don't need adjustable crosshair functionality.
+     * @param limelightName Name of the Limelight camera ("" for default)
+     * @return Horizontal offset angle in degrees
+     */
+    fun getTXNC(limelightName: String?): Double {
+        return getLimelightNTDouble(limelightName, "txnc")
+    }
+
+    /**
+     * Gets the vertical offset from the principal pixel/point to the target in degrees. This is the most accurate 2d metric if you are using a calibrated camera and you don't need adjustable crosshair functionality.
+     * @param limelightName Name of the Limelight camera ("" for default)
+     * @return Vertical offset angle in degrees
+     */
+    fun getTYNC(limelightName: String?): Double {
+        return getLimelightNTDouble(limelightName, "tync")
+    }
+
+    /**
+     * Gets the target area as a percentage of the image (0-100%).
+     * @param limelightName Name of the Limelight camera ("" for default)
+     * @return Target area percentage (0-100)
+     */
     fun getTA(limelightName: String?): Double {
         return getLimelightNTDouble(limelightName, "ta")
     }
 
+    /**
+     * T2D is an array that contains several targeting metrcis
+     * @param limelightName Name of the Limelight camera
+     * @return Array containing  [targetValid, targetCount, targetLatency, captureLatency, tx, ty, txnc, tync, ta, tid, targetClassIndexDetector,
+     * targetClassIndexClassifier, targetLongSidePixels, targetShortSidePixels, targetHorizontalExtentPixels, targetVerticalExtentPixels, targetSkewDegrees]
+     */
     fun getT2DArray(limelightName: String?): DoubleArray {
         return getLimelightNTDoubleArray(limelightName, "t2d")
     }
 
-
+    /**
+     * Gets the number of targets currently detected.
+     * @param limelightName Name of the Limelight camera
+     * @return Number of detected targets
+     */
     fun getTargetCount(limelightName: String?): Int {
         val t2d = getT2DArray(limelightName)
         if (t2d.size == 17) {
@@ -348,6 +449,11 @@ object LimelightHelpers {
         return 0
     }
 
+    /**
+     * Gets the classifier class index from the currently running neural classifier pipeline
+     * @param limelightName Name of the Limelight camera
+     * @return Class index from classifier pipeline
+     */
     fun getClassifierClassIndex(limelightName: String?): Int {
         val t2d = getT2DArray(limelightName)
         if (t2d.size == 17) {
@@ -356,6 +462,11 @@ object LimelightHelpers {
         return 0
     }
 
+    /**
+     * Gets the detector class index from the primary result of the currently running neural detector pipeline.
+     * @param limelightName Name of the Limelight camera
+     * @return Class index from detector pipeline
+     */
     fun getDetectorClassIndex(limelightName: String?): Int {
         val t2d = getT2DArray(limelightName)
         if (t2d.size == 17) {
@@ -364,31 +475,65 @@ object LimelightHelpers {
         return 0
     }
 
+    /**
+     * Gets the current neural classifier result class name.
+     * @param limelightName Name of the Limelight camera
+     * @return Class name string from classifier pipeline
+     */
     fun getClassifierClass(limelightName: String?): String {
         return getLimelightNTString(limelightName, "tcclass")
     }
 
+    /**
+     * Gets the primary neural detector result class name.
+     * @param limelightName Name of the Limelight camera
+     * @return Class name string from detector pipeline
+     */
     fun getDetectorClass(limelightName: String?): String {
         return getLimelightNTString(limelightName, "tdclass")
     }
 
-
+    /**
+     * Gets the pipeline's processing latency contribution.
+     * @param limelightName Name of the Limelight camera
+     * @return Pipeline latency in milliseconds
+     */
     fun getLatency_Pipeline(limelightName: String?): Double {
         return getLimelightNTDouble(limelightName, "tl")
     }
 
+    /**
+     * Gets the capture latency.
+     * @param limelightName Name of the Limelight camera
+     * @return Capture latency in milliseconds
+     */
     fun getLatency_Capture(limelightName: String?): Double {
         return getLimelightNTDouble(limelightName, "cl")
     }
 
+    /**
+     * Gets the active pipeline index.
+     * @param limelightName Name of the Limelight camera
+     * @return Current pipeline index (0-9)
+     */
     fun getCurrentPipelineIndex(limelightName: String?): Double {
         return getLimelightNTDouble(limelightName, "getpipe")
     }
 
+    /**
+     * Gets the current pipeline type.
+     * @param limelightName Name of the Limelight camera
+     * @return Pipeline type string (e.g. "retro", "apriltag", etc)
+     */
     fun getCurrentPipelineType(limelightName: String?): String {
         return getLimelightNTString(limelightName, "getpipetype")
     }
 
+    /**
+     * Gets the full JSON results dump.
+     * @param limelightName Name of the Limelight camera
+     * @return JSON string containing all current results
+     */
     fun getJSONDump(limelightName: String?): String {
         return getLimelightNTString(limelightName, "json")
     }
@@ -477,36 +622,71 @@ object LimelightHelpers {
         return toPose3D(poseArray)
     }
 
+    /**
+     * (Not Recommended) Gets the robot's 3D pose in the WPILib Red Alliance Coordinate System.
+     * @param limelightName Name/identifier of the Limelight
+     * @return Pose3d object representing the robot's position and orientation in Red Alliance field space
+     */
     fun getBotPose3d_wpiRed(limelightName: String?): Pose3d {
         val poseArray = getLimelightNTDoubleArray(limelightName, "botpose_wpired")
         return toPose3D(poseArray)
     }
 
+    /**
+     * (Recommended) Gets the robot's 3D pose in the WPILib Blue Alliance Coordinate System.
+     * @param limelightName Name/identifier of the Limelight
+     * @return Pose3d object representing the robot's position and orientation in Blue Alliance field space
+     */
     fun getBotPose3d_wpiBlue(limelightName: String?): Pose3d {
         val poseArray = getLimelightNTDoubleArray(limelightName, "botpose_wpiblue")
         return toPose3D(poseArray)
     }
 
+    /**
+     * Gets the robot's 3D pose with respect to the currently tracked target's coordinate system.
+     * @param limelightName Name/identifier of the Limelight
+     * @return Pose3d object representing the robot's position and orientation relative to the target
+     */
     fun getBotPose3d_TargetSpace(limelightName: String?): Pose3d {
         val poseArray = getLimelightNTDoubleArray(limelightName, "botpose_targetspace")
         return toPose3D(poseArray)
     }
 
+    /**
+     * Gets the camera's 3D pose with respect to the currently tracked target's coordinate system.
+     * @param limelightName Name/identifier of the Limelight
+     * @return Pose3d object representing the camera's position and orientation relative to the target
+     */
     fun getCameraPose3d_TargetSpace(limelightName: String?): Pose3d {
         val poseArray = getLimelightNTDoubleArray(limelightName, "camerapose_targetspace")
         return toPose3D(poseArray)
     }
 
+    /**
+     * Gets the target's 3D pose with respect to the camera's coordinate system.
+     * @param limelightName Name/identifier of the Limelight
+     * @return Pose3d object representing the target's position and orientation relative to the camera
+     */
     fun getTargetPose3d_CameraSpace(limelightName: String?): Pose3d {
         val poseArray = getLimelightNTDoubleArray(limelightName, "targetpose_cameraspace")
         return toPose3D(poseArray)
     }
 
+    /**
+     * Gets the target's 3D pose with respect to the robot's coordinate system.
+     * @param limelightName Name/identifier of the Limelight
+     * @return Pose3d object representing the target's position and orientation relative to the robot
+     */
     fun getTargetPose3d_RobotSpace(limelightName: String?): Pose3d {
         val poseArray = getLimelightNTDoubleArray(limelightName, "targetpose_robotspace")
         return toPose3D(poseArray)
     }
 
+    /**
+     * Gets the camera's 3D pose with respect to the robot's coordinate system.
+     * @param limelightName Name/identifier of the Limelight
+     * @return Pose3d object representing the camera's position and orientation relative to the robot
+     */
     fun getCameraPose3d_RobotSpace(limelightName: String?): Pose3d {
         val poseArray = getLimelightNTDoubleArray(limelightName, "camerapose_robotspace")
         return toPose3D(poseArray)
@@ -525,25 +705,24 @@ object LimelightHelpers {
     }
 
     /**
-     * Gets the Pose2d and timestamp for use with WPILib pose estimator (addVisionMeasurement) when you are on the BLUE
-     * alliance
+     * Gets the MegaTag1 Pose2d and timestamp for use with WPILib pose estimator (addVisionMeasurement) in the WPILib Blue alliance coordinate system.
      *
      * @param limelightName
      * @return
      */
     fun getBotPoseEstimate_wpiBlue(limelightName: String): PoseEstimate? {
-        return getBotPoseEstimate(limelightName, "botpose_wpiblue")
+        return getBotPoseEstimate(limelightName, "botpose_wpiblue", false)
     }
 
     /**
-     * Gets the Pose2d and timestamp for use with WPILib pose estimator (addVisionMeasurement) when you are on the BLUE
-     * alliance
+     * Gets the MegaTag2 Pose2d and timestamp for use with WPILib pose estimator (addVisionMeasurement) in the WPILib Blue alliance coordinate system.
+     * Make sure you are calling setRobotOrientation() before calling this method.
      *
      * @param limelightName
      * @return
      */
     fun getBotPoseEstimate_wpiBlue_MegaTag2(limelightName: String): PoseEstimate? {
-        return getBotPoseEstimate(limelightName, "botpose_orb_wpiblue")
+        return getBotPoseEstimate(limelightName, "botpose_orb_wpiblue", true)
     }
 
     /**
@@ -565,7 +744,7 @@ object LimelightHelpers {
      * @return
      */
     fun getBotPoseEstimate_wpiRed(limelightName: String): PoseEstimate? {
-        return getBotPoseEstimate(limelightName, "botpose_wpired")
+        return getBotPoseEstimate(limelightName, "botpose_wpired", false)
     }
 
     /**
@@ -575,7 +754,7 @@ object LimelightHelpers {
      * @return
      */
     fun getBotPoseEstimate_wpiRed_MegaTag2(limelightName: String): PoseEstimate? {
-        return getBotPoseEstimate(limelightName, "botpose_orb_wpired")
+        return getBotPoseEstimate(limelightName, "botpose_orb_wpired", true)
     }
 
     /**
@@ -590,9 +769,6 @@ object LimelightHelpers {
         return toPose2D(result)
     }
 
-    fun getTV(limelightName: String?): Boolean {
-        return 1.0 == getLimelightNTDouble(limelightName, "tv")
-    }
 
     /////
     /////
@@ -606,8 +782,8 @@ object LimelightHelpers {
     }
 
     /**
-     * The LEDs will be controlled by Limelight pipeline settings, and not by robot
-     * code.
+     * Sets LED mode to be controlled by the current pipeline.
+     * @param limelightName Name of the Limelight camera
      */
     fun setLEDMode_PipelineControl(limelightName: String?) {
         setLimelightNTDouble(limelightName, "ledMode", 0.0)
@@ -625,22 +801,38 @@ object LimelightHelpers {
         setLimelightNTDouble(limelightName, "ledMode", 3.0)
     }
 
+    /**
+     * Enables standard side-by-side stream mode.
+     * @param limelightName Name of the Limelight camera
+     */
     fun setStreamMode_Standard(limelightName: String?) {
         setLimelightNTDouble(limelightName, "stream", 0.0)
     }
 
+    /**
+     * Enables Picture-in-Picture mode with secondary stream in the corner.
+     * @param limelightName Name of the Limelight camera
+     */
     fun setStreamMode_PiPMain(limelightName: String?) {
         setLimelightNTDouble(limelightName, "stream", 1.0)
     }
 
+    /**
+     * Enables Picture-in-Picture mode with primary stream in the corner.
+     * @param limelightName Name of the Limelight camera
+     */
     fun setStreamMode_PiPSecondary(limelightName: String?) {
         setLimelightNTDouble(limelightName, "stream", 2.0)
     }
 
 
     /**
-     * Sets the crop window. The crop window in the UI must be completely open for
-     * dynamic cropping to work.
+     * Sets the crop window for the camera. The crop window in the UI must be completely open.
+     * @param limelightName Name of the Limelight camera
+     * @param cropXMin Minimum X value (-1 to 1)
+     * @param cropXMax Maximum X value (-1 to 1)
+     * @param cropYMin Minimum Y value (-1 to 1)
+     * @param cropYMax Maximum Y value (-1 to 1)
      */
     fun setCropWindow(limelightName: String?, cropXMin: Double, cropXMax: Double, cropYMin: Double, cropYMax: Double) {
         val entries = DoubleArray(4)
@@ -662,6 +854,17 @@ object LimelightHelpers {
         setLimelightNTDoubleArray(limelightName, "fiducial_offset_set", entries)
     }
 
+    /**
+     * Sets robot orientation values used by MegaTag2 localization algorithm.
+     *
+     * @param limelightName Name/identifier of the Limelight
+     * @param yaw Robot yaw in degrees. 0 = robot facing red alliance wall in FRC
+     * @param yawRate (Unnecessary) Angular velocity of robot yaw in degrees per second
+     * @param pitch (Unnecessary) Robot pitch in degrees
+     * @param pitchRate (Unnecessary) Angular velocity of robot pitch in degrees per second
+     * @param roll (Unnecessary) Robot roll in degrees
+     * @param rollRate (Unnecessary) Angular velocity of robot roll in degrees per second
+     */
     fun SetRobotOrientation(
         limelightName: String, yaw: Double, yawRate: Double,
         pitch: Double, pitchRate: Double,
@@ -696,7 +899,15 @@ object LimelightHelpers {
         }
     }
 
-
+    /**
+     * Sets the 3D point-of-interest offset for the current fiducial pipeline.
+     * https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-3d#point-of-interest-tracking
+     *
+     * @param limelightName Name/identifier of the Limelight
+     * @param x X offset in meters
+     * @param y Y offset in meters
+     * @param z Z offset in meters
+     */
     fun SetFidcuial3DOffset(
         limelightName: String?, x: Double, y: Double,
         z: Double
@@ -708,6 +919,13 @@ object LimelightHelpers {
         setLimelightNTDoubleArray(limelightName, "fiducial_offset_set", entries)
     }
 
+    /**
+     * Overrides the valid AprilTag IDs that will be used for localization.
+     * Tags not in this list will be ignored for robot pose estimation.
+     *
+     * @param limelightName Name/identifier of the Limelight
+     * @param validIDs Array of valid AprilTag IDs to track
+     */
     fun SetFiducialIDFiltersOverride(limelightName: String?, validIDs: IntArray) {
         val validIDsDouble = DoubleArray(validIDs.size)
         for (i in validIDs.indices) {
@@ -716,6 +934,13 @@ object LimelightHelpers {
         setLimelightNTDoubleArray(limelightName, "fiducial_id_filters_set", validIDsDouble)
     }
 
+    /**
+     * Sets the downscaling factor for AprilTag detection.
+     * Increasing downscale can improve performance at the cost of potentially reduced detection range.
+     *
+     * @param limelightName Name/identifier of the Limelight
+     * @param downscale Downscale factor. Valid values: 1.0 (no downscale), 1.5, 2.0, 3.0, 4.0. Set to 0 for pipeline control.
+     */
     fun SetFiducialDownscalingOverride(limelightName: String?, downscale: Float) {
         var d = 0 // pipeline
         if (downscale.toDouble() == 1.0) {
@@ -736,6 +961,16 @@ object LimelightHelpers {
         setLimelightNTDouble(limelightName, "fiducial_downscale_set", d.toDouble())
     }
 
+    /**
+     * Sets the camera pose relative to the robot.
+     * @param limelightName Name of the Limelight camera
+     * @param forward Forward offset in meters
+     * @param side Side offset in meters
+     * @param up Up offset in meters
+     * @param roll Roll angle in degrees
+     * @param pitch Pitch angle in degrees
+     * @param yaw Yaw angle in degrees
+     */
     fun setCameraPose_RobotSpace(
         limelightName: String?,
         forward: Double,
@@ -771,7 +1006,12 @@ object LimelightHelpers {
      * Asynchronously take snapshot.
      */
     fun takeSnapshot(tableName: String, snapshotName: String?): CompletableFuture<Boolean> {
-        return CompletableFuture.supplyAsync { SYNCH_TAKESNAPSHOT(tableName, snapshotName) }
+        return CompletableFuture.supplyAsync {
+            SYNCH_TAKESNAPSHOT(
+                tableName,
+                snapshotName
+            )
+        }
     }
 
     private fun SYNCH_TAKESNAPSHOT(tableName: String, snapshotName: String?): Boolean {
@@ -796,7 +1036,9 @@ object LimelightHelpers {
     }
 
     /**
-     * Parses Limelight's JSON results dump into a LimelightResults Object
+     * Gets the latest JSON results output and returns a LimelightResults object.
+     * @param limelightName Name of the Limelight camera
+     * @return LimelightResults object containing all current target data
      */
     fun getLatestResults(limelightName: String?): LimelightResults {
         val start = System.nanoTime()
@@ -806,7 +1048,10 @@ object LimelightHelpers {
         }
 
         try {
-            results = mapper!!.readValue(getJSONDump(limelightName), LimelightResults::class.java)
+            results = mapper!!.readValue(
+                getJSONDump(limelightName),
+                LimelightResults::class.java
+            )
         } catch (e: JsonProcessingException) {
             results.error = "lljson error: " + e.message
         }
@@ -821,6 +1066,9 @@ object LimelightHelpers {
         return results
     }
 
+    /**
+     * Represents a Color/Retroreflective Target Result extracted from JSON Output
+     */
     class LimelightTarget_Retro {
         @JsonProperty("t6c_ts")
         private val cameraPose_TargetSpace = DoubleArray(6)
@@ -874,19 +1122,28 @@ object LimelightHelpers {
         @JsonProperty("tx")
         var tx: Double = 0.0
 
-        @JsonProperty("txp")
-        var tx_pixels: Double = 0.0
-
         @JsonProperty("ty")
         var ty: Double = 0.0
 
+        @JsonProperty("txp")
+        var tx_pixels: Double = 0.0
+
         @JsonProperty("typ")
         var ty_pixels: Double = 0.0
+
+        @JsonProperty("tx_nocross")
+        var tx_nocrosshair: Double = 0.0
+
+        @JsonProperty("ty_nocross")
+        var ty_nocrosshair: Double = 0.0
 
         @JsonProperty("ts")
         var ts: Double = 0.0
     }
 
+    /**
+     * Represents an AprilTag/Fiducial Target Result extracted from JSON Output
+     */
     class LimelightTarget_Fiducial {
         @JsonProperty("fID")
         var fiducialID: Double = 0.0
@@ -946,21 +1203,69 @@ object LimelightHelpers {
         @JsonProperty("tx")
         var tx: Double = 0.0
 
-        @JsonProperty("txp")
-        var tx_pixels: Double = 0.0
-
         @JsonProperty("ty")
         var ty: Double = 0.0
 
+        @JsonProperty("txp")
+        var tx_pixels: Double = 0.0
+
         @JsonProperty("typ")
         var ty_pixels: Double = 0.0
+
+        @JsonProperty("tx_nocross")
+        var tx_nocrosshair: Double = 0.0
+
+        @JsonProperty("ty_nocross")
+        var ty_nocrosshair: Double = 0.0
 
         @JsonProperty("ts")
         var ts: Double = 0.0
     }
 
-    class LimelightTarget_Barcode
+    /**
+     * Represents a Barcode Target Result extracted from JSON Output
+     */
+    class LimelightTarget_Barcode {
+        /**
+         * Barcode family type (e.g. "QR", "DataMatrix", etc.)
+         */
+        @JsonProperty("fam")
+        var family: String? = null
 
+        /**
+         * Gets the decoded data content of the barcode
+         */
+        @JsonProperty("data")
+        var data: String? = null
+
+        @JsonProperty("txp")
+        var tx_pixels: Double = 0.0
+
+        @JsonProperty("typ")
+        var ty_pixels: Double = 0.0
+
+        @JsonProperty("tx")
+        var tx: Double = 0.0
+
+        @JsonProperty("ty")
+        var ty: Double = 0.0
+
+        @JsonProperty("tx_nocross")
+        var tx_nocrosshair: Double = 0.0
+
+        @JsonProperty("ty_nocross")
+        var ty_nocrosshair: Double = 0.0
+
+        @JsonProperty("ta")
+        var ta: Double = 0.0
+
+        @JsonProperty("pts")
+        lateinit var corners: Array<DoubleArray>
+    }
+
+    /**
+     * Represents a Neural Classifier Pipeline Result extracted from JSON Output
+     */
     class LimelightTarget_Classifier {
         @JsonProperty("class")
         var className: String? = null
@@ -987,6 +1292,9 @@ object LimelightHelpers {
         var ty_pixels: Double = 0.0
     }
 
+    /**
+     * Represents a Neural Detector Pipeline Result extracted from JSON Output
+     */
     class LimelightTarget_Detector {
         @JsonProperty("class")
         var className: String? = null
@@ -1003,16 +1311,25 @@ object LimelightHelpers {
         @JsonProperty("tx")
         var tx: Double = 0.0
 
-        @JsonProperty("txp")
-        var tx_pixels: Double = 0.0
-
         @JsonProperty("ty")
         var ty: Double = 0.0
 
+        @JsonProperty("txp")
+        var tx_pixels: Double = 0.0
+
         @JsonProperty("typ")
         var ty_pixels: Double = 0.0
+
+        @JsonProperty("tx_nocross")
+        var tx_nocrosshair: Double = 0.0
+
+        @JsonProperty("ty_nocross")
+        var ty_nocrosshair: Double = 0.0
     }
 
+    /**
+     * Limelight Results object, parsed from a Limelight's JSON results output.
+     */
     class LimelightResults {
         var error: String? = null
 
@@ -1095,6 +1412,9 @@ object LimelightHelpers {
         var targets_Barcode: Array<LimelightTarget_Barcode?> = arrayOfNulls(0)
     }
 
+    /**
+     * Represents a Limelight Raw Fiducial result from Limelight's NetworkTables output.
+     */
     class RawFiducial(
         id: Int,
         txnc: Double,
@@ -1124,6 +1444,9 @@ object LimelightHelpers {
         }
     }
 
+    /**
+     * Represents a Limelight Raw Neural Detector result from Limelight's NetworkTables output.
+     */
     class RawDetection(
         classId: Int, txnc: Double, tync: Double, ta: Double,
         corner0_X: Double, corner0_Y: Double,
@@ -1161,6 +1484,9 @@ object LimelightHelpers {
         }
     }
 
+    /**
+     * Represents a 3D Pose Estimate.
+     */
     class PoseEstimate {
         var pose: Pose2d
         var timestampSeconds: Double
@@ -1169,10 +1495,12 @@ object LimelightHelpers {
         var tagSpan: Double
         var avgTagDist: Double
         var avgTagArea: Double
+
         var rawFiducials: Array<RawFiducial?>?
+        var isMegaTag2: Boolean
 
         /**
-         * Makes a PoseEstimate object with default values
+         * Instantiates a PoseEstimate object with default values
          */
         constructor() {
             this.pose = Pose2d()
@@ -1183,12 +1511,13 @@ object LimelightHelpers {
             this.avgTagDist = 0.0
             this.avgTagArea = 0.0
             this.rawFiducials = arrayOf()
+            this.isMegaTag2 = false
         }
 
         constructor(
             pose: Pose2d, timestampSeconds: Double, latency: Double,
             tagCount: Int, tagSpan: Double, avgTagDist: Double,
-            avgTagArea: Double, rawFiducials: Array<RawFiducial?>?
+            avgTagArea: Double, rawFiducials: Array<RawFiducial?>?, isMegaTag2: Boolean
         ) {
             this.pose = pose
             this.timestampSeconds = timestampSeconds
@@ -1198,6 +1527,7 @@ object LimelightHelpers {
             this.avgTagDist = avgTagDist
             this.avgTagArea = avgTagArea
             this.rawFiducials = rawFiducials
+            this.isMegaTag2 = isMegaTag2
         }
     }
 }
