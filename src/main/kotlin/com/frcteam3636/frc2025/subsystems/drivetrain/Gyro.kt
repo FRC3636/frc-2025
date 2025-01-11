@@ -44,7 +44,7 @@ class GyroNavX(private val ahrs: AHRS) : Gyro {
         get() = ahrs.isConnected
 }
 
-class  GyroPigeon(private val pigeon: Pigeon2) : Gyro {
+class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
 
     private var offset: Rotation3d = Rotation3d()
 
