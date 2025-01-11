@@ -171,16 +171,13 @@ object Robot : LoggedRobot() {
         Dashboard.showTeleopTab(Shuffleboard.getTab("Teleoperated"))
     }
 
+    override fun simulationInit() {
+        SimulatedArena.getInstance().resetFieldForAuto()
+    }
+
     override fun simulationPeriodic() {
-        //DON'T RUN ON ROBOT
         SimulatedArena.getInstance().simulationPeriodic()
 
-        SimulatedArena.getInstance().addGamePiece(
-            ReefscapeCoral(
-                // We must specify a heading since the coral is a tube
-                Pose2d(2.0, 2.0, Rotation2d.fromDegrees(90.0))
-        ))
-        SimulatedArena.getInstance().addGamePiece(ReefscapeAlgaeOnField(Translation2d(2.0, 2.0)))
         Logger.recordOutput("FieldSimulation/Algae",
             *SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"))
         Logger.recordOutput("FieldSimulation/Coral",
