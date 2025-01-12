@@ -106,10 +106,10 @@ class DrivetrainIOSim : DrivetrainIO() {
                 SwerveModuleSimulationConfig(
                     DCMotor.getKrakenX60(1),  // Drive motor is a Kraken X60
                     DCMotor.getNeo550(1),  // Steer motor is a Neo 550
-                    DRIVING_GEAR_RATIO_TALON,
-                    5.5,
-                    Volts.of(5.0),
-                    Volts.of(0.05),
+                    3.5,
+                    9424.0 / 203.0,
+                    Volts.of(0.1),
+                    Volts.of(0.1),
                     WHEEL_RADIUS,
                     KilogramSquareMeters.of(0.02),
                     WHEELS.SLS_PRINTED_WHEELS.cof
