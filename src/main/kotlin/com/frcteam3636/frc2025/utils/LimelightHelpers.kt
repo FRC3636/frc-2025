@@ -1,5 +1,7 @@
 //LimelightHelpers v1.10 (REQUIRES LLOS 2024.9.1 OR LATER)
 
+@file:Suppress("unused")
+
 package com.frcteam3636.frc2025.utils
 
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -13,6 +15,8 @@ import edu.wpi.first.networktables.DoubleArrayEntry
 import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.units.Units.Meters
+import edu.wpi.first.units.measure.Distance
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
@@ -164,7 +168,8 @@ object LimelightHelpers {
                 val distToCamera = poseArray[baseIndex + 4]
                 val distToRobot = poseArray[baseIndex + 5]
                 val ambiguity = poseArray[baseIndex + 6]
-                rawFiducials[i] = RawFiducial(id, txnc, tync, ta, distToCamera, distToRobot, ambiguity)
+                rawFiducials[i] =
+                    RawFiducial(id, txnc, tync, ta, Meters.of(distToCamera), Meters.of(distToRobot), ambiguity)
             }
         }
 
@@ -208,7 +213,8 @@ object LimelightHelpers {
             val distToRobot = extractArrayEntry(rawFiducialArray, baseIndex + 5)
             val ambiguity = extractArrayEntry(rawFiducialArray, baseIndex + 6)
 
-            rawFiducials[i] = RawFiducial(id, txnc, tync, ta, distToCamera, distToRobot, ambiguity)
+            rawFiducials[i] =
+                RawFiducial(id, txnc, tync, ta, Meters.of(distToCamera), Meters.of(distToRobot), ambiguity)
         }
 
         return rawFiducials
@@ -288,14 +294,14 @@ object LimelightHelpers {
         System.out.printf("Is MegaTag2: %b%n", pose.isMegaTag2)
         println()
 
-        if (pose.rawFiducials == null || pose.rawFiducials!!.size == 0) {
+        if (pose.rawFiducials.isEmpty()) {
             println("No RawFiducials data available.")
             return
         }
 
         println("Raw Fiducials Details:")
-        for (i in pose.rawFiducials!!.indices) {
-            val fiducial = pose.rawFiducials!![i]
+        for (i in pose.rawFiducials.indices) {
+            val fiducial = pose.rawFiducials[i]
             System.out.printf(" Fiducial #%d:%n", i + 1)
             System.out.printf("  ID: %d%n", fiducial!!.id)
             System.out.printf("  TXNC: %.2f%n", fiducial.txnc)
@@ -309,7 +315,7 @@ object LimelightHelpers {
     }
 
     fun validPoseEstimate(pose: PoseEstimate?): Boolean {
-        return pose?.rawFiducials != null && pose.rawFiducials!!.size != 0
+        return pose?.rawFiducials != null && pose.rawFiducials.isNotEmpty()
     }
 
     fun getLimelightNTTable(tableName: String?): NetworkTable {
@@ -1420,16 +1426,16 @@ object LimelightHelpers {
         txnc: Double,
         tync: Double,
         ta: Double,
-        distToCamera: Double,
-        distToRobot: Double,
-        ambiguity: Double
+        distToCamera: Distance,
+        distToRobot: Distance,
+        ambiguity: Double,
     ) {
         var id: Int = 0
         var txnc: Double = 0.0
         var tync: Double = 0.0
         var ta: Double = 0.0
-        var distToCamera: Double = 0.0
-        var distToRobot: Double = 0.0
+        var distToCamera: Distance = Meters.zero()
+        var distToRobot: Distance = Meters.zero()
         var ambiguity: Double = 0.0
 
 
@@ -1496,7 +1502,7 @@ object LimelightHelpers {
         var avgTagDist: Double
         var avgTagArea: Double
 
-        var rawFiducials: Array<RawFiducial?>?
+        var rawFiducials: Array<RawFiducial?>
         var isMegaTag2: Boolean
 
         /**
@@ -1517,7 +1523,7 @@ object LimelightHelpers {
         constructor(
             pose: Pose2d, timestampSeconds: Double, latency: Double,
             tagCount: Int, tagSpan: Double, avgTagDist: Double,
-            avgTagArea: Double, rawFiducials: Array<RawFiducial?>?, isMegaTag2: Boolean
+            avgTagArea: Double, rawFiducials: Array<RawFiducial?>, isMegaTag2: Boolean
         ) {
             this.pose = pose
             this.timestampSeconds = timestampSeconds
