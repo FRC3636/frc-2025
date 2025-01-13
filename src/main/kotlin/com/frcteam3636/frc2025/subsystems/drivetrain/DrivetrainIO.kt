@@ -3,6 +3,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Pigeon2
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.math.TAU
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.studica.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation2d
@@ -38,6 +39,7 @@ abstract class DrivetrainIO {
     }
 
     fun setGyro(rotation: Rotation2d) {
+        assert(rotation.radians in 0.0..TAU)
         gyro.rotation = rotation
     }
 
