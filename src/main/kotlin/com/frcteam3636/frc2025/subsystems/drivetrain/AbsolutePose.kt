@@ -143,11 +143,14 @@ class LimelightPoseProvider(
     companion object {
         /**
          * The acceptable distance for a single-April-Tag reading.
+         *
+         * This is a somewhat conservative limit, but it is only applied when using the old MegaTag v1 algorithm.
+         * It's possible it could be increased if it's too restrictive.
          */
         private val MAX_SINGLE_TAG_DISTANCE = Meters.of(3.0)!!
 
         /**
-         * The acceptable ambiguity for a single-tag reading.
+         * The acceptable ambiguity for a single-tag reading on MegaTag v1.
          */
         private const val AMBIGUITY_THRESHOLD = 0.7
 
