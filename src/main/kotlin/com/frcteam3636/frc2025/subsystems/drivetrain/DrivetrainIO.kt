@@ -3,19 +3,22 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Pigeon2
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.math.TAU
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.studica.frc.AHRS
-import edu.wpi.first.math.geometry.Rotation3d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.units.Units.DegreesPerSecond
 import org.team9432.annotation.Logged
 
 @Logged
 open class DrivetrainInputs {
-    var gyroRotation = Rotation3d()
+    var gyroRotation = Rotation2d()
+    var gyroVelocity = DegreesPerSecond.zero()!!
+    var gyroConnected = true
     var measuredStates = PerCorner.generate { SwerveModuleState() }
     var measuredPositions = PerCorner.generate { SwerveModulePosition() }
-    var gyroConnected = true
 }
 
 
@@ -29,12 +32,14 @@ abstract class DrivetrainIO {
         modules.forEach(SwerveModule::periodic)
 
         inputs.gyroRotation = gyro.rotation
+        inputs.gyroVelocity = gyro.velocity
+        inputs.gyroConnected = gyro.connected
         inputs.measuredStates = modules.map { it.state }
         inputs.measuredPositions = modules.map { it.position }
-        inputs.gyroConnected = gyro.connected
     }
 
-    fun setGyro(rotation: Rotation3d) {
+    fun setGyro(rotation: Rotation2d) {
+        assert(rotation.radians in 0.0..TAU)
         gyro.rotation = rotation
     }
 

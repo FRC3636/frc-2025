@@ -5,16 +5,18 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.MetersPerSecond
+import edu.wpi.first.units.Units.RadiansPerSecond
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 
 enum class DrivetrainCorner {
     FRONT_LEFT,
+    FRONT_RIGHT,
     BACK_LEFT,
-    BACK_RIGHT,
-    FRONT_RIGHT
+    BACK_RIGHT
 }
 
-data class PerCorner<T>(val frontLeft: T, val backLeft: T, val backRight: T, val frontRight: T) :
+data class PerCorner<T>(val frontLeft: T, val frontRight: T, val backLeft: T, val backRight: T) :
     Collection<T> {
     operator fun get(corner: DrivetrainCorner): T =
         when (corner) {
@@ -33,7 +35,7 @@ data class PerCorner<T>(val frontLeft: T, val backLeft: T, val backRight: T, val
         Pair(this[corner], second[corner])
     }
 
-    private fun sequence(): Sequence<T> = sequenceOf(frontLeft, backLeft, backRight, frontRight)
+    private fun sequence(): Sequence<T> = sequenceOf(frontLeft, frontRight, backLeft, backRight)
     override fun iterator(): Iterator<T> = sequence().iterator()
 
     override val size: Int = 4
@@ -48,17 +50,17 @@ data class PerCorner<T>(val frontLeft: T, val backLeft: T, val backRight: T, val
         fun <T> generate(block: (DrivetrainCorner) -> T): PerCorner<T> =
             PerCorner(
                 frontLeft = block(DrivetrainCorner.FRONT_LEFT),
+                frontRight = block(DrivetrainCorner.FRONT_RIGHT),
                 backLeft = block(DrivetrainCorner.BACK_LEFT),
                 backRight = block(DrivetrainCorner.BACK_RIGHT),
-                frontRight = block(DrivetrainCorner.FRONT_RIGHT),
             )
 
         fun <T> fromConventionalArray(array: Array<T>): PerCorner<T> =
             PerCorner(
                 frontLeft = array[0],
-                backLeft = array[1],
-                backRight = array[2],
-                frontRight = array[3],
+                frontRight = array[1],
+                backLeft = array[2],
+                backRight = array[3],
             )
     }
 }
@@ -81,6 +83,12 @@ var SwerveModuleState.speed: LinearVelocity
         speedMetersPerSecond = value.`in`(MetersPerSecond)
     }
 
-/** This swerve module state as a Translation2d. */
+/** This swerve module state as a `Translation2d`. */
 val SwerveModuleState.translation2dPerSecond: Translation2d
     get() = Translation2d(speedMetersPerSecond, angle)
+
+val ChassisSpeeds.translation2dPerSecond: Translation2d
+    get() = Translation2d(vxMetersPerSecond, vyMetersPerSecond)
+
+val ChassisSpeeds.angularVelocity: AngularVelocity
+    get() = RadiansPerSecond.of(omegaRadiansPerSecond)

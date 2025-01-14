@@ -145,7 +145,7 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
         val innerConfig = SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
             smartCurrentLimit(DRIVING_CURRENT_LIMIT.`in`(Amps).toInt())
-            inverted(true)
+            inverted(false)
 
             encoder.apply {
                 positionConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO)
