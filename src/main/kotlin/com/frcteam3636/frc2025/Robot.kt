@@ -82,7 +82,6 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
-        simulationPeriodic()
     }
 
     /** Start logging or pull replay logs from a file */
@@ -171,8 +170,10 @@ object Robot : LoggedRobot() {
         Dashboard.showTeleopTab(Shuffleboard.getTab("Teleoperated"))
     }
 
-    override fun simulationInit() {
-        SimulatedArena.getInstance().resetFieldForAuto()
+    override fun disabledInit() {
+        if (Robot.model == Model.SIMULATION) {
+            SimulatedArena.getInstance().resetFieldForAuto()
+        }
     }
 
     override fun simulationPeriodic() {

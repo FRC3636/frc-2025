@@ -5,6 +5,7 @@ import com.frcteam3636.frc2025.Pigeon2
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER_LENGTH
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER_WIDTH
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRACK_WIDTH
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_BASE
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
@@ -24,6 +25,7 @@ import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
 import org.ironmaple.simulation.drivesims.SwerveModuleSimulation
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
+import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 
 
@@ -41,7 +43,7 @@ abstract class DrivetrainIO {
     abstract val modules: PerCorner<out SwerveModule>
 
 
-    fun updateInputs(inputs: DrivetrainInputs) {
+    open fun updateInputs(inputs: DrivetrainInputs) {
         gyro.periodic()
         modules.forEach(SwerveModule::periodic)
 
@@ -106,7 +108,7 @@ class DrivetrainIOSim : DrivetrainIO() {
                 SwerveModuleSimulationConfig(
                     DCMotor.getKrakenX60(1),  // Drive motor is a Kraken X60
                     DCMotor.getNeo550(1),  // Steer motor is a Neo 550
-                    3.5,
+                    (45.0 * 22.0) / (14.0 * 15.0),
                     9424.0 / 203.0,
                     Volts.of(0.1),
                     Volts.of(0.1),
@@ -122,6 +124,10 @@ class DrivetrainIOSim : DrivetrainIO() {
             ) // Configures the bumper size (dimensions of the robot bumper)
             .withBumperSize(BUMPER_WIDTH, BUMPER_LENGTH)
 
+            .withCustomModuleTranslations(
+                MODULE_POSITIONS.map { it.translation }.toTypedArray()
+            )
+
     // Create a swerve drive simulation
     val swerveDriveSimulation = SwerveDriveSimulation(
         // Specify Configuration
@@ -131,10 +137,15 @@ class DrivetrainIOSim : DrivetrainIO() {
     )
 
     override val modules = PerCorner.generate { SimSwerveModule(swerveDriveSimulation.modules[it.ordinal]) }
-    override val gyro = GyroMapleSim(GyroSimulation(.001, .05))
+    override val gyro = GyroMapleSim(swerveDriveSimulation.gyroSimulation)
 
     init {
         SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation)
+    }
+
+    override fun updateInputs(inputs: DrivetrainInputs) {
+        super.updateInputs(inputs)
+        Logger.recordOutput("FieldSimulation/RobotPosition", swerveDriveSimulation.simulatedDriveTrainPose)
     }
 
     // Register the drivetrain simulation to the default simulation world

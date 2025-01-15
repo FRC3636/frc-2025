@@ -220,7 +220,7 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
 // take the known wheel diameter, divide it by two to get the radius, then get the
 // circumference
-internal val WHEEL_RADIUS = Inches.of(3.0).div(2.0)
+internal val WHEEL_RADIUS = Inches.of(1.5)
 internal val WHEEL_CIRCUMFERENCE = WHEEL_RADIUS * TAU
 
 internal val NEO_FREE_SPEED = RPM.of(5676.0)

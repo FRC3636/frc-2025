@@ -118,6 +118,10 @@ object Drivetrain : Subsystem, Sendable {
             this
         )
 
+        if (io is DrivetrainIOSim){
+            poseEstimator.resetPose(io.swerveDriveSimulation.simulatedDriveTrainPose)
+        }
+
     }
 
     override fun periodic() {
