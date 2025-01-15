@@ -2,14 +2,21 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 
 //import org.photonvision.PhotonCamera
 //import org.photonvision.PhotonPoseEstimator
+import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.QuestNav
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Pose3d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.util.struct.Struct
@@ -54,47 +61,114 @@ class AbsolutePoseProviderInputs : LoggableInputs {
     }
 }
 
-
 interface AbsolutePoseProvider {
     fun updateInputs(inputs: AbsolutePoseProviderInputs)
-
-    /**
-     * If there is little to no ambiguity.
-     */
-    val hasHighQualityReading: Boolean
 }
 
-class LimelightPoseProvider(private val name: String) : AbsolutePoseProvider {
-    override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
-        // This is mostly pulled from the LimeLight docs.
-        // https://docs.limelightvision.io/docs/docs-limelight/apis/limelight-lib#4-field-localization-with-megatag
-        val estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue(name)
-        val trackedTag = LimelightHelpers.getTargetPose3d_RobotSpace(name)
+/**
+ * A Limelight localization algorithm.
+ */
+sealed class LimelightAlgorithm {
+    /**
+     * An older, less accurate localization algorithm.
+     */
+    object MegaTag : LimelightAlgorithm()
 
-        // Only trust the measurement if we see multiple tags.
-        inputs.measurement = if (estimate != null && estimate.tagCount >= 2) {
-            AbsolutePoseMeasurement(
-                estimate.pose,
-                Seconds.of(estimate.timestampSeconds),
-                VecBuilder.fill(0.7, 0.7, 9999999.0),
-            )
-        } else {
-            null
+    /**
+     * A newer and much more accurate algorithm that requires accurate gyro readings and a right-side-up Limelight.
+     */
+    class MegaTag2(private val inputsProvider: () -> DrivetrainInputs) : LimelightAlgorithm() {
+        val gyroPosition: Rotation2d
+            get() = inputsProvider().gyroRotation
+        val gyroVelocity: AngularVelocity
+            get() = inputsProvider().gyroVelocity
+    }
+}
+
+class LimelightPoseProvider(
+    private val name: String,
+    private val algorithm: LimelightAlgorithm,
+) : AbsolutePoseProvider {
+    // References:
+    // https://docs.limelightvision.io/docs/docs-limelight/tutorials/tutorial-swerve-pose-estimation
+    // https://docs.limelightvision.io/docs/docs-limelight/apis/limelight-lib#4-field-localization-with-megatag
+
+    private fun updateCurrentMeasurement(): AbsolutePoseMeasurement? {
+        return when (algorithm) {
+            is LimelightAlgorithm.MegaTag ->
+                LimelightHelpers.getBotPoseEstimate_wpiBlue(name)?.let { estimate ->
+                    // Reject zero tag or low-quality one tag readings
+                    if (estimate.tagCount == 0) return null
+                    if (estimate.tagCount == 1) {
+                        val fiducial = estimate.rawFiducials[0]
+                        if (fiducial == null
+                            || fiducial.ambiguity > AMBIGUITY_THRESHOLD
+                            || fiducial.distToCamera > MAX_SINGLE_TAG_DISTANCE
+                        ) return null
+                    }
+
+                    return AbsolutePoseMeasurement(
+                        estimate.pose,
+                        Seconds.of(estimate.timestampSeconds),
+                        // This value is pulled directly from the Limelight docs (linked at the top of this class)
+                        VecBuilder.fill(.5, .5, 9999999.0)
+                    )
+                }
+
+            is LimelightAlgorithm.MegaTag2 -> {
+                LimelightHelpers.SetRobotOrientation(
+                    name,
+                    algorithm.gyroPosition.degrees,
+                    // The Limelight sample code leaves these as zero, and the API docs call them "Unnecessary."
+                    0.0, 0.0, 0.0, 0.0, 0.0
+                )
+
+                LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name)?.let { estimate ->
+                    if (algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0) return null
+                    if (estimate.tagCount == 0) return null
+
+                    return AbsolutePoseMeasurement(
+                        estimate.pose,
+                        Seconds.of(estimate.timestampSeconds),
+                        // This value is also pulled directly from the Limelight docs
+                        VecBuilder.fill(.7, .7, 9999999.0)
+                    )
+                }
+            }
+
         }
-
-        val hasReading = (estimate?.tagCount ?: 0) >= 1
-        val readingIsNearby = trackedTag.translation.norm < DISTANT_APRIL_TAG_DISTANCE.`in`(Meters)
-        hasHighQualityReading = hasReading && readingIsNearby
-
-        // We assume the camera has disconnected if there's no new updates.
-        inputs.connected = inputs.measurement?.let {
-            val timeSinceLastUpdate = Seconds.of(Timer.getTimestamp()) - it.timestamp
-            timeSinceLastUpdate > Seconds.of(0.25)
-        } == true
     }
 
-    override var hasHighQualityReading = false
-        private set
+    override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
+        val measurement = this.updateCurrentMeasurement()
+        inputs.measurement = measurement
+
+        // We assume the camera has disconnected if there are no new updates for several ticks.
+        inputs.connected = if (measurement != null) {
+            val timeSinceLastUpdate = Seconds.of(Timer.getTimestamp()) - measurement.timestamp
+            timeSinceLastUpdate > CONNECTED_TIMEOUT
+        } else false
+    }
+
+    companion object {
+        /**
+         * The acceptable distance for a single-April-Tag reading.
+         *
+         * This is a somewhat conservative limit, but it is only applied when using the old MegaTag v1 algorithm.
+         * It's possible it could be increased if it's too restrictive.
+         */
+        private val MAX_SINGLE_TAG_DISTANCE = Meters.of(3.0)!!
+
+        /**
+         * The acceptable ambiguity for a single-tag reading on MegaTag v1.
+         */
+        private const val AMBIGUITY_THRESHOLD = 0.7
+
+        /**
+         * The amount of time without an update before considering the camera to be disconnected.
+         */
+        private val CONNECTED_TIMEOUT = Seconds.of(Robot.period * 5)
+    }
 }
 
 @Suppress("unused")
@@ -233,5 +307,4 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 //    )
 //}
 
-val DISTANT_APRIL_TAG_DISTANCE = Meters.of(6.0)!!
 val LIMELIGHT_FOV = Degrees.of(75.76079874010732)
