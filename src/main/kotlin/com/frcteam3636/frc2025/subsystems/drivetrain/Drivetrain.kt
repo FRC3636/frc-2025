@@ -10,6 +10,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
 import com.frcteam3636.frc2025.utils.ElasticWidgets
+import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.PIDController
 import com.frcteam3636.frc2025.utils.math.PIDGains
 import com.frcteam3636.frc2025.utils.math.TAU
@@ -265,9 +266,9 @@ object Drivetrain : Subsystem, Sendable {
             desiredModuleStates = BRAKE_POSITION
         } else {
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                -translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
-                -translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
-                -rotationInput.y * TAU * ROTATION_SENSITIVITY,
+                translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                rotationInput.y * TAU * ROTATION_SENSITIVITY,
                 inputs.gyroRotation
             )
         }
@@ -276,7 +277,7 @@ object Drivetrain : Subsystem, Sendable {
     fun driveWithJoysticks(translationJoystick: Joystick, rotationJoystick: Joystick): Command =
         run {
             // Directly accessing Joystick.x/y gives inverted values - use a `Translation2d` instead.
-            drive(translationJoystick.translation2d, rotationJoystick.translation2d)
+            drive(translationJoystick.fieldRelativeTranslation2d, rotationJoystick.translation2d)
         }
 
     @Suppress("unused")
@@ -311,8 +312,8 @@ object Drivetrain : Subsystem, Sendable {
             )
 
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                -translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
-                -translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 -magnitude,
                 inputs.gyroRotation
             )
@@ -325,12 +326,11 @@ object Drivetrain : Subsystem, Sendable {
     fun zeroGyro() {
         // Tell the gyro that the robot is facing the other alliance.
         val zeroPos = when (DriverStation.getAlliance().getOrNull()) {
-            DriverStation.Alliance.Blue -> Rotation2d.kZero
-            else -> Rotation2d.k180deg
+            DriverStation.Alliance.Red -> Rotation2d.k180deg
+            else -> Rotation2d.kZero
         }
         io.setGyro(zeroPos)
     }
-
 
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
