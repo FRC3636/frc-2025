@@ -158,7 +158,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun disabledInit() {
-        if (Robot.model == Model.SIMULATION) {
+        if (model == Model.SIMULATION) {
             SimulatedArena.getInstance().resetFieldForAuto()
         }
     }
