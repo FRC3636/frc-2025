@@ -177,9 +177,11 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
 class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
     private val driveMotor: SimulatedMotorController.GenericMotorController = sim.useGenericMotorControllerForDrive()
+        .withCurrentLimit(DRIVING_CURRENT_LIMIT)
 
     // reference to the simulated turn motor
     private val turnMotor: SimulatedMotorController.GenericMotorController = sim.useGenericControllerForSteer()
+        .withCurrentLimit(TURNING_CURRENT_LIMIT)
 
     // TODO: figure out what the moment of inertia actually is and if it even matters
     private val drivingFeedforward = SimpleMotorFeedforward(DRIVING_FF_GAINS_TALON)

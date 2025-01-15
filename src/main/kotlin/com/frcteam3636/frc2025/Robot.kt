@@ -2,10 +2,6 @@ package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER_LENGTH
-import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER_WIDTH
-import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRACK_WIDTH
-import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_BASE
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
@@ -16,10 +12,6 @@ import com.frcteam3636.version.GIT_SHA
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Translation2d
-import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
@@ -29,11 +21,6 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.JoystickButton
 import org.ironmaple.simulation.SimulatedArena
-import org.ironmaple.simulation.drivesims.COTS
-import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
-import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
-import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeAlgaeOnField
-import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoral
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -184,15 +171,6 @@ object Robot : LoggedRobot() {
         Logger.recordOutput("FieldSimulation/Coral",
             *SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"))
 
-    }
-
-    fun displaySimFieldToAdvantageScope() {
-        if (Robot.model !== Robot.Model.SIMULATION) return
-
-        Logger.recordOutput("FieldSimulation/RobotPosition", Drivetrain.estimatedPose)
-        Logger.recordOutput(
-            "FieldSimulation/Notes", *SimulatedArena.getInstance().getGamePiecesArrayByType("Note")
-        )
     }
 
     override fun robotPeriodic() {
