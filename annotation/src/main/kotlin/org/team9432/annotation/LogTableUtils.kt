@@ -37,7 +37,7 @@ object LogTableUtils {
 
     fun <E : Enum<E>> LogTable.kPut(key: String, value: E) = put(key, value)
 
-    fun <U : Unit> LogTable.kPut(key: String, value: Measure<U>) = put(key, value)
+    fun <M : Measure<U>, U : Unit> LogTable.kPut(key: String, value: M) = put(key, value)
 
     fun LogTable.kPut(key: String, value: BooleanArray) = put(key, value)
 
@@ -80,7 +80,8 @@ object LogTableUtils {
 
     fun <E : Enum<E>> LogTable.kGet(key: String, defaultValue: E): E = get(key, defaultValue)
 
-    fun <U : Unit> LogTable.kGet(key: String, defaultValue: Measure<U>): Measure<U> = get(key, defaultValue)
+    fun <M : Measure<U>, U : Unit> LogTable.kGet(key: String, defaultValue: M): M =
+        get(key, defaultValue)
 
     fun LogTable.kGet(key: String, defaultValue: BooleanArray): BooleanArray = get(key, defaultValue)
 

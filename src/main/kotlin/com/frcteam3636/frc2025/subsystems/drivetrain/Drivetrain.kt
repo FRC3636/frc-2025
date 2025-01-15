@@ -23,7 +23,10 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.pathfinding.Pathfinding
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
@@ -41,7 +44,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import org.littletonrobotics.junction.Logger
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
-import kotlin.math.PI
 import kotlin.math.abs
 
 /** A singleton object representing the drivetrain. */
@@ -60,20 +62,25 @@ object Drivetrain : Subsystem, Sendable {
     private var questNavCalibrated = false
 
     private val absolutePoseIOs = mapOf(
-        "Limelight" to LimelightPoseProvider("limelight"),
+        "Limelight" to LimelightPoseProvider(
+            "limelight",
+            algorithm = LimelightAlgorithm.MegaTag2 { inputs }
+        ),
     ).mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
     /** Helper for converting a desired drivetrain velocity into the speeds and angles for each swerve module */
     private val kinematics =
         SwerveDriveKinematics(
-            *Constants.MODULE_POSITIONS.map(Pose2d::getTranslation).toTypedArray()
+            *Constants.MODULE_POSITIONS
+                .map { it.translation }
+                .toTypedArray()
         )
 
     /** Helper for estimating the location of the drivetrain on the field */
     private val poseEstimator =
         SwerveDrivePoseEstimator(
             kinematics, // swerve drive kinematics
-            inputs.gyroRotation.toRotation2d(), // initial gyro rotation
+            inputs.gyroRotation, // initial gyro rotation
             inputs.measuredPositions.toTypedArray(), // initial module positions
             Pose2d(), // initial pose
             VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5.0)),
@@ -135,18 +142,18 @@ object Drivetrain : Subsystem, Sendable {
             sensorIO.updateInputs(inputs)
             Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
 
+            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
                 Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
                 Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
                 Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
-            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has High Quality Reading", sensorIO.hasHighQualityReading)
         }
 
         // Use the new measurements to update the pose estimator
         poseEstimator.update(
-            inputs.gyroRotation.toRotation2d(),
+            inputs.gyroRotation,
             inputs.measuredPositions.toTypedArray()
         )
 
@@ -211,11 +218,11 @@ object Drivetrain : Subsystem, Sendable {
             return Pose2d(
                 estimated.x,
                 estimated.y,
-                inputs.gyroRotation.toRotation2d(),
+                inputs.gyroRotation,
             )
         }
         private set(value) = poseEstimator.resetPosition(
-            inputs.gyroRotation.toRotation2d(),
+            inputs.gyroRotation,
             inputs.measuredPositions.toTypedArray(),
             value
         )
@@ -225,7 +232,7 @@ object Drivetrain : Subsystem, Sendable {
      */
     private fun updateQuestNavOrigin() {
         val hasHighQualityData = absolutePoseIOs.values.any {
-            it.first.hasHighQualityReading
+            it.second.measurement != null
         }
         if (!hasHighQualityData || isMoving) return
         questNavLocalizer.resetPose(poseEstimator.estimatedPosition)
@@ -234,7 +241,7 @@ object Drivetrain : Subsystem, Sendable {
 
     override fun initSendable(builder: SendableBuilder) {
         builder.setSmartDashboardType(ElasticWidgets.SwerveDrive.widgetName)
-        builder.addDoubleProperty("Robot Angle", { inputs.gyroRotation.toRotation2d().radians }, null)
+        builder.addDoubleProperty("Robot Angle", { inputs.gyroRotation.radians }, null)
 
         builder.addDoubleProperty("Front Left Angle", { io.modules.frontLeft.state.angle.radians }, null)
         builder.addDoubleProperty("Front Left Velocity", { io.modules.frontLeft.state.speedMetersPerSecond }, null)
@@ -261,7 +268,7 @@ object Drivetrain : Subsystem, Sendable {
                 translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 -rotationInput.y * TAU * ROTATION_SENSITIVITY,
-                inputs.gyroRotation.toRotation2d()
+                inputs.gyroRotation
             )
         }
     }
@@ -307,7 +314,7 @@ object Drivetrain : Subsystem, Sendable {
                 translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 -magnitude,
-                inputs.gyroRotation.toRotation2d()
+                inputs.gyroRotation
             )
         }, {
             // Might be worth testing this but AdvantageScope seems to ignore `null`s
@@ -318,8 +325,8 @@ object Drivetrain : Subsystem, Sendable {
     fun zeroGyro() {
         // Tell the gyro that the robot is facing the other alliance.
         val zeroPos = when (DriverStation.getAlliance().getOrNull()) {
-            DriverStation.Alliance.Blue -> Rotation3d()
-            else -> Rotation3d(0.0, 0.0, PI)
+            DriverStation.Alliance.Blue -> Rotation2d.kZero
+            else -> Rotation2d.k180deg
         }
         io.setGyro(zeroPos)
     }

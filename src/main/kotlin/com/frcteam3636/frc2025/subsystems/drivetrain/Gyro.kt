@@ -6,8 +6,11 @@ import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.studica.frc.AHRS
-import edu.wpi.first.math.geometry.Rotation3d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.units.Units.DegreesPerSecond
+import edu.wpi.first.units.Units.RadiansPerSecond
+import edu.wpi.first.units.measure.AngularVelocity
 import org.ironmaple.simulation.drivesims.GyroSimulation
 import org.littletonrobotics.junction.Logger
 import kotlin.math.sign
@@ -17,7 +20,12 @@ interface Gyro {
      * The current rotation of the robot.
      * This can be set to a different value to change the gyro's offset.
      */
-    var rotation: Rotation3d
+    var rotation: Rotation2d
+
+    /**
+     * The rotational velocity of the robot on its yaw axis.
+     */
+    val velocity: AngularVelocity
 
     /** Whether the gyro is connected. */
     val connected: Boolean
@@ -27,45 +35,48 @@ interface Gyro {
 
 class GyroNavX(private val ahrs: AHRS) : Gyro {
 
-    private var offset: Rotation3d = Rotation3d()
+    private var offset = Rotation2d()
 
     init {
         Logger.recordOutput("NavXGyro/Offset", offset)
     }
 
-    override var rotation: Rotation3d
-        get() = offset + ahrs.rotation3d
+    override var rotation: Rotation2d
+        get() = offset + ahrs.rotation2d
         set(goal) {
-            offset = goal - ahrs.rotation3d
+            offset = goal - ahrs.rotation2d
             Logger.recordOutput("NavXGyro/Offset", offset)
         }
+
+    override val velocity: AngularVelocity
+        get() = DegreesPerSecond.of(ahrs.rate)
 
     override val connected
         get() = ahrs.isConnected
 }
 
 class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
-
-    private var offset: Rotation3d = Rotation3d()
-
     init {
-        Logger.recordOutput("PigeonGyro/Offset", offset)
         BaseStatusSignal.setUpdateFrequencyForAll(100.0, pigeon.yaw, pigeon.pitch, pigeon.roll)
     }
 
-    override var rotation: Rotation3d
-        get() = offset + pigeon.rotation3d
+    override var rotation: Rotation2d
+        get() = pigeon.rotation2d
         set(goal) {
-            offset = goal - pigeon.rotation3d
-            Logger.recordOutput("PigeonGyro/Offset", offset)
+            pigeon.setYaw(goal.measure)
         }
+
+    override val velocity: AngularVelocity
+        get() = pigeon.angularVelocityZWorld.value
 
     override val connected
         get() = pigeon.yaw.status.isOK
 }
 
 class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
-    override var rotation = Rotation3d()
+    override var rotation = Rotation2d()
+    override var velocity: AngularVelocity = RadiansPerSecond.zero()
+        private set
     override val connected = true
 
     override fun periodic() {
@@ -79,7 +90,8 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
             sign(rotationalVelocities.frontLeft.y) * rotationalVelocities.frontLeft.norm /
                     Drivetrain.Constants.MODULE_POSITIONS.frontLeft.translation.norm
 
-        rotation += Rotation3d(0.0, 0.0, yawVelocity) * Robot.period
+        velocity = RadiansPerSecond.of(yawVelocity)
+        rotation += Rotation2d(yawVelocity) * Robot.period
     }
 }
 

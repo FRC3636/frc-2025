@@ -8,13 +8,16 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRACK_WIDTH
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_BASE
+import com.frcteam3636.frc2025.utils.math.TAU
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.studica.frc.AHRS
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.Units.KilogramSquareMeters
 import edu.wpi.first.units.Units.Volts
@@ -27,13 +30,13 @@ import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 
-
 @Logged
 open class DrivetrainInputs {
-    var gyroRotation = Rotation3d()
+    var gyroRotation = Rotation2d()
+    var gyroVelocity = DegreesPerSecond.zero()!!
+    var gyroConnected = true
     var measuredStates = PerCorner.generate { SwerveModuleState() }
     var measuredPositions = PerCorner.generate { SwerveModulePosition() }
-    var gyroConnected = true
 }
 
 
@@ -47,12 +50,14 @@ abstract class DrivetrainIO {
         modules.forEach(SwerveModule::periodic)
 
         inputs.gyroRotation = gyro.rotation
+        inputs.gyroVelocity = gyro.velocity
+        inputs.gyroConnected = gyro.connected
         inputs.measuredStates = modules.map { it.state }
         inputs.measuredPositions = modules.map { it.position }
-        inputs.gyroConnected = gyro.connected
     }
 
-    fun setGyro(rotation: Rotation3d) {
+    fun setGyro(rotation: Rotation2d) {
+        assert(rotation.radians in 0.0..TAU)
         gyro.rotation = rotation
     }
 
