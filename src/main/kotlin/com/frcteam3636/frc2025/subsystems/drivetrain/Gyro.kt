@@ -50,7 +50,7 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
 
     init {
         Logger.recordOutput("PigeonGyro/Offset", offset)
-        BaseStatusSignal.setUpdateFrequencyForAll(100.0, pigeon.yaw, pigeon.pitch, pigeon.roll);
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, pigeon.yaw, pigeon.pitch, pigeon.roll)
     }
 
     override var rotation: Rotation3d

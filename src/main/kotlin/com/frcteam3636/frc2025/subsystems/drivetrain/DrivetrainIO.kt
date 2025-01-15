@@ -16,13 +16,12 @@ import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.Units.KilogramSquareMeters
+import edu.wpi.first.units.Units.Volts
 import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.drivesims.COTS
 import org.ironmaple.simulation.drivesims.COTS.WHEELS
-import org.ironmaple.simulation.drivesims.GyroSimulation
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
-import org.ironmaple.simulation.drivesims.SwerveModuleSimulation
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
 import org.littletonrobotics.junction.Logger
