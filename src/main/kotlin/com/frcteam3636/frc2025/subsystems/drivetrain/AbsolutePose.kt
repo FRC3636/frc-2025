@@ -8,16 +8,11 @@ import com.frcteam3636.frc2025.utils.QuestNav
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Pose3d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.AngularVelocity
-import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.util.struct.Struct
 import edu.wpi.first.util.struct.StructSerializable
@@ -207,8 +202,6 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
             }.toIntArray()
         }
     }
-
-    override val hasHighQualityReading = true
 }
 
 @Logged
