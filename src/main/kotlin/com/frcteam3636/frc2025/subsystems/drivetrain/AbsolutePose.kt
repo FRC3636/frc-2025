@@ -171,7 +171,7 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
     private val camera = PhotonCamera(name)
     private val simProperties = SimCameraProperties().apply {
         setCalibration(1280, 800, Rotation2d(LIMELIGHT_FOV))
-        fps = 120.0
+        fps = 20.0
         avgLatencyMs = 51.0
         latencyStdDevMs = 5.0
     }
