@@ -11,16 +11,12 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_
 import com.frcteam3636.frc2025.utils.math.TAU
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.studica.frc.AHRS
-import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Units.KilogramSquareMeters
-import edu.wpi.first.units.Units.Volts
+import edu.wpi.first.units.Units.*
 import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.drivesims.COTS
 import org.ironmaple.simulation.drivesims.COTS.WHEELS
@@ -70,7 +66,7 @@ abstract class DrivetrainIO {
 
 /** Drivetrain I/O layer that uses real swerve modules along with a NavX gyro. */
 class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : DrivetrainIO() {
-    override val gyro = when(Robot.model) {
+    override val gyro = when (Robot.model) {
         Robot.Model.SIMULATION -> GyroSim(modules)
         Robot.Model.COMPETITION -> GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
         Robot.Model.PROTOTYPE -> GyroNavX(AHRS(AHRS.NavXComType.kMXP_SPI))
@@ -79,7 +75,7 @@ class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : Drivetra
     companion object {
         fun fromKrakenSwerve() =
             DrivetrainIOReal(
-                Drivetrain.Constants.MODULE_POSITIONS.zip(Drivetrain.Constants.KRAKEN_MODULE_CAN_IDS)
+                MODULE_POSITIONS.zip(Drivetrain.Constants.KRAKEN_MODULE_CAN_IDS)
                     .map { (position, ids) ->
                         val (driveId, turnId) = ids
                         MAXSwerveModule(
@@ -90,14 +86,16 @@ class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : Drivetra
                     })
 
         fun fromNeoSwerve() =
-            DrivetrainIOReal(Drivetrain.Constants.MODULE_POSITIONS.zip(Drivetrain.Constants.MODULE_CAN_IDS_PRACTICE).map { (position, ids) ->
-                val (driveId, turnId) = ids
-                MAXSwerveModule(
-                    DrivingSparkMAX(driveId),
-                    turnId,
-                    position.rotation
-                )
-            })
+            DrivetrainIOReal(
+                MODULE_POSITIONS.zip(Drivetrain.Constants.MODULE_CAN_IDS_PRACTICE)
+                    .map { (position, ids) ->
+                        val (driveId, turnId) = ids
+                        MAXSwerveModule(
+                            DrivingSparkMAX(driveId),
+                            turnId,
+                            position.rotation
+                        )
+                    })
     }
 }
 

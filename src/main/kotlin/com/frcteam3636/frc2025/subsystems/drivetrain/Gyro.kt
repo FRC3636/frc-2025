@@ -95,12 +95,14 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
     }
 }
 
-class GyroMapleSim(val gyroSimulation : GyroSimulation): Gyro {
-    override var rotation: Rotation3d
-        get() = Rotation3d(gyroSimulation.gyroReading)
+class GyroMapleSim(val gyroSimulation: GyroSimulation) : Gyro {
+    override var rotation: Rotation2d
+        get() = gyroSimulation.gyroReading
         set(value) {
-            gyroSimulation.setRotation(value.toRotation2d())
+            gyroSimulation.setRotation(value)
         }
+    override val velocity: AngularVelocity
+        get() = gyroSimulation.measuredAngularVelocity
     override val connected: Boolean
         get() = true
 }
