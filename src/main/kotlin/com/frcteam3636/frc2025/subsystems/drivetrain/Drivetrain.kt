@@ -1,10 +1,12 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+//import com.frcteam3636.frc2024.subsystems.drivetrain.Drivetrain.Constants.DEFAULT_PATHING_CONSTRAINTS
+//import com.pathplanner.lib.util.HolonomicPathFollowerConfig
+//import com.pathplanner.lib.util.ReplanningConfig
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
-//import com.frcteam3636.frc2024.subsystems.drivetrain.Drivetrain.Constants.DEFAULT_PATHING_CONSTRAINTS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTICK_DEADBAND
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
@@ -15,9 +17,12 @@ import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.frcteam3636.frc2025.utils.swerve.cornerStatesToChassisSpeeds
 import com.frcteam3636.frc2025.utils.swerve.toCornerSwerveModuleStates
 import com.frcteam3636.frc2025.utils.translation2d
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.config.PIDConstants
+import com.pathplanner.lib.config.RobotConfig
+import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.controllers.PPLTVController
 import com.pathplanner.lib.pathfinding.Pathfinding
-//import com.pathplanner.lib.util.HolonomicPathFollowerConfig
-//import com.pathplanner.lib.util.ReplanningConfig
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
@@ -41,6 +46,7 @@ import java.util.*
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.PI
 import kotlin.math.abs
+
 
 /** A singleton object representing the drivetrain. */
 object Drivetrain : Subsystem, Sendable {
@@ -86,17 +92,31 @@ object Drivetrain : Subsystem, Sendable {
             LocalADStarAK()
         )
 
-        // FIXME: Update for 2025
-//        AutoBuilder.configureHolonomic(
-//            this::estimatedPose,
-//            this::estimatedPose::set,
-//            this::measuredChassisSpeeds,
-//            this::desiredChassisSpeeds::set,
-//            Constants.PATH_FOLLOWER_CONFIG,
-//            // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
-//            { DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red) },
-//            this
-//        )
+        val config: RobotConfig
+        try {
+            config = RobotConfig.fromGUISettings()
+        } catch (e: Exception) {
+            // Handle exception as needed
+            e.printStackTrace()
+        }
+
+//         FIXME: Update for 2025
+        AutoBuilder.configure(
+            this::getPose, // Robot pose supplier
+            this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
+            this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+            PPLTVController(0.02), // PPLTVController is the built in path following controller for differential drive trains
+            config, // The robot configuration
+            () -> {
+            var alliance = DriverStation.getAlliance() // Boolean supplier that controls when the path will be mirrored for the red alliance
+            if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+            }   // This will flip the path being followed to the red side of the field.
+            return false;   // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+        },
+        this
+        )
 
     }
 

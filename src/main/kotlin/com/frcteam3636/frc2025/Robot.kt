@@ -9,6 +9,10 @@ import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.commands.FollowPathCommand
+import com.pathplanner.lib.commands.PathPlannerAuto
+import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
@@ -68,6 +72,8 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
+
+        FollowPathCommand.warmupCommand().schedule()
     }
 
     /** Start logging or pull replay logs from a file */
@@ -129,8 +135,20 @@ object Robot : LoggedRobot() {
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
-    private fun configureAutos() {
-//        NamedCommands.registerCommand(
+    private fun configureAutos(): Command? {
+        try {
+            // Load the path you want to follow using its name in the GUI
+            val path1 = PathPlannerPath.fromPathFile("drive_score1")
+            val path2 = PathPlannerPath.fromPathFile("intake")
+            val path3 = PathPlannerPath.fromPathFile("outtake")
+
+            // Create a path following command using AutoBuilder. This will also trigger event markers.
+            return AutoBuilder.followPath(path1)
+        } catch (e: Exception) {
+            DriverStation.reportError("Big oops: " + e.message, e.stackTrace)
+            return Commands.none()
+        }
+        //    NamedCommands.registerCommand(
 //            "revAim",
 //            Commands.parallel(
 //                Shooter.Pivot.followMotionProfile(Shooter.Pivot.Target.AIM),
