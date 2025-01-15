@@ -119,7 +119,7 @@ object Drivetrain : Subsystem, Sendable {
                 }.toPPLib(),
                 ROTATION_PID_GAINS.toPPLib()
             ),
-            Constants.PP_ROBOT_CONFIG,
+            RobotConfig.fromGUISettings(),
             // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
             { DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red) },
             this
@@ -256,15 +256,16 @@ object Drivetrain : Subsystem, Sendable {
         abs(translation.x) < JOYSTICK_DEADBAND && abs(translation.y) < JOYSTICK_DEADBAND
 
     private fun drive(translationInput: Translation2d, rotationInput: Translation2d) {
+        Logger.recordOutput("Drivetrain/CommandedInput", translationInput)
         if (isInDeadband(translationInput) && isInDeadband(rotationInput)) {
             // No joystick input - stop moving!
             desiredModuleStates = BRAKE_POSITION
         } else {
-            desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+            desiredChassisSpeeds = ChassisSpeeds(
                 translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 -rotationInput.y * TAU * ROTATION_SENSITIVITY,
-                inputs.gyroRotation
+//                inputs.gyroRotation
             )
         }
     }

@@ -101,6 +101,7 @@ deploy {
             // if you want to store a team number in this file.
             team = frc.teamNumber
             debug = frc.getDebugOrDefault(false)
+
         }
 
         roborio.artifacts {
