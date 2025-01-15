@@ -10,6 +10,8 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRACK_
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_BASE
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.studica.frc.AHRS
+import edu.wpi.first.apriltag.AprilTagFieldLayout
+import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Rotation3d
@@ -25,6 +27,7 @@ import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
 import org.littletonrobotics.junction.Logger
+import org.photonvision.simulation.VisionSystemSim
 import org.team9432.annotation.Logged
 
 
@@ -65,7 +68,7 @@ abstract class DrivetrainIO {
 
 /** Drivetrain I/O layer that uses real swerve modules along with a NavX gyro. */
 class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : DrivetrainIO() {
-    override val gyro = when(Robot.model) {
+    override val gyro = when (Robot.model) {
         Robot.Model.SIMULATION -> GyroSim(modules)
         Robot.Model.COMPETITION -> GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
         Robot.Model.PROTOTYPE -> GyroNavX(AHRS(AHRS.NavXComType.kMXP_SPI))
@@ -74,7 +77,7 @@ class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : Drivetra
     companion object {
         fun fromKrakenSwerve() =
             DrivetrainIOReal(
-                Drivetrain.Constants.MODULE_POSITIONS.zip(Drivetrain.Constants.KRAKEN_MODULE_CAN_IDS)
+                MODULE_POSITIONS.zip(Drivetrain.Constants.KRAKEN_MODULE_CAN_IDS)
                     .map { (position, ids) ->
                         val (driveId, turnId) = ids
                         MAXSwerveModule(
@@ -85,14 +88,16 @@ class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : Drivetra
                     })
 
         fun fromNeoSwerve() =
-            DrivetrainIOReal(Drivetrain.Constants.MODULE_POSITIONS.zip(Drivetrain.Constants.MODULE_CAN_IDS_PRACTICE).map { (position, ids) ->
-                val (driveId, turnId) = ids
-                MAXSwerveModule(
-                    DrivingSparkMAX(driveId),
-                    turnId,
-                    position.rotation
-                )
-            })
+            DrivetrainIOReal(
+                MODULE_POSITIONS.zip(Drivetrain.Constants.MODULE_CAN_IDS_PRACTICE)
+                    .map { (position, ids) ->
+                        val (driveId, turnId) = ids
+                        MAXSwerveModule(
+                            DrivingSparkMAX(driveId),
+                            turnId,
+                            position.rotation
+                        )
+                    })
     }
 }
 
@@ -135,6 +140,10 @@ class DrivetrainIOSim : DrivetrainIO() {
         Pose2d(3.0, 3.0, Rotation2d())
     )
 
+    val vision = VisionSystemSim("main").apply {
+        addAprilTags(APRIL_TAGS)
+    }
+
     override val modules = PerCorner.generate { SimSwerveModule(swerveDriveSimulation.modules[it.ordinal]) }
     override val gyro = GyroMapleSim(swerveDriveSimulation.gyroSimulation)
 
@@ -144,8 +153,21 @@ class DrivetrainIOSim : DrivetrainIO() {
 
     override fun updateInputs(inputs: DrivetrainInputs) {
         super.updateInputs(inputs)
+        vision.update(swerveDriveSimulation.simulatedDriveTrainPose)
         Logger.recordOutput("FieldSimulation/RobotPosition", swerveDriveSimulation.simulatedDriveTrainPose)
+    }
+
+    fun registerPoseProviders(providers: Iterable<AbsolutePoseProvider>) {
+        for (provider in providers) {
+            if (provider is CameraSimPoseProvider) {
+                vision.addCamera(provider.sim, provider.chassisToCamera)
+            }
+        }
     }
 
     // Register the drivetrain simulation to the default simulation world
 }
+
+val APRIL_TAGS = AprilTagFieldLayout.loadFromResource(
+    AprilTagFields.k2025Reefscape.m_resourceFile
+)!!
