@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.JoystickButton
+import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -156,10 +157,27 @@ object Robot : LoggedRobot() {
         Dashboard.showTeleopTab(Shuffleboard.getTab("Teleoperated"))
     }
 
+    override fun disabledInit() {
+        if (Robot.model == Model.SIMULATION) {
+            SimulatedArena.getInstance().resetFieldForAuto()
+        }
+    }
+
+    override fun simulationPeriodic() {
+        SimulatedArena.getInstance().simulationPeriodic()
+
+        Logger.recordOutput("FieldSimulation/Algae",
+            *SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"))
+        Logger.recordOutput("FieldSimulation/Coral",
+            *SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"))
+
+    }
+
     override fun robotPeriodic() {
         Dashboard.update()
         Diagnostics.collect(statusSignals).reportAlerts()
         CommandScheduler.getInstance().run()
+
     }
 
     override fun autonomousInit() {

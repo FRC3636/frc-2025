@@ -19,6 +19,8 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
+import org.ironmaple.simulation.drivesims.SwerveModuleSimulation
+import org.ironmaple.simulation.motorsims.SimulatedMotorController
 import org.littletonrobotics.junction.Logger
 import kotlin.math.roundToInt
 
@@ -50,7 +52,7 @@ class MAXSwerveModule(
     private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless).apply {
         configure(SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
-            smartCurrentLimit(TURNING_CURRENT_LIMIT.roundToInt())
+            smartCurrentLimit(TURNING_CURRENT_LIMIT.`in`(Amps).roundToInt())
 
             absoluteEncoder.apply {
                 inverted(true)
@@ -172,53 +174,55 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
         }
 }
 //
-//class SimSwerveModule : SwerveModule {
-//
-//    // TODO: figure out what the moment of inertia actually is and if it even matters
-////    private val turningMotor = DCMotorSim(DCMotor.getNeo550(1), TAU, 0.0001)
-//    private val turningMotor = DCMotorSim(LinearSystemId.createDCMotorSystem(DCMotor.getNeo550(1), 0.0, 1.0), )
-//    private val drivingMotor = DCMotorSim(DCMotor.getKrakenX60(1), 6.75, 0.0025)
-//
-//    private val drivingFeedforward = SimpleMotorFeedforward(MotorFFGains(v = 3.33))
-//    private val drivingFeedback = PIDController(PIDGains(0.06))
-//
-//    private val turningFeedback = PIDController(PIDGains(p = 2.0)).apply { enableContinuousInput(0.0, TAU) }
-//
-//    override val state: SwerveModuleState
-//        get() = SwerveModuleState(
-//            drivingMotor.angularVelocityRadPerSec * WHEEL_RADIUS,
-//            Rotation2d.fromRadians(turningMotor.angularPositionRad)
-//        )
-//
-//    override var desiredState: SwerveModuleState = SwerveModuleState(0.0, Rotation2d())
-//        set(value) {
-//            field = SwerveModuleState.optimize(value, state.angle)
-//        }
-//
-//    override val position: SwerveModulePosition
-//        get() = SwerveModulePosition(
-//            drivingMotor.angularPositionRad * WHEEL_RADIUS, Rotation2d.fromRadians(turningMotor.angularPositionRad)
-//        )
-//
-//    override fun periodic() {
-//        turningMotor.update(Robot.period)
-//        drivingMotor.update(Robot.period)
-//
-//        // Set the new input voltages
-//        turningMotor.setInputVoltage(
-//            turningFeedback.calculate(state.angle.radians, desiredState.angle.radians)
-//        )
-//        drivingMotor.setInputVoltage(
-//            drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
-//                state.speedMetersPerSecond, desiredState.speedMetersPerSecond
-//            )
-//        )
-//    }
-//}
+class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
+
+    private val driveMotor: SimulatedMotorController.GenericMotorController = sim.useGenericMotorControllerForDrive()
+        .withCurrentLimit(DRIVING_CURRENT_LIMIT)
+
+    // reference to the simulated turn motor
+    private val turnMotor: SimulatedMotorController.GenericMotorController = sim.useGenericControllerForSteer()
+        .withCurrentLimit(TURNING_CURRENT_LIMIT)
+
+    // TODO: figure out what the moment of inertia actually is and if it even matters
+    private val drivingFeedforward = SimpleMotorFeedforward(DRIVING_FF_GAINS_TALON)
+    private val drivingFeedback = PIDController(DRIVING_PID_GAINS_TALON)
+
+    private val turningFeedback = PIDController(TURNING_PID_GAINS).apply { enableContinuousInput(0.0, TAU) }
+
+    override val state: SwerveModuleState
+        get() = SwerveModuleState(
+            sim.driveWheelFinalSpeed.`in`(RadiansPerSecond) * WHEEL_RADIUS.`in`(Meters),
+            sim.steerAbsoluteFacing
+        )
+
+    override var desiredState: SwerveModuleState = SwerveModuleState(0.0, Rotation2d())
+        set(value) {
+            field = value.apply {
+                optimize(state.angle)
+            }
+        }
+
+    override val position: SwerveModulePosition
+        get() = SwerveModulePosition(
+            sim.driveWheelFinalPosition.`in`(Radians) * WHEEL_RADIUS.`in`(Meters), sim.steerAbsoluteFacing
+        )
+
+    override fun periodic() {
+        // Set the new input voltages
+        turnMotor.requestVoltage(
+            Volts.of(turningFeedback.calculate(state.angle.radians, desiredState.angle.radians))
+        )
+        driveMotor.requestVoltage(
+            Volts.of(drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
+                state.speedMetersPerSecond, desiredState.speedMetersPerSecond)
+            )
+        )
+    }
+}
 
 // take the known wheel diameter, divide it by two to get the radius, then get the
 // circumference
-internal val WHEEL_RADIUS = Inches.of(3.0).div(2.0)
+internal val WHEEL_RADIUS = Inches.of(1.5)
 internal val WHEEL_CIRCUMFERENCE = WHEEL_RADIUS * TAU
 
 internal val NEO_FREE_SPEED = RPM.of(5676.0)
@@ -226,7 +230,7 @@ internal val NEO_FREE_SPEED = RPM.of(5676.0)
 private const val DRIVING_MOTOR_PINION_TEETH = 14
 
 internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
-internal const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
+const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
 internal val NEO_DRIVING_FREE_SPEED = MetersPerSecond.of((NEO_FREE_SPEED.`in`(RotationsPerSecond) * WHEEL_CIRCUMFERENCE.`in`(Meters)) / DRIVING_GEAR_RATIO_NEO)
 
@@ -238,4 +242,4 @@ internal val DRIVING_FF_GAINS_NEO: MotorFFGains =
 
 internal val TURNING_PID_GAINS: PIDGains = PIDGains(1.7, 0.0, 0.125)
 internal val DRIVING_CURRENT_LIMIT = Amps.of(35.0)
-internal const val TURNING_CURRENT_LIMIT = 20.0
+internal val TURNING_CURRENT_LIMIT = Amps.of(20.0)

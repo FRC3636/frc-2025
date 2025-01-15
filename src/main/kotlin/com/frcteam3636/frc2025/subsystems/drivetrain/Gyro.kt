@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
+import org.ironmaple.simulation.drivesims.GyroSimulation
 import org.littletonrobotics.junction.Logger
 import kotlin.math.sign
 
@@ -92,4 +93,16 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
         velocity = RadiansPerSecond.of(yawVelocity)
         rotation += Rotation2d(yawVelocity) * Robot.period
     }
+}
+
+class GyroMapleSim(val gyroSimulation: GyroSimulation) : Gyro {
+    override var rotation: Rotation2d
+        get() = gyroSimulation.gyroReading
+        set(value) {
+            gyroSimulation.setRotation(value)
+        }
+    override val velocity: AngularVelocity
+        get() = gyroSimulation.measuredAngularVelocity
+    override val connected: Boolean
+        get() = true
 }
