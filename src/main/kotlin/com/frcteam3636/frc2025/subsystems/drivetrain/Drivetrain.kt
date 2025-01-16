@@ -24,10 +24,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.pathfinding.Pathfinding
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Transform2d
-import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
@@ -68,16 +65,22 @@ object Drivetrain : Subsystem, Sendable {
         inputs.gyroVelocity
     } )
 
-    private val absolutePoseIOs = mapOf(
-        "Limelight Front" to LimelightPoseProvider(
-            "limelight-front",
-            algorithm = mt2Algo
-        ),
-        "Limelight Rear" to LimelightPoseProvider(
-            "limelight-rear",
-            algorithm = mt2Algo
-        ),
-    ).mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
+    private val absolutePoseIOs = when (Robot.model) {
+        Robot.Model.SIMULATION -> mapOf(
+            "Limelight" to CameraSimPoseProvider("limelight", Transform3d()),
+        )
+
+        else -> mapOf(
+                "Limelight Front" to LimelightPoseProvider(
+                        "limelight-front",
+                        algorithm = mt2Algo
+                ),
+                "Limelight Rear" to LimelightPoseProvider(
+                        "limelight-rear",
+                        algorithm = mt2Algo
+                ),
+        )
+    }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
     /** Helper for converting a desired drivetrain velocity into the speeds and angles for each swerve module */
     private val kinematics =
@@ -122,7 +125,7 @@ object Drivetrain : Subsystem, Sendable {
             this::measuredChassisSpeeds,
             this::desiredChassisSpeeds::set,
             PPHolonomicDriveController(
-                when(Robot.model) {
+                when (Robot.model) {
                     Robot.Model.SIMULATION -> DRIVING_PID_GAINS_TALON
                     Robot.Model.COMPETITION -> DRIVING_PID_GAINS_TALON
                     Robot.Model.PROTOTYPE -> DRIVING_PID_GAINS_NEO
@@ -135,10 +138,10 @@ object Drivetrain : Subsystem, Sendable {
             this
         )
 
-        if (io is DrivetrainIOSim){
+        if (io is DrivetrainIOSim) {
             poseEstimator.resetPose(io.swerveDriveSimulation.simulatedDriveTrainPose)
+            io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
         }
-
     }
 
     override fun periodic() {
@@ -178,6 +181,14 @@ object Drivetrain : Subsystem, Sendable {
         Logger.recordOutput("Drivetrain/Localizer", localizer.name)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
         questNavInactiveAlert.set(localizer != Localizer.QuestNav)
+
+        Logger.recordOutput(
+            "Drivetrain/TagPoses", *APRIL_TAGS.tags
+                .filter { tag ->
+                    absolutePoseIOs.values.any { it.second.observedTags.contains(tag.ID) }
+                }
+                .map { it.pose }
+                .toTypedArray())
     }
 
     /** The desired speeds and angles of the swerve modules. */
@@ -360,25 +371,25 @@ object Drivetrain : Subsystem, Sendable {
         val MODULE_POSITIONS =
             PerCorner(
                 frontLeft =
-                Pose2d(
-                    Translation2d(WHEEL_BASE, TRACK_WIDTH) / 2.0,
-                    Rotation2d.fromDegrees(0.0)
-                ),
+                    Pose2d(
+                        Translation2d(WHEEL_BASE, TRACK_WIDTH) / 2.0,
+                        Rotation2d.fromDegrees(0.0)
+                    ),
                 frontRight =
-                Pose2d(
-                    Translation2d(WHEEL_BASE, -TRACK_WIDTH) / 2.0,
-                    Rotation2d.fromDegrees(270.0)
-                ),
+                    Pose2d(
+                        Translation2d(WHEEL_BASE, -TRACK_WIDTH) / 2.0,
+                        Rotation2d.fromDegrees(270.0)
+                    ),
                 backLeft =
-                Pose2d(
-                    Translation2d(-WHEEL_BASE, TRACK_WIDTH) / 2.0,
-                    Rotation2d.fromDegrees(90.0)
-                ),
+                    Pose2d(
+                        Translation2d(-WHEEL_BASE, TRACK_WIDTH) / 2.0,
+                        Rotation2d.fromDegrees(90.0)
+                    ),
                 backRight =
-                Pose2d(
-                    Translation2d(-WHEEL_BASE, -TRACK_WIDTH) / 2.0,
-                    Rotation2d.fromDegrees(180.0)
-                ),
+                    Pose2d(
+                        Translation2d(-WHEEL_BASE, -TRACK_WIDTH) / 2.0,
+                        Rotation2d.fromDegrees(180.0)
+                    ),
             )
 
         // Chassis Control
@@ -387,7 +398,7 @@ object Drivetrain : Subsystem, Sendable {
 
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
 
-//        // Pathing
+        //        // Pathing
 //        val DEFAULT_PATHING_CONSTRAINTS =
 //            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
         // FIXME: Update for 2025
@@ -423,12 +434,11 @@ object Drivetrain : Subsystem, Sendable {
             }.toTypedArray()
         )
 
-        val PP_ROBOT_CONFIG = when(Robot.model) {
+        val PP_ROBOT_CONFIG = when (Robot.model) {
             Robot.Model.SIMULATION -> PP_ROBOT_CONFIG_COMP
             Robot.Model.COMPETITION -> PP_ROBOT_CONFIG_COMP
             Robot.Model.PROTOTYPE -> PP_ROBOT_CONFIG_PROTOTYPE
         }
-
 
 
         // CAN IDs
@@ -459,25 +469,25 @@ object Drivetrain : Subsystem, Sendable {
         internal val MODULE_CAN_IDS_PRACTICE =
             PerCorner(
                 frontLeft =
-                Pair(
-                    REVMotorControllerId.FrontLeftDrivingMotor,
-                    REVMotorControllerId.FrontLeftTurningMotor
-                ),
+                    Pair(
+                        REVMotorControllerId.FrontLeftDrivingMotor,
+                        REVMotorControllerId.FrontLeftTurningMotor
+                    ),
                 frontRight =
-                Pair(
-                    REVMotorControllerId.FrontRightDrivingMotor,
-                    REVMotorControllerId.FrontRightTurningMotor
-                ),
+                    Pair(
+                        REVMotorControllerId.FrontRightDrivingMotor,
+                        REVMotorControllerId.FrontRightTurningMotor
+                    ),
                 backLeft =
                     Pair(
                         REVMotorControllerId.BackLeftDrivingMotor,
                         REVMotorControllerId.BackLeftTurningMotor
                     ),
                 backRight =
-                Pair(
-                    REVMotorControllerId.BackRightDrivingMotor,
-                    REVMotorControllerId.BackRightTurningMotor
-                ),
+                    Pair(
+                        REVMotorControllerId.BackRightDrivingMotor,
+                        REVMotorControllerId.BackRightTurningMotor
+                    ),
             )
 
         /** A position with the modules radiating outwards from the center of the robot, preventing movement. */
