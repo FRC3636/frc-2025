@@ -84,6 +84,9 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             *branchTargetsFromIds(6..11),
             // Processor
             AprilTagTarget(3, Translation2d()),
+            // Human Player Stations
+            AprilTagTarget(1, Translation2d()),
+            AprilTagTarget(2, Translation2d())
         )
 
         val blueAllianceTargets = arrayOf(
@@ -91,6 +94,9 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             *branchTargetsFromIds(17..22),
             // Processor
             AprilTagTarget(16, Translation2d()),
+            // Human Player Stations
+            AprilTagTarget(13, Translation2d()),
+            AprilTagTarget(12, Translation2d())
         )
 
         val currentAllianceTargets: Array<AprilTagTarget>
