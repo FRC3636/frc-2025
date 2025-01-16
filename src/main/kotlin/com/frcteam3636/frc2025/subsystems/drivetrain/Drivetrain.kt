@@ -4,11 +4,14 @@ import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.DEFAULT_PATHING_CONSTRAINTS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTICK_DEADBAND
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.closestTargetTo
 import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.PIDController
@@ -21,6 +24,7 @@ import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.pathfinding.Pathfinding
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
@@ -342,6 +346,14 @@ object Drivetrain : Subsystem, Sendable {
         })
     }
 
+    fun alignToNearestPOI(): Command = defer {
+        val target = AprilTagTarget.currentAllianceTargets
+            .asIterable()
+            .closestTargetTo(estimatedPose)
+
+        AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS)
+    }
+
     fun zeroGyro() {
         // Tell the gyro that the robot is facing the other alliance.
         val zeroPos = when (DriverStation.getAlliance().getOrNull()) {
@@ -394,13 +406,14 @@ object Drivetrain : Subsystem, Sendable {
 
         // Chassis Control
         val FREE_SPEED = MetersPerSecond.of(8.132)!!
-//        private val ROTATION_SPEED = RadiansPerSecond.of(14.604)!!
+        private val ROTATION_SPEED = RadiansPerSecond.of(14.604)!!
 
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
 
         //        // Pathing
-//        val DEFAULT_PATHING_CONSTRAINTS =
-//            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
+        val DEFAULT_PATHING_CONSTRAINTS =
+            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
+
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(
             Pounds.of(120.0), // FIXME: Placeholder

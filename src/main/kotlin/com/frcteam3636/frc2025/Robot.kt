@@ -12,7 +12,10 @@ import com.frcteam3636.version.GIT_SHA
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.wpilibj.*
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.Joystick
+import edu.wpi.first.wpilibj.PowerDistribution
+import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
@@ -144,6 +147,8 @@ object Robot : LoggedRobot() {
     private fun configureBindings() {
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
 
+        controller.a().whileTrue(Drivetrain.alignToNearestPOI())
+
         // (The button with the yellow tape on it)
         JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
@@ -166,10 +171,14 @@ object Robot : LoggedRobot() {
     override fun simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic()
 
-        Logger.recordOutput("FieldSimulation/Algae",
-            *SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"))
-        Logger.recordOutput("FieldSimulation/Coral",
-            *SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"))
+        Logger.recordOutput(
+            "FieldSimulation/Algae",
+            *SimulatedArena.getInstance().getGamePiecesArrayByType("Algae")
+        )
+        Logger.recordOutput(
+            "FieldSimulation/Coral",
+            *SimulatedArena.getInstance().getGamePiecesArrayByType("Coral")
+        )
 
     }
 
@@ -201,7 +210,7 @@ object Robot : LoggedRobot() {
     }
 
     /** The model of this robot. */
-    val model: Model = if (RobotBase.isSimulation()) {
+    val model: Model = if (isSimulation()) {
         Model.SIMULATION
     } else {
         when (val key = Preferences.getString("Model", "prototype")) {
