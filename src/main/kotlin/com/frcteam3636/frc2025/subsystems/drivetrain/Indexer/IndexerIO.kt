@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain.Indexer
 
 import com.frcteam3636.frc2025.SparkFlex
 import com.frcteam3636.frc2025.REVMotorControllerId
+import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.math.TAU
 import com.revrobotics.spark.SparkLowLevel
 import edu.wpi.first.math.system.plant.DCMotor
@@ -9,7 +10,6 @@ import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
-import java.awt.Robot
 
 @Logged
 open class IndexerInputs {
@@ -52,8 +52,7 @@ class IndexerIOSim: IndexerIO {
             0.00942358695924,
             1.6
             ),
-        1.0,
-        1.0
+        DCMotor.getNeoVortex(1)
     )
 
     override fun updateInputs(inputs: IndexerInputs) {
