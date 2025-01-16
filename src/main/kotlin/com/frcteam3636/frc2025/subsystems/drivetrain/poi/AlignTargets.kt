@@ -95,7 +95,6 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val currentAllianceTargets: Array<AprilTagTarget>
             get() {
-                Logger.recordOutput("Drivetrain/All Targets", *redAllianceTargets.map { it.pose }.toTypedArray())
                 return when (DriverStation.getAlliance().getOrNull()) {
                     DriverStation.Alliance.Red -> redAllianceTargets
                     else -> blueAllianceTargets
