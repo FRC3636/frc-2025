@@ -59,16 +59,26 @@ object Drivetrain : Subsystem, Sendable {
     private val questNavInputs = LoggedQuestNavInputs()
     private var questNavCalibrated = false
 
+    private val mt2Algo = LimelightAlgorithm.MegaTag2 ( {
+        poseEstimator.estimatedPosition.rotation
+    }, {
+        inputs.gyroVelocity
+    } )
+
     private val absolutePoseIOs = when (Robot.model) {
         Robot.Model.SIMULATION -> mapOf(
             "Limelight" to CameraSimPoseProvider("limelight", Transform3d()),
         )
 
         else -> mapOf(
-            "Limelight" to LimelightPoseProvider(
-                "limelight",
-                algorithm = LimelightAlgorithm.MegaTag2 { inputs },
-            ),
+                "Limelight Front" to LimelightPoseProvider(
+                        "limelight-front",
+                        algorithm = mt2Algo
+                ),
+                "Limelight Rear" to LimelightPoseProvider(
+                        "limelight-rear",
+                        algorithm = mt2Algo
+                ),
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
@@ -109,7 +119,6 @@ object Drivetrain : Subsystem, Sendable {
             LocalADStarAK()
         )
 
-        // FIXME: Update for 2025
         AutoBuilder.configure(
             this::estimatedPose,
             this::estimatedPose::set,
@@ -123,7 +132,7 @@ object Drivetrain : Subsystem, Sendable {
                 }.toPPLib(),
                 ROTATION_PID_GAINS.toPPLib()
             ),
-            Constants.PP_ROBOT_CONFIG,
+            RobotConfig.fromGUISettings(),
             // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
             { DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red) },
             this
@@ -170,6 +179,7 @@ object Drivetrain : Subsystem, Sendable {
         Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
         Logger.recordOutput("Drivetrain/Localizer", localizer.name)
+        Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
         questNavInactiveAlert.set(localizer != Localizer.QuestNav)
 
         Logger.recordOutput(
@@ -227,17 +237,15 @@ object Drivetrain : Subsystem, Sendable {
                 Localizer.PoseEstimator -> poseEstimator.estimatedPosition
             }
 
-            return Pose2d(
-                estimated.x,
-                estimated.y,
-                inputs.gyroRotation,
+            return estimated
+        }
+        private set(value) {
+            poseEstimator.resetPosition(
+                    inputs.gyroRotation,
+                    inputs.measuredPositions.toTypedArray(),
+                    value
             )
         }
-        private set(value) = poseEstimator.resetPosition(
-            inputs.gyroRotation,
-            inputs.measuredPositions.toTypedArray(),
-            value
-        )
 
     /**
      * Update the QuestNav pose to keep its origin correct.
@@ -253,7 +261,7 @@ object Drivetrain : Subsystem, Sendable {
 
     override fun initSendable(builder: SendableBuilder) {
         builder.setSmartDashboardType(ElasticWidgets.SwerveDrive.widgetName)
-        builder.addDoubleProperty("Robot Angle", { inputs.gyroRotation.radians }, null)
+        builder.addDoubleProperty("Robot Angle", { estimatedPose.rotation.radians }, null)
 
         builder.addDoubleProperty("Front Left Angle", { io.modules.frontLeft.state.angle.radians }, null)
         builder.addDoubleProperty("Front Left Velocity", { io.modules.frontLeft.state.speedMetersPerSecond }, null)
@@ -280,7 +288,7 @@ object Drivetrain : Subsystem, Sendable {
                 translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 rotationInput.y * TAU * ROTATION_SENSITIVITY,
-                inputs.gyroRotation
+                estimatedPose.rotation
             )
         }
     }
@@ -326,7 +334,7 @@ object Drivetrain : Subsystem, Sendable {
                 translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 -magnitude,
-                inputs.gyroRotation
+                estimatedPose.rotation
             )
         }, {
             // Might be worth testing this but AdvantageScope seems to ignore `null`s
@@ -340,7 +348,8 @@ object Drivetrain : Subsystem, Sendable {
             DriverStation.Alliance.Red -> Rotation2d.k180deg
             else -> Rotation2d.kZero
         }
-        io.setGyro(zeroPos)
+        estimatedPose = Pose2d(estimatedPose.translation, zeroPos)
+//        io.setGyro(zeroPos)
     }
 
     internal object Constants {

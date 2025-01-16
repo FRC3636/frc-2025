@@ -55,11 +55,6 @@ abstract class DrivetrainIO {
         inputs.measuredPositions = modules.map { it.position }
     }
 
-    fun setGyro(rotation: Rotation2d) {
-        assert(rotation.radians in 0.0..TAU)
-        gyro.rotation = rotation
-    }
-
     var desiredStates: PerCorner<SwerveModuleState>
         get() = modules.map { it.desiredState }
         set(value) {

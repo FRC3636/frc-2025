@@ -27,6 +27,7 @@ import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
 import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
+import kotlin.math.absoluteValue
 
 class AbsolutePoseProviderInputs : LoggableInputs {
     /**
@@ -72,11 +73,11 @@ sealed class LimelightAlgorithm {
     /**
      * A newer and much more accurate algorithm that requires accurate gyro readings and a right-side-up Limelight.
      */
-    class MegaTag2(private val inputsProvider: () -> DrivetrainInputs) : LimelightAlgorithm() {
+    class MegaTag2(private val gyroGetter: () -> Rotation2d, private val velocityGetter: () -> AngularVelocity) : LimelightAlgorithm() {
         val gyroPosition: Rotation2d
-            get() = inputsProvider().gyroRotation
+            get() = gyroGetter()
         val gyroVelocity: AngularVelocity
-            get() = inputsProvider().gyroVelocity
+            get() = velocityGetter()
     }
 }
 
