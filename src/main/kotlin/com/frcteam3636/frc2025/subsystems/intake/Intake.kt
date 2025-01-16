@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.intake
 
 import com.frcteam3636.frc2025.Robot
+import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
@@ -20,23 +21,27 @@ object Intake: Subsystem {
         Logger.processInputs("Intake", inputs)
     }
 
-    fun intake(): Command =
+    fun downAndIntake(): Command =
         startEnd(
             {
                 io.setSpeed(0.5)
+                io.pivotToAngle(Radians.of(1.0))
             },
             {
                 io.setSpeed(0.0)
+                io.pivotToAngle(Radians.of(-1.0))
             }
         )
 
-    fun outtake(): Command =
+    fun downAndOuttake(): Command =
         startEnd(
             {
                 io.setSpeed(-0.5)
+                io.pivotToAngle(Radians.of(1.0))
             },
             {
                 io.setSpeed(0.0)
+                io.pivotToAngle(Radians.of(-1.0))
             }
         )
 }
