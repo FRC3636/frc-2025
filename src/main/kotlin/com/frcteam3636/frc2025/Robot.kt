@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.Indexer.Indexer
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
@@ -148,6 +149,18 @@ object Robot : LoggedRobot() {
             println("Zeroing gyro.")
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
+
+        controller.y()
+            .debounce(.15)
+            .whileTrue(
+                Indexer.indexCoral()
+            )
+
+        controller.b()
+            .debounce(.15)
+            .whileTrue(
+                Indexer.outtakeCoral()
+            )
 
     }
 
