@@ -58,7 +58,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
         )
 
         val offsetWithSpaceForBumpers = Translation2d(
-            -Drivetrain.Constants.BUMPER_LENGTH / 2.0,
+            -Drivetrain.Constants.BUMPER_LENGTH / 1.5,
             // We don't want to be *on top* of the april tag, so back up a bit from the tag.
             Meters.zero()
         )
