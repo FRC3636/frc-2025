@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.DriverStation
+import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 
 enum class ReefBranchSide {
@@ -32,12 +33,12 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
     constructor(aprilTagId: Int, side: ReefBranchSide) : this(
         aprilTagId,
         Translation2d(
+            Meters.zero(),
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
                 ReefBranchSide.Right -> APRIL_TAG_HORIZONTAL_OFFSET
                 ReefBranchSide.Left -> -APRIL_TAG_HORIZONTAL_OFFSET
-            },
-            Meters.zero()
+            }
         ),
     )
 
@@ -57,12 +58,11 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
         )
 
         val offsetWithSpaceForBumpers = Translation2d(
-            Meters.zero(),
+            -Drivetrain.Constants.BUMPER_LENGTH / 2.0,
             // We don't want to be *on top* of the april tag, so back up a bit from the tag.
-            -Drivetrain.Constants.BUMPER_LENGTH
+            Meters.zero()
         )
             .plus(offset)
-            .rotateBy(poseFacingAprilTag.rotation)
 
         pose = poseFacingAprilTag + Transform2d(offsetWithSpaceForBumpers, Rotation2d.kZero)
     }
@@ -95,6 +95,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val currentAllianceTargets: Array<AprilTagTarget>
             get() {
+                Logger.recordOutput("Drivetrain/All Targets", *redAllianceTargets.map { it.pose }.toTypedArray())
                 return when (DriverStation.getAlliance().getOrNull()) {
                     DriverStation.Alliance.Red -> redAllianceTargets
                     else -> blueAllianceTargets
@@ -111,4 +112,4 @@ fun Iterable<AprilTagTarget>.closestTargetTo(pose: Pose2d): AprilTagTarget =
         ?: error("Can't find closest target ")
 
 
-private val APRIL_TAG_HORIZONTAL_OFFSET = Meters.of(0.29505)
+private val APRIL_TAG_HORIZONTAL_OFFSET = Meters.of(0.147525)

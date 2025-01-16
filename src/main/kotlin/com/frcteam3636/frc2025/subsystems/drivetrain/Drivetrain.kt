@@ -21,6 +21,7 @@ import com.frcteam3636.frc2025.utils.math.toPPLib
 import com.frcteam3636.frc2025.utils.swerve.*
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.commands.PathfindingCommand
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
@@ -141,6 +142,10 @@ object Drivetrain : Subsystem, Sendable {
             { DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red) },
             this
         )
+
+        if (Robot.model != Robot.Model.SIMULATION) {
+            PathfindingCommand.warmupCommand().schedule();
+        }
 
         if (io is DrivetrainIOSim) {
             poseEstimator.resetPose(io.swerveDriveSimulation.simulatedDriveTrainPose)
