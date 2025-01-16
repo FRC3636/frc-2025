@@ -8,10 +8,7 @@ import com.frcteam3636.frc2025.utils.QuestNav
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Pose3d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Transform2d
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.units.Units.*
@@ -24,6 +21,10 @@ import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.Timer
 import org.littletonrobotics.junction.LogTable
 import org.littletonrobotics.junction.inputs.LoggableInputs
+import org.photonvision.PhotonCamera
+import org.photonvision.PhotonPoseEstimator
+import org.photonvision.simulation.PhotonCameraSim
+import org.photonvision.simulation.SimCameraProperties
 import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
 
@@ -38,16 +39,20 @@ class AbsolutePoseProviderInputs : LoggableInputs {
      */
     var connected = false
 
+    var observedTags: IntArray = intArrayOf()
+
     override fun toLog(table: LogTable) {
         if (measurement != null) {
             table.put("Measurement", measurement)
         }
         table.put("Connected", connected)
+        table.put("ObservedTags", observedTags)
     }
 
     override fun fromLog(table: LogTable) {
         measurement = table.get("Measurement", measurement)[0]
         connected = table.get("Connected", connected)
+        observedTags = table.get("ObservedTags", observedTags)
     }
 }
 
@@ -161,6 +166,44 @@ class LimelightPoseProvider(
     }
 }
 
+@Suppress("unused")
+class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : AbsolutePoseProvider {
+    private val camera = PhotonCamera(name)
+    private val simProperties = SimCameraProperties().apply {
+        setCalibration(1280, 800, Rotation2d(LIMELIGHT_FOV))
+        fps = 20.0
+        avgLatencyMs = 51.0
+        latencyStdDevMs = 5.0
+    }
+    val sim = PhotonCameraSim(camera, simProperties)
+
+    private val estimator =
+        PhotonPoseEstimator(
+            APRIL_TAGS,
+            PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+            chassisToCamera
+        )
+
+    override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
+        inputs.connected = true
+        inputs.measurement = null
+        val unreadResults = camera.allUnreadResults
+        val latestResult = unreadResults.lastOrNull()
+        if (latestResult != null) {
+            estimator.update(latestResult).ifPresent {
+                inputs.measurement = AbsolutePoseMeasurement(
+                    it.estimatedPose.toPose2d(),
+                    Seconds.of(it.timestampSeconds),
+                    VecBuilder.fill(0.7, 0.7, 9999999.0)
+                )
+            }
+            inputs.observedTags = latestResult.targets.map {
+                it.fiducialId
+            }.toIntArray()
+        }
+    }
+}
+
 @Logged
 open class QuestNavInputs {
     /**
@@ -196,32 +239,6 @@ class QuestNavLocalizer(
         inputs.pose = questNav.pose.transformBy(deviceToChassis)
     }
 }
-
-//@Suppress("unused")
-//class PhotonVisionPoseIOReal(name: String, chassisToCamera: Transform3d) : AbsolutePoseIO {
-//    private val camera = PhotonCamera(name).apply { driverMode = false }
-//    private val estimator =
-//        PhotonPoseEstimator(
-//            APRIL_TAG_FIELD_LAYOUT,
-//            PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-//            camera,
-//            chassisToCamera
-//        )
-//
-//    override fun updateInputs(inputs: AbsolutePoseIO.Inputs) {
-//        inputs.measurement = null
-//        estimator.update().ifPresent {
-//            inputs.measurement = AbsolutePoseMeasurement(
-//                it.estimatedPose,
-//                it.timestampSeconds,
-//                APRIL_TAG_STD_DEV(it.estimatedPose.translation.norm, it.targetsUsed.size)
-//            )
-//        }
-//    }
-//
-//    override val cameraConnected
-//        get() = camera.isConnected
-//}
 
 data class AbsolutePoseMeasurement(
     val pose: Pose2d,
@@ -272,7 +289,6 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
     }
 }
 
-//internal val APRIL_TAG_FIELD_LAYOUT = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2024Crescendo.m_resourceFile)
 
 //internal const val APRIL_TAG_AMBIGUITY_FILTER = 0.3
 //internal val APRIL_TAG_STD_DEV = { distance: Double, count: Int ->
@@ -283,3 +299,5 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 //        translationalStdDev, translationalStdDev, rotationalStdDev
 //    )
 //}
+
+val LIMELIGHT_FOV = Degrees.of(75.76079874010732)

@@ -11,6 +11,8 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_
 import com.frcteam3636.frc2025.utils.math.TAU
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.studica.frc.AHRS
+import edu.wpi.first.apriltag.AprilTagFieldLayout
+import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -24,6 +26,7 @@ import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
 import org.littletonrobotics.junction.Logger
+import org.photonvision.simulation.VisionSystemSim
 import org.team9432.annotation.Logged
 
 @Logged
@@ -138,6 +141,10 @@ class DrivetrainIOSim : DrivetrainIO() {
         Pose2d(3.0, 3.0, Rotation2d())
     )
 
+    val vision = VisionSystemSim("main").apply {
+        addAprilTags(APRIL_TAGS)
+    }
+
     override val modules = PerCorner.generate { SimSwerveModule(swerveDriveSimulation.modules[it.ordinal]) }
     override val gyro = GyroMapleSim(swerveDriveSimulation.gyroSimulation)
 
@@ -147,8 +154,21 @@ class DrivetrainIOSim : DrivetrainIO() {
 
     override fun updateInputs(inputs: DrivetrainInputs) {
         super.updateInputs(inputs)
+        vision.update(swerveDriveSimulation.simulatedDriveTrainPose)
         Logger.recordOutput("FieldSimulation/RobotPosition", swerveDriveSimulation.simulatedDriveTrainPose)
+    }
+
+    fun registerPoseProviders(providers: Iterable<AbsolutePoseProvider>) {
+        for (provider in providers) {
+            if (provider is CameraSimPoseProvider) {
+                vision.addCamera(provider.sim, provider.chassisToCamera)
+            }
+        }
     }
 
     // Register the drivetrain simulation to the default simulation world
 }
+
+val APRIL_TAGS = AprilTagFieldLayout.loadFromResource(
+    AprilTagFields.k2025Reefscape.m_resourceFile
+)!!
