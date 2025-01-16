@@ -62,10 +62,20 @@ object Drivetrain : Subsystem, Sendable {
     private val questNavInputs = LoggedQuestNavInputs()
     private var questNavCalibrated = false
 
+    private val mt2Algo = LimelightAlgorithm.MegaTag2 ( {
+        poseEstimator.estimatedPosition.rotation
+    }, {
+        inputs.gyroVelocity
+    } )
+
     private val absolutePoseIOs = mapOf(
-        "Limelight" to LimelightPoseProvider(
-            "limelight",
-            algorithm = LimelightAlgorithm.MegaTag2 { inputs }
+        "Limelight Front" to LimelightPoseProvider(
+            "limelight-front",
+            algorithm = mt2Algo
+        ),
+        "Limelight Rear" to LimelightPoseProvider(
+            "limelight-rear",
+            algorithm = mt2Algo
         ),
     ).mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
@@ -106,7 +116,6 @@ object Drivetrain : Subsystem, Sendable {
             LocalADStarAK()
         )
 
-        // FIXME: Update for 2025
         AutoBuilder.configure(
             this::estimatedPose,
             this::estimatedPose::set,
