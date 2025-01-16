@@ -101,43 +101,44 @@ class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : Drivetra
 
 /** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */
 class DrivetrainIOSim : DrivetrainIO() {
-    // Create and configure a drivetrain simulation configuration
-    val driveTrainSimulationConfig: DriveTrainSimulationConfig =
-        DriveTrainSimulationConfig.Default() // Specify gyro type (for realistic gyro drifting and error simulation)
-            .withGyro(COTS.ofPigeon2()) // Specify swerve module (for realistic swerve dynamics)
-            .withSwerveModule(
-                // FIXME: Calculate values
-                SwerveModuleSimulationConfig(
-                    DCMotor.getKrakenX60(1),  // Drive motor is a Kraken X60
-                    DCMotor.getNeo550(1),  // Steer motor is a Neo 550
-                    (45.0 * 22.0) / (14.0 * 15.0),
-                    9424.0 / 203.0,
-                    Volts.of(0.1),
-                    Volts.of(0.1),
-                    WHEEL_RADIUS,
-                    KilogramSquareMeters.of(0.02),
-                    WHEELS.SLS_PRINTED_WHEELS.cof
+    companion object {
+        // Create and configure a drivetrain simulation configuration
+        private val driveTrainSimulationConfig: DriveTrainSimulationConfig =
+            DriveTrainSimulationConfig.Default() // Specify gyro type (for realistic gyro drifting and error simulation)
+                .withGyro(COTS.ofPigeon2()) // Specify swerve module (for realistic swerve dynamics)
+                .withSwerveModule(
+                    // FIXME: Calculate values
+                    SwerveModuleSimulationConfig(
+                        DCMotor.getKrakenX60(1),  // Drive motor is a Kraken X60
+                        DCMotor.getNeo550(1),  // Steer motor is a Neo 550
+                        (45.0 * 22.0) / (14.0 * 15.0),
+                        9424.0 / 203.0,
+                        Volts.of(0.1),
+                        Volts.of(0.1),
+                        WHEEL_RADIUS,
+                        KilogramSquareMeters.of(0.02),
+                        WHEELS.SLS_PRINTED_WHEELS.cof
+                    )
                 )
-            )
-            // Configures the track length and track width (spacing between swerve modules)
-            .withTrackLengthTrackWidth(
-                WHEEL_BASE,
-                TRACK_WIDTH
-            ) // Configures the bumper size (dimensions of the robot bumper)
-            .withBumperSize(BUMPER_WIDTH, BUMPER_LENGTH)
+                // Configures the track length and track width (spacing between swerve modules)
+                .withTrackLengthTrackWidth(
+                    WHEEL_BASE,
+                    TRACK_WIDTH
+                ) // Configures the bumper size (dimensions of the robot bumper)
+                .withBumperSize(BUMPER_WIDTH, BUMPER_LENGTH)
 
-            .withCustomModuleTranslations(
-                MODULE_POSITIONS.map { it.translation }.toTypedArray()
-            )
+                .withCustomModuleTranslations(
+                    MODULE_POSITIONS.map { it.translation }.toTypedArray()
+                )
 
-    // Create a swerve drive simulation
-    val swerveDriveSimulation = SwerveDriveSimulation(
-        // Specify Configuration
-        driveTrainSimulationConfig,
-        // Specify starting pose
-        Pose2d(3.0, 3.0, Rotation2d())
-    )
-
+        // Create a swerve drive simulation
+        public val swerveDriveSimulation = SwerveDriveSimulation(
+            // Specify Configuration
+            driveTrainSimulationConfig,
+            // Specify starting pose
+            Pose2d(3.0, 3.0, Rotation2d())
+        )
+    }
     override val modules = PerCorner.generate { SimSwerveModule(swerveDriveSimulation.modules[it.ordinal]) }
     override val gyro = GyroMapleSim(swerveDriveSimulation.gyroSimulation)
 

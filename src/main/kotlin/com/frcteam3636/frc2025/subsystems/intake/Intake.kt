@@ -9,7 +9,7 @@ import org.littletonrobotics.junction.Logger
 object Intake: Subsystem {
 
     private val io: IntakeIO = when (Robot.model) {
-        Robot.Model.SIMULATION -> TODO()
+        Robot.Model.SIMULATION -> IntakeIOSim()
         Robot.Model.COMPETITION -> IntakeIOReal()
         Robot.Model.PROTOTYPE -> TODO()
     }

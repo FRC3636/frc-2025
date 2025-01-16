@@ -5,10 +5,9 @@ import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
-import com.frcteam3636.frc2025.CTREDeviceId
-import com.frcteam3636.frc2025.REVMotorControllerId
-import com.frcteam3636.frc2025.SparkFlex
-import com.frcteam3636.frc2025.TalonFX
+import com.frcteam3636.frc2025.*
+import com.frcteam3636.frc2025.subsystems.drivetrain.DrivetrainIOSim.Companion.swerveDriveSimulation
+import com.frcteam3636.frc2025.subsystems.intake.Intake.inputs
 import com.frcteam3636.frc2025.utils.math.MotorFFGains
 import com.frcteam3636.frc2025.utils.math.PIDGains
 import com.frcteam3636.frc2025.utils.math.motorFFGains
@@ -18,9 +17,13 @@ import com.revrobotics.spark.SparkBase.ResetMode
 import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode
 import com.revrobotics.spark.config.SparkFlexConfig
-import edu.wpi.first.units.Measure
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.wpilibj.simulation.FlywheelSim
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
+import org.ironmaple.simulation.IntakeSimulation
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 import kotlin.math.roundToInt
@@ -29,7 +32,6 @@ import kotlin.math.roundToInt
 open class IntakeInputs {
     var rollerVelocity = RotationsPerSecond.zero()!!
     var rollerCurrent = Amps.zero()!!
-    var rollerPosition = Radians.zero()!!
 
     var armVelocity = RotationsPerSecond.zero()!!
     var armCurrent = Amps.zero()!!
@@ -105,7 +107,6 @@ class IntakeIOReal: IntakeIO {
     override fun updateInputs(inputs: IntakeInputs) {
         inputs.rollerVelocity = RotationsPerSecond.of(intakeRollerMotor.encoder.velocity)
         inputs.rollerCurrent = Amps.of(intakeRollerMotor.outputCurrent)
-        inputs.rollerPosition = Rotations.of(intakeRollerMotor.encoder.position.mod(1.0))
 
         inputs.armVelocity = intakeArmMotor.velocity.value
         inputs.armCurrent = intakeArmMotor.torqueCurrent.value
@@ -125,6 +126,58 @@ class IntakeIOReal: IntakeIO {
 
 }
 
-//class IntakeIOSim: IntakeIO {
-//    intakeSimulation = Intakesimulation()
-//}
+class IntakeIOSim: IntakeIO {
+
+    val flywheelSim = FlywheelSim(
+        LinearSystemId.createFlywheelSystem(
+            DCMotor.getNeoVortex(1),
+            0.00942358695924,
+            1.6
+        ),
+        DCMotor.getNeoVortex(1)
+    )
+
+    val armSim = SingleJointedArmSim(
+        LinearSystemId.createSingleJointedArmSystem(
+            DCMotor.getNeoVortex(1),
+            0.00942358695924,
+            1.6
+        ),
+        DCMotor.getNeoVortex(1)
+    )
+
+    var intakeSimulation = IntakeSimulation.OverTheBumperIntake(
+        "Coral",
+        swerveDriveSimulation,
+        Meters.of(0.7),
+        Meters.of(0.3),
+        IntakeSimulation.IntakeSide.FRONT,
+        1)
+
+    override fun setSpeed(percent: Double){
+        assert(percent in -100.0..100.0)
+        flywheelSim.setInputVoltage(percent*12.0)
+        if (inputs.armPosition == ARM_DOWN && percent > 0){intakeSimulation.startIntake()}
+        else {intakeSimulation.stopIntake()}
+    }
+
+    override fun pivotToAngle(position: Angle){
+        if (position > Radians.of(0.0)){ inputs.armPosition = ARM_DOWN}
+        else { inputs.armPosition = ARM_UP}
+    }
+
+    override fun updateInputs(inputs: IntakeInputs){
+        flywheelSim.update(Robot.period)
+        inputs.rollerVelocity = RadiansPerSecond.of(flywheelSim.angularVelocityRadPerSec)
+        inputs.rollerCurrent = Amps.of(flywheelSim.currentDrawAmps)
+
+        inputs.armVelocity =
+        inputs.armCurrent =
+        inputs.armPosition = inputs.armPosition
+    }
+
+    internal companion object Constants {
+        private val ARM_UP = Radians.of(1.0)
+        private val ARM_DOWN = Radians.of(0.2)
+    }
+}
