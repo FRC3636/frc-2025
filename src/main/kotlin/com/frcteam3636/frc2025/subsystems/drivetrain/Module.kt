@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
 import org.ironmaple.simulation.drivesims.SwerveModuleSimulation
@@ -70,21 +71,20 @@ class MAXSwerveModule(
         }, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
     }
 
-    // whereas the turning encoder must be absolute so that
-    // we know where the wheel is pointing
     private val turningEncoder = turningSpark.getAbsoluteEncoder()
-
 
     private val turningPIDController = turningSpark.closedLoopController
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            drivingMotor.velocity.`in`(MetersPerSecond), Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.velocity,
+            Rotation2d(turningEncoder.angle) + chassisAngle,
         )
 
     override val position: SwerveModulePosition
         get() = SwerveModulePosition(
-            drivingMotor.position, Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.position,
+            Rotation2d(turningEncoder.angle) + chassisAngle
         )
 
     override var desiredState: SwerveModuleState = SwerveModuleState(0.0, -chassisAngle)
@@ -96,12 +96,11 @@ class MAXSwerveModule(
                 Rotation2d.fromRadians(turningEncoder.position)
             )
 
-            drivingMotor.velocity = corrected.speed
+            drivingMotor.desiredVelocity = corrected.speed
 
             turningPIDController.setReference(
                 corrected.angle.radians, SparkBase.ControlType.kPosition
             )
-
 
             field = corrected
         }
@@ -109,11 +108,11 @@ class MAXSwerveModule(
 
 interface DrivingMotor {
     val position: Distance
-    var velocity: LinearVelocity
+    val velocity: LinearVelocity
+    var desiredVelocity: LinearVelocity
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
-
     private val inner = TalonFX(id).apply {
         configurator.apply(Slot0Configs().apply {
             pidGains = DRIVING_PID_GAINS_TALON
@@ -133,12 +132,18 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     override val position: Distance
-        get() = Meters.of(inner.position.value.`in`(Rotations) * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
+        get() = (inner.position.value * DRIVING_TALON_DISTANCE_PER_ANGLE) as Distance
+//        get() = Meters.of(inner.position.value.`in`(Rotations) * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
 
-    override var velocity: LinearVelocity
-        get() = MetersPerSecond.of(inner.velocity.value.`in`(RotationsPerSecond) * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
+    override val velocity: LinearVelocity
+        get() = (inner.velocity.value * DRIVING_TALON_DISTANCE_PER_ANGLE) as LinearVelocity
+//        get() = MetersPerSecond.of(inner.velocity.value.`in`(RotationsPerSecond) * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
+
+
+    override var desiredVelocity: LinearVelocity = MetersPerSecond.zero()
         set(value) {
-            inner.setControl(VelocityTorqueCurrentFOC(value.`in`(MetersPerSecond) / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.`in`(Meters)))
+            inner.setControl(VelocityTorqueCurrentFOC((value / DRIVING_TALON_DISTANCE_PER_ANGLE) as AngularVelocity))
+            field = value
         }
 }
 
@@ -164,13 +169,17 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
     }
 
     override val position: Distance
-        get() = Meters.of(inner.encoder.position)
+        get() = (inner.encoder.angle * DRIVING_NEO_DISTANCE_PER_ANGLE) as Distance
 
-    override var velocity: LinearVelocity
-        get() = MetersPerSecond.of(inner.encoder.velocity)
+    override val velocity: LinearVelocity
+        // FIXME: This crashes
+        get() = (inner.encoder.angularVelocity * DRIVING_NEO_DISTANCE_PER_ANGLE) as LinearVelocity
+
+    override var desiredVelocity: LinearVelocity = MetersPerSecond.zero()
         set(value) {
-            Logger.recordOutput("/Drivetrain/$id/OutputVel", value)
-            inner.closedLoopController.setReference(value.`in`(MetersPerSecond), SparkBase.ControlType.kVelocity)
+            Logger.recordOutput("/Drivetrain/$id/Desired Velocity", value)
+            inner.closedLoopController.setReference(value, MetersPerSecond)
+            field = value
         }
 }
 //
@@ -231,6 +240,9 @@ private const val DRIVING_MOTOR_PINION_TEETH = 14
 
 internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
 const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
+
+internal val DRIVING_NEO_DISTANCE_PER_ANGLE = WHEEL_CIRCUMFERENCE / Rotations.one() / DRIVING_GEAR_RATIO_NEO
+internal val DRIVING_TALON_DISTANCE_PER_ANGLE = WHEEL_CIRCUMFERENCE / Rotations.one() / DRIVING_GEAR_RATIO_TALON
 
 internal val NEO_DRIVING_FREE_SPEED = MetersPerSecond.of((NEO_FREE_SPEED.`in`(RotationsPerSecond) * WHEEL_CIRCUMFERENCE.`in`(Meters)) / DRIVING_GEAR_RATIO_NEO)
 
