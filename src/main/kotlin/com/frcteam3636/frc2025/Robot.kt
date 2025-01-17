@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
@@ -147,7 +148,29 @@ object Robot : LoggedRobot() {
     private fun configureBindings() {
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
 
-        controller.a().whileTrue(Drivetrain.alignToNearestPOI())
+        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
+            println("Setting desired target node to left branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+        }))
+
+        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
+            println("Setting desired target node to right branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+        }))
+
+        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOV())
+
+        controller.a().whileTrue(Drivetrain.alignToClosestPOV())
+
+        controller.b().onTrue(Commands.runOnce({
+            println("Setting desired target node to left branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+        }))
+
+        controller.x().onTrue(Commands.runOnce({
+            println("Setting desired target node to right branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+        }))
 
         // (The button with the yellow tape on it)
         JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({

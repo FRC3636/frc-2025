@@ -20,6 +20,16 @@ interface AlignableTarget {
     val pose: Pose2d
 }
 
+data class TargetGroup(val targets: Array<AprilTagTarget>)
+
+data class TargetSelection(
+    val group: TargetGroup,
+    val idx: Int = 0,
+) {
+    val pose: Pose2d
+        get() = group.targets[idx].pose
+}
+
 /**
  * An alignment target relative to an April Tag's location.
  *
@@ -36,8 +46,8 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             Meters.zero(),
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
-                ReefBranchSide.Right -> APRIL_TAG_HORIZONTAL_OFFSET
-                ReefBranchSide.Left -> -APRIL_TAG_HORIZONTAL_OFFSET
+                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET
+                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET
             }
         ),
     )
@@ -68,38 +78,40 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
     }
 
     companion object {
-        /** Makes a list of reef side targets. The given april tags are used to determine the pose of the target. */
-        private fun branchTargetsFromIds(ids: IntRange): Array<AprilTagTarget> {
+        private fun branchTargetsFromIds(ids: IntRange): Array<TargetGroup> {
             return ids
-                .flatMap { id ->
-                    ReefBranchSide.entries.map { side ->
-                        AprilTagTarget(id, side)
-                    }
+                .map { id ->
+                    TargetGroup(
+                        arrayOf(
+                            AprilTagTarget(id, ReefBranchSide.Left),
+                            AprilTagTarget(id, ReefBranchSide.Right),
+                        )
+                    )
                 }
                 .toTypedArray()
         }
 
-        val redAllianceTargets = arrayOf(
+        val redAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
             *branchTargetsFromIds(6..11),
             // Processor
-            AprilTagTarget(3, Translation2d()),
+            TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
             // Human Player Stations
-            AprilTagTarget(1, Translation2d()),
-            AprilTagTarget(2, Translation2d())
+            TargetGroup(arrayOf(AprilTagTarget(1, Translation2d()))),
+            TargetGroup(arrayOf(AprilTagTarget(2, Translation2d())))
         )
 
-        val blueAllianceTargets = arrayOf(
+        val blueAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
             *branchTargetsFromIds(17..22),
             // Processor
-            AprilTagTarget(16, Translation2d()),
+            TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
             // Human Player Stations
-            AprilTagTarget(13, Translation2d()),
-            AprilTagTarget(12, Translation2d())
+            TargetGroup(arrayOf(AprilTagTarget(13, Translation2d()))),
+            TargetGroup(arrayOf(AprilTagTarget(12, Translation2d())))
         )
 
-        val currentAllianceTargets: Array<AprilTagTarget>
+        val currentAllianceTargets: Array<TargetGroup>
             get() {
                 return when (DriverStation.getAlliance().getOrNull()) {
                     DriverStation.Alliance.Red -> redAllianceTargets
@@ -109,12 +121,25 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
     }
 }
 
-/**
- * Returns the target closest to the given pose.
- */
-fun Iterable<AprilTagTarget>.closestTargetTo(pose: Pose2d): AprilTagTarget =
-    minByOrNull { it.pose.relativeTo(pose).translation.norm }
-        ?: error("Can't find closest target ")
+@Suppress("unused")
+fun Iterable<TargetGroup>.closestTargetTo(pose: Pose2d): TargetSelection =
+    flatMap { group ->
+        group.targets.indices.map {
+            TargetSelection(group, idx = it)
+        }
+    }.minByOrNull {
+        it.pose.relativeTo(pose).translation.norm
+    } ?: error("Can't find closest target")
 
+fun Iterable<TargetGroup>.closestTargetToWithSelection(pose: Pose2d, reefBranchSide: ReefBranchSide): TargetSelection =
+    map { group ->
+        if (group.targets.size >= reefBranchSide.ordinal + 1) {
+            TargetSelection(group, idx = reefBranchSide.ordinal)
+        } else {
+            TargetSelection(group, idx = 0)
+        }
+    }.minByOrNull { it : TargetSelection ->
+        it.pose.relativeTo(pose).translation.norm
+    } ?: error("Can't find closest target")
 
 private val APRIL_TAG_HORIZONTAL_OFFSET = Meters.of(0.147525)

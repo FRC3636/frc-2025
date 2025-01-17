@@ -10,8 +10,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.closestTargetTo
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
 import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.PIDController
@@ -63,6 +62,8 @@ object Drivetrain : Subsystem, Sendable {
     private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
     private val questNavInputs = LoggedQuestNavInputs()
     private var questNavCalibrated = false
+
+    var currentTargetSelection: ReefBranchSide = ReefBranchSide.Right
 
     private val mt2Algo = LimelightAlgorithm.MegaTag2 ( {
         poseEstimator.estimatedPosition.rotation
@@ -351,10 +352,10 @@ object Drivetrain : Subsystem, Sendable {
         })
     }
 
-    fun alignToNearestPOI(): Command = defer {
+    fun alignToClosestPOV(): Command = defer {
         val target = AprilTagTarget.currentAllianceTargets
             .asIterable()
-            .closestTargetTo(estimatedPose)
+            .closestTargetToWithSelection(estimatedPose, currentTargetSelection)
 
         AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS)
     }
