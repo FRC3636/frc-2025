@@ -94,6 +94,7 @@ class ElevatorIOReal: ElevatorIO {
     }
 
     override fun runToHeight(height: Distance) {
+        assert(height in MIN_HEIGHT..MAX_HEIGHT)
         Logger.recordOutput("Elevator/Height Setpoint", height)
         var desiredMotorAngle = (height / DISTANCE_PER_TURN) as Angle
         var controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
@@ -109,14 +110,16 @@ class ElevatorIOReal: ElevatorIO {
     }
 
     internal companion object Constants {
-        val DISTANCE_PER_TURN = Meters.per(Rotation).of(0.0)!!
+        private val DISTANCE_PER_TURN = Meters.per(Rotation).of(0.0)!!
         private const val GEAR_RATIO = 0.0
-        val PID_GAINS = PIDGains(0.0, 0.0, 0.0)
-        val FF_GAINS = MotorFFGains(0.0, 0.0, 0.0)
+        private val PID_GAINS = PIDGains(0.0, 0.0, 0.0)
+        private val FF_GAINS = MotorFFGains(0.0, 0.0, 0.0)
         private const val GRAVITY_GAIN = 0.0
         private const val PROFILE_ACCELERATION = 0.0
         private const val PROFILE_JERK = 0.0
         private const val PROFILE_VELOCITY = 0.0
+        private val MAX_HEIGHT = Meters.of(100.0)
+        private val MIN_HEIGHT = Meters.of(0.0)
     }
 
 }

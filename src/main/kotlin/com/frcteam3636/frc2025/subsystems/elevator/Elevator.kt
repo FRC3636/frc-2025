@@ -35,12 +35,12 @@ object Elevator: Subsystem {
 //        sysID.dynamic(direction)!!
 
     enum class Position(val height: Distance) {
-        Stowed(Meters.of(0.0)),
-        Trough(Meters.of(0.0)),
-        LowBar(Meters.of(0.0)),
-        MidBar(Meters.of(0.0)),
-        HighBar(Meters.of(0.0)),
-        LowAlgae(Meters.of(0.0)),
-        HighAlgae(Meters.of(0.0)),
+        Stowed(Meters.of(0.0)), // Not true but will change with the design, make an actual constant after a real robot is built
+        Trough(Meters.of(0.418)),
+        LowBar(Meters.of(0.765124)),
+        MidBar(Meters.of(1.161953)),
+        HighBar(Meters.of(1.809750)),
+//        LowAlgae(Meters.of(0.0)), // No algae for now according to the cad people
+//        HighAlgae(Meters.of(0.0)),
     }
 }
