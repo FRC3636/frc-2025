@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.Timer
 import org.littletonrobotics.junction.LogTable
+import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.inputs.LoggableInputs
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
@@ -27,7 +28,7 @@ import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
 import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
-import kotlin.math.absoluteValue
+import kotlin.concurrent.thread
 
 class AbsolutePoseProviderInputs : LoggableInputs {
     /**
@@ -81,6 +82,11 @@ sealed class LimelightAlgorithm {
     }
 }
 
+data class LimelightMeasurement(
+        var poseMeasurement: AbsolutePoseMeasurement? = null,
+        var observedTags: IntArray = intArrayOf(),
+)
+
 class LimelightPoseProvider(
     private val name: String,
     private val algorithm: LimelightAlgorithm,
@@ -89,21 +95,43 @@ class LimelightPoseProvider(
     // https://docs.limelightvision.io/docs/docs-limelight/tutorials/tutorial-swerve-pose-estimation
     // https://docs.limelightvision.io/docs/docs-limelight/apis/limelight-lib#4-field-localization-with-megatag
 
-    private fun updateCurrentMeasurement(): AbsolutePoseMeasurement? {
-        return when (algorithm) {
+    private var observedTags = intArrayOf()
+
+    private var measurement: AbsolutePoseMeasurement? = null
+    private var mutex = Any()
+
+    init {
+        thread(isDaemon = true) {
+            while (true) {
+                val temp = updateCurrentMeasurement()
+                synchronized(mutex) {
+                    measurement = temp.poseMeasurement
+                    observedTags = temp.observedTags
+                }
+                Thread.sleep(Robot.period.toLong())
+            }
+        }
+    }
+
+    private fun updateCurrentMeasurement(): LimelightMeasurement {
+        val measurement = LimelightMeasurement()
+
+        when (algorithm) {
             is LimelightAlgorithm.MegaTag ->
                 LimelightHelpers.getBotPoseEstimate_wpiBlue(name)?.let { estimate ->
+                    measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
+
                     // Reject zero tag or low-quality one tag readings
-                    if (estimate.tagCount == 0) return null
+                    if (estimate.tagCount == 0) return measurement
                     if (estimate.tagCount == 1) {
                         val fiducial = estimate.rawFiducials[0]
                         if (fiducial == null
                             || fiducial.ambiguity > AMBIGUITY_THRESHOLD
                             || fiducial.distToCamera > MAX_SINGLE_TAG_DISTANCE
-                        ) return null
+                        ) return measurement
                     }
 
-                    return AbsolutePoseMeasurement(
+                    measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         Seconds.of(estimate.timestampSeconds),
                         // This value is pulled directly from the Limelight docs (linked at the top of this class)
@@ -120,10 +148,13 @@ class LimelightPoseProvider(
                 )
 
                 LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name)?.let { estimate ->
-                    if (algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0) return null
-                    if (estimate.tagCount == 0) return null
+                    measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
+                    val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
+                    Logger.recordOutput("Drivetrain/Absolute Pose/$name/High Speed Rejection", highSpeed)
+                    if (estimate.tagCount == 0 || highSpeed) return measurement
 
-                    return AbsolutePoseMeasurement(
+
+                    measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         Seconds.of(estimate.timestampSeconds),
                         // This value is also pulled directly from the Limelight docs
@@ -133,17 +164,22 @@ class LimelightPoseProvider(
             }
 
         }
+
+        return measurement
     }
 
     override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
-        val measurement = this.updateCurrentMeasurement()
-        inputs.measurement = measurement
+//        val measurement = this.updateCurrentMeasurement()
+        synchronized(mutex) {
+            inputs.measurement = measurement
+            inputs.observedTags = observedTags
 
-        // We assume the camera has disconnected if there are no new updates for several ticks.
-        inputs.connected = if (measurement != null) {
-            val timeSinceLastUpdate = Seconds.of(Timer.getTimestamp()) - measurement.timestamp
-            timeSinceLastUpdate > CONNECTED_TIMEOUT
-        } else false
+            // We assume the camera has disconnected if there are no new updates for several ticks.
+            inputs.connected = if (measurement != null) {
+                val timeSinceLastUpdate = Seconds.of(Timer.getTimestamp()) - measurement!!.timestamp
+                timeSinceLastUpdate > CONNECTED_TIMEOUT
+            } else false
+        }
     }
 
     companion object {

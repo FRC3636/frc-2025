@@ -66,7 +66,7 @@ object Robot : LoggedRobot() {
         )
 
         // Joysticks are likely to be missing in simulation, which usually isn't a problem.
-        DriverStation.silenceJoystickConnectionWarning(!isReal())
+        DriverStation.silenceJoystickConnectionWarning(model != Model.COMPETITION)
 
         configureAdvantageKit()
         configureSubsystems()

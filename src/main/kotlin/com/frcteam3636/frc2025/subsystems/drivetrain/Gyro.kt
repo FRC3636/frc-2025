@@ -49,7 +49,7 @@ class GyroNavX(private val ahrs: AHRS) : Gyro {
         }
 
     override val velocity: AngularVelocity
-        get() = DegreesPerSecond.of(ahrs.rate)
+        get() = DegreesPerSecond.zero() // NavX get rate broken... use the Pigeon lol
 
     override val connected
         get() = ahrs.isConnected

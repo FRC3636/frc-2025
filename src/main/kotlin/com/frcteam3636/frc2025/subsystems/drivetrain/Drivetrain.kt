@@ -10,7 +10,9 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.closestTargetToWithSelection
 import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.PIDController
@@ -180,17 +182,17 @@ object Drivetrain : Subsystem, Sendable {
             inputs.measuredPositions.toTypedArray()
         )
 
-        questNavLocalizer.updateInputs(questNavInputs)
-        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
-        updateQuestNavOrigin()
+//        questNavLocalizer.updateInputs(questNavInputs)
+//        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
+//        updateQuestNavOrigin()
 
-        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
+//        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
         Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
         Logger.recordOutput("Drivetrain/Localizer", localizer.name)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
-        questNavInactiveAlert.set(localizer != Localizer.QuestNav)
+//        questNavInactiveAlert.set(localizer != Localizer.QuestNav)
 
         Logger.recordOutput(
             "Drivetrain/TagPoses", *APRIL_TAGS.tags
@@ -418,7 +420,7 @@ object Drivetrain : Subsystem, Sendable {
 
         //        // Pathing
         val DEFAULT_PATHING_CONSTRAINTS =
-            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
+                PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879 * 1.5, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
 
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(

@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.DriverStation
-import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 
 enum class ReefBranchSide {
@@ -93,9 +92,9 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val redAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
-            *branchTargetsFromIds(6..11),
+//            *branchTargetsFromIds(6..11),
             // Processor
-            TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
             // Human Player Stations
             TargetGroup(arrayOf(AprilTagTarget(1, Translation2d()))),
             TargetGroup(arrayOf(AprilTagTarget(2, Translation2d())))
@@ -103,9 +102,9 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val blueAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
-            *branchTargetsFromIds(17..22),
+//            *branchTargetsFromIds(17..22),
             // Processor
-            TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
             // Human Player Stations
             TargetGroup(arrayOf(AprilTagTarget(13, Translation2d()))),
             TargetGroup(arrayOf(AprilTagTarget(12, Translation2d())))
