@@ -10,7 +10,7 @@ import org.littletonrobotics.junction.Logger
 
 object Manipulator: Subsystem {
     private val io: ManipulatorIO = when (Robot.model){
-        Robot.Model.SIMULATION -> TODO()
+        Robot.Model.SIMULATION -> ManipulatorIOSim()
         Robot.Model.COMPETITION -> ManipulatorIOReal()
         Robot.Model.PROTOTYPE -> TODO()
     }

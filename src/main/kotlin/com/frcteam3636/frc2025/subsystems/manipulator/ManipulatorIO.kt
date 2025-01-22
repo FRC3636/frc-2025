@@ -5,8 +5,12 @@ import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.TalonFX
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
+import edu.wpi.first.math.system.plant.LinearSystemId.createDCMotorSystem
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.Ultrasonic
+import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
 
 @Logged
@@ -58,4 +62,19 @@ class ManipulatorIOReal: ManipulatorIO {
         private const val FRONT_ULTRASONIC_PING_CHANNEL = 0
         private const val FRONT_ULTRASONIC_ECHO_CHANNEL = 0
     }
+}
+
+class ManipulatorIOSim: ManipulatorIO {
+    var motor = DCMotor.getKrakenX60Foc(1)
+    var system = LinearSystemId.createFlywheelSystem(motor,1.0, 1.0)
+    private var simMotor = FlywheelSim(system, motor, 1.0)
+
+    override fun setSpeed(percent: Double) {
+        simMotor.setInput()
+    }
+
+    override fun updateInputs(inputs: ManipulatorInputs) {
+        TODO("Not yet implemented")
+    }
+
 }
