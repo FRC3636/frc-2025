@@ -29,11 +29,6 @@ object Dashboard {
             Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
         }
 
-        tab.add("Swerve Drive", Drivetrain)!!
-            .withWidget(ElasticWidgets.SwerveDrive.widgetName)
-            .withSize(4, 4)
-            .withPosition(6, 0)
-
 //        tab.addNumber("Velocity, meters per second") {
 //            Translation2d(
 //                Drivetrain.measuredChassisSpeeds.vxMetersPerSecond,
