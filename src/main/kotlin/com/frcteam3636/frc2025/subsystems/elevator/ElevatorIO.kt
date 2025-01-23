@@ -12,7 +12,6 @@ import com.ctre.phoenix6.sim.TalonFXSimState
 import com.frcteam3636.frc2025.CANcoder
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
-import com.frcteam3636.frc2025.Robot.controller
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants
@@ -110,8 +109,8 @@ class ElevatorIOReal: ElevatorIO {
 
     override fun runToHeight(height: Distance) {
         Logger.recordOutput("Elevator/Height Setpoint", height)
-        var desiredMotorAngle = (height / DISTANCE_PER_TURN) as Angle
-        var controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
+        val desiredMotorAngle = (height / DISTANCE_PER_TURN) as Angle
+        val controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
