@@ -4,10 +4,10 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2025.CTREDeviceId
+import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
-import edu.wpi.first.math.system.plant.LinearSystemId.createDCMotorSystem
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.Ultrasonic
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
@@ -51,6 +51,7 @@ class ManipulatorIOReal: ManipulatorIO {
     override fun updateInputs(inputs: ManipulatorInputs) {
         inputs.velocity = manipulatorMotor.velocity.value
         inputs.current = manipulatorMotor.supplyCurrent.value
+
         inputs.backUltrasonicDistance = Meters.of(backUltrasonic.rangeMM * 1000)
         inputs.frontUltrasonicDistance = Meters.of(frontUltrasonic.rangeMM * 1000)
     }
@@ -65,16 +66,19 @@ class ManipulatorIOReal: ManipulatorIO {
 }
 
 class ManipulatorIOSim: ManipulatorIO {
-    var motor = DCMotor.getKrakenX60Foc(1)
-    var system = LinearSystemId.createFlywheelSystem(motor,1.0, 1.0)
-    private var simMotor = FlywheelSim(system, motor, 1.0)
+    private var motor = DCMotor.getKrakenX60Foc(1)
+    private var system = LinearSystemId.createFlywheelSystem(motor,1.0, 1.0)
+    private var simMotor = FlywheelSim(system, motor, 0.0)
 
     override fun setSpeed(percent: Double) {
-        simMotor.setInput()
+        simMotor.inputVoltage = percent * 12
     }
 
     override fun updateInputs(inputs: ManipulatorInputs) {
-        TODO("Not yet implemented")
+        simMotor.update(Robot.period)
+        inputs.velocity = simMotor.angularVelocity
+        simMotor.setAngularVelocity(simMotor.angularVelocityRadPerSec * 0.95)
+        inputs.current = Amps.of(simMotor.currentDrawAmps)
     }
 
 }

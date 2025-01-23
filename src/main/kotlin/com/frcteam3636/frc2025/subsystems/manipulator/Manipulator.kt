@@ -1,12 +1,17 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
+import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.units.Units.Meters
+import edu.wpi.first.wpilibj.util.Color
+import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import org.littletonrobotics.junction.Logger
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d
 
 object Manipulator: Subsystem {
     private val io: ManipulatorIO = when (Robot.model){
@@ -17,13 +22,23 @@ object Manipulator: Subsystem {
 
     var inputs = LoggedManipulatorInputs()
 
+    private var mechanism = LoggedMechanism2d(100.0, 100.0)
+    private var motorAngleVisualizer = LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
+
+    init {
+        mechanism.getRoot("Manipulator", 50.0, 50.0).apply { append(motorAngleVisualizer) }
+    }
+
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Manipulator", inputs)
+
+        motorAngleVisualizer.angle += inputs.velocity.`in`(DegreesPerSecond) * Robot.period
+        Logger.recordOutput("/Manipulator/Mechanism", mechanism)
     }
 
-    val coralInIntakeBack = Trigger{inputs.backUltrasonicDistance < Meters.zero()}
-    val coralInIntakeFront = Trigger{inputs.frontUltrasonicDistance < Meters.zero()}
+    private val coralInIntakeBack = Trigger{inputs.backUltrasonicDistance < Meters.zero()}
+    private val coralInIntakeFront = Trigger{inputs.frontUltrasonicDistance < Meters.zero()}
 
     fun intake(): Command = startEnd(
         { io.setSpeed(0.5) },
