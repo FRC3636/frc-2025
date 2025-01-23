@@ -50,18 +50,17 @@ class ManipulatorIOReal: ManipulatorIO {
 
     override fun updateInputs(inputs: ManipulatorInputs) {
         inputs.velocity = manipulatorMotor.velocity.value
-        inputs.current = manipulatorMotor.supplyCurrent.value
+        inputs.current = manipulatorMotor.torqueCurrent.value
 
         inputs.backUltrasonicDistance = Meters.of(backUltrasonic.rangeMM * 1000)
         inputs.frontUltrasonicDistance = Meters.of(frontUltrasonic.rangeMM * 1000)
     }
 
-
     internal companion object Constants {
-        private const val BACK_ULTRASONIC_PING_CHANNEL = 0
-        private const val BACK_ULTRASONIC_ECHO_CHANNEL = 0
-        private const val FRONT_ULTRASONIC_PING_CHANNEL = 0
-        private const val FRONT_ULTRASONIC_ECHO_CHANNEL = 0
+        private const val BACK_ULTRASONIC_PING_CHANNEL = 1
+        private const val BACK_ULTRASONIC_ECHO_CHANNEL = 2
+        private const val FRONT_ULTRASONIC_PING_CHANNEL = 3
+        private const val FRONT_ULTRASONIC_ECHO_CHANNEL = 4
     }
 }
 
