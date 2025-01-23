@@ -41,8 +41,8 @@ import org.team9432.annotation.Logged
 @Logged
 open class ElevatorInputs {
     var height = Meters.zero()!!
-    var rightCurrent = Volts.zero()!!
-    var leftCurrent = Volts.zero()!!
+    var rightCurrent = Amps.zero()!!
+    var leftCurrent = Amps.zero()!!
     var velocity = MetersPerSecond.zero()!!
 }
 
@@ -104,8 +104,8 @@ class ElevatorIOReal: ElevatorIO {
     override fun updateInputs(inputs: ElevatorInputs) {
         inputs.height = (DISTANCE_PER_TURN * encoder.position.value) as Distance
         inputs.velocity = (DISTANCE_PER_TURN * encoder.velocity.value) as LinearVelocity
-        inputs.rightCurrent = rightElevatorMotor.motorVoltage.value
-        inputs.leftCurrent = leftElevatorMotor.motorVoltage.value
+        inputs.rightCurrent = rightElevatorMotor.torqueCurrent.value
+        inputs.leftCurrent = leftElevatorMotor.torqueCurrent.value
     }
 
     override fun runToHeight(height: Distance) {
@@ -138,12 +138,7 @@ class ElevatorIOReal: ElevatorIO {
 
 class ElevatorIOSim: ElevatorIO {
     // Simulation classes help us simulate what's going on, including gravity.
-    var motor = DCMotor.getKrakenX60Foc(2)
-    var motorSim = DCMotorSim(
-        LinearSystemId.createDCMotorSystem(motor,0.0000763789,25.0),
-        motor,
-        0.0
-    )
+    private var motor: DCMotor = DCMotor.getKrakenX60Foc(2)
 
     private val elevatorSim: ElevatorSim = ElevatorSim(
         motor,
@@ -157,33 +152,32 @@ class ElevatorIOSim: ElevatorIO {
         0.0
     )
 
-    var controller = ProfiledPIDController(
+    private var controller = ProfiledPIDController(
         PID_GAINS.p,
         PID_GAINS.i,
         PID_GAINS.d,
         TRAPEZOID_CONSTRAINTS
     )
 
-    var feedforward = ElevatorFeedforward(
+    private var feedforward = ElevatorFeedforward(
         FF_GAINS.s,
         FF_GAINS.v,
         FF_GAINS.a
     )
 
-    var encoder = Encoder(0,1)
-    var encoderSim = EncoderSim(encoder)
-
     override fun updateInputs(inputs: ElevatorInputs) {
-        elevatorSim.setInput(motorSim.angularVelocity * RobotController.getBatteryVoltage())
-        elevatorSim.update(.020)
-        encoderSim.setDistance(elevatorSim.positionMeters)
+        elevatorSim.update(Robot.period)
+        inputs.height = Meters.of(elevatorSim.positionMeters)
+        inputs.velocity = MetersPerSecond.of(elevatorSim.velocityMetersPerSecond)
+        inputs.leftCurrent = Amps.of(elevatorSim.currentDrawAmps)
+        inputs.rightCurrent = Amps.of(elevatorSim.currentDrawAmps)
         RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(elevatorSim.currentDrawAmps))
     }
 
     override fun runToHeight(height: Distance) {
-        var pidOutput = controller.calculate(encoder.distance)
-        var feedforwardOutput = feedforward.calculate(controller.setpoint.velocity)
-        motor.setVoltage(pidOutput + feedforwardOutput)
+        val pidOutput = controller.calculate(elevatorSim.positionMeters)
+        val feedforwardOutput = feedforward.calculate(controller.setpoint.velocity)
+        elevatorSim.setInputVoltage(pidOutput + feedforwardOutput)
     }
 
     override fun setVoltage(volts: Voltage) {
@@ -192,18 +186,13 @@ class ElevatorIOSim: ElevatorIO {
     }
 
     internal companion object Constants {
-        val DISTANCE_PER_TURN = Meters.per(Rotation).of(0.0)!!
-        private const val GEAR_RATIO = 0.0
+        private const val GEAR_RATIO = 1.0
         private const val CARRIAGE_MASS = 1.62519701308126
         private const val MIN_HEIGHT = 0.254000
         private const val MAX_HEIGHT = 2.298700
         private const val DRUM_RADIUS = 0.028575/2
         val PID_GAINS = PIDGains(0.0, 0.0, 0.0)
-        val FF_GAINS = MotorFFGains(0.0, 0.0, 0.0)
-        var TRAPEZOID_CONSTRAINTS = TrapezoidProfile.Constraints(1.0, 1.0)
-        private const val GRAVITY_GAIN = 0.0
-        private const val PROFILE_ACCELERATION = 0.0
-        private const val PROFILE_JERK = 0.0
-        private const val PROFILE_VELOCITY = 0.0
+        val FF_GAINS = MotorFFGains(0.0, 2.77, 0.05)
+        var TRAPEZOID_CONSTRAINTS = TrapezoidProfile.Constraints(4.16, 8.2119724)
     }
 }

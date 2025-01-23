@@ -9,7 +9,7 @@ import org.littletonrobotics.junction.Logger
 
 object Elevator: Subsystem {
     private val io: ElevatorIO = when (Robot.model) {
-        Robot.Model.SIMULATION -> TODO()
+        Robot.Model.SIMULATION -> ElevatorIOSim()
         Robot.Model.COMPETITION -> ElevatorIOReal()
         Robot.Model.PROTOTYPE -> TODO()
     }
@@ -35,12 +35,12 @@ object Elevator: Subsystem {
 //        sysID.dynamic(direction)!!
 
     enum class Position(val height: Distance) {
-        Stowed(Meters.of(0.0)),
-        Trough(Meters.of(0.0)),
-        LowBar(Meters.of(0.0)),
-        MidBar(Meters.of(0.0)),
-        HighBar(Meters.of(0.0)),
-        LowAlgae(Meters.of(0.0)),
-        HighAlgae(Meters.of(0.0)),
+        Stowed(Meters.of(0.254000)),
+        Trough(Meters.of(0.254000)),
+        LowBar(Meters.of(0.050800)),
+        MidBar(Meters.of(0.254000)),
+        HighBar(Meters.of(1.219200)),
+//        LowAlgae(Meters.of(0.0)),
+//        HighAlgae(Meters.of(0.0)),
     }
 }
