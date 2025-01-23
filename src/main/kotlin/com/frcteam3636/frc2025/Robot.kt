@@ -44,7 +44,7 @@ import kotlin.io.path.exists
  * renaming the object or package, it will get changed everywhere.)
  */
 object Robot : LoggedRobot() {
-    val controller = CommandXboxController(2)
+    private val controller = CommandXboxController(2)
     private val joystickLeft = Joystick(0)
     private val joystickRight = Joystick(1)
 
