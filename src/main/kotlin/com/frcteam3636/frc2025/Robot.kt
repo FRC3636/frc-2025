@@ -3,6 +3,7 @@ package com.frcteam3636.frc2025
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
+import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
@@ -129,6 +130,7 @@ object Robot : LoggedRobot() {
     private fun configureSubsystems() {
         Drivetrain.register()
         Manipulator.register()
+        Elevator.register()
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
