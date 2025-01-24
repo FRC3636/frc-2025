@@ -236,7 +236,7 @@ object Robot : LoggedRobot() {
     val model: Model = if (isSimulation()) {
         Model.SIMULATION
     } else {
-        when (val key = Preferences.getString("Model", "prototype")) {
+        when (val key = Preferences.getString("Model", "competition")) {
             "competition" -> Model.COMPETITION
             "prototype" -> Model.PROTOTYPE
             else -> throw AssertionError("Invalid model found in preferences: $key")
