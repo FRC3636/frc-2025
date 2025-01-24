@@ -165,14 +165,14 @@ object Drivetrain : Subsystem, Sendable {
             val (sensorIO, inputs) = ioPair
 
             sensorIO.updateInputs(inputs)
-            Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
+//            Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
 
-            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
+//            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
-                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
-                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
-                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
+//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
+//                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
+//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
         }
 
@@ -188,10 +188,10 @@ object Drivetrain : Subsystem, Sendable {
 
 //        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
-        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
-        Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
+//        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
+//        Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
         Logger.recordOutput("Drivetrain/Localizer", localizer.name)
-        Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
+//        Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
 //        questNavInactiveAlert.set(localizer != Localizer.QuestNav)
 
         Logger.recordOutput(
@@ -212,7 +212,7 @@ object Drivetrain : Subsystem, Sendable {
                 SwerveDriveKinematics.desaturateWheelSpeeds(stateArr, FREE_SPEED)
 
                 io.desiredStates = PerCorner.fromConventionalArray(stateArr)
-                Logger.recordOutput("Drivetrain/Desired States", *stateArr)
+//                Logger.recordOutput("Drivetrain/Desired States", *stateArr)
             }
         }
 
