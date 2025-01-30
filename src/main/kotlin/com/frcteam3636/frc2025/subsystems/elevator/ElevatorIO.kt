@@ -147,8 +147,7 @@ class ElevatorIOSim: ElevatorIO {
         MIN_HEIGHT,
         MAX_HEIGHT,
         true,
-        0.01,
-        0.0
+        0.01
     )
 
     private var controller = ProfiledPIDController(
