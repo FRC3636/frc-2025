@@ -52,7 +52,7 @@ class MAXSwerveModule(
     private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless).apply {
         configure(SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
-            smartCurrentLimit(TURNING_CURRENT_LIMIT.`in`(Amps).roundToInt())
+            smartCurrentLimit(TURNING_CURRENT_LIMIT.amps.roundToInt())
 
             absoluteEncoder.apply {
                 inverted(true)
@@ -79,7 +79,7 @@ class MAXSwerveModule(
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            drivingMotor.velocity.`in`(MetersPerSecond), Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.velocity.metersPerSecond, Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
         )
 
     override val position: SwerveModulePosition
@@ -133,12 +133,12 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     override val position: Distance
-        get() = Meters.of(inner.position.value.`in`(Rotations) * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
+        get() = Meters.of(inner.position.value.rotations * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.meters)
 
     override var velocity: LinearVelocity
-        get() = MetersPerSecond.of(inner.velocity.value.`in`(RotationsPerSecond) * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.`in`(Meters))
+        get() = MetersPerSecond.of(inner.velocity.value.rotationsPerSecond * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.meters)
         set(value) {
-            inner.setControl(VelocityTorqueCurrentFOC(value.`in`(MetersPerSecond) / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.`in`(Meters)))
+            inner.setControl(VelocityTorqueCurrentFOC(value.metersPerSecond / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.meters))
         }
 }
 
@@ -146,12 +146,12 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
     private val inner = SparkMax(id, SparkLowLevel.MotorType.kBrushless).apply {
         val innerConfig = SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
-            smartCurrentLimit(DRIVING_CURRENT_LIMIT.`in`(Amps).toInt())
+            smartCurrentLimit(DRIVING_CURRENT_LIMIT.amps.toInt())
             inverted(false)
 
             encoder.apply {
-                positionConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO)
-                velocityConversionFactor(WHEEL_CIRCUMFERENCE.`in`(Meters) / DRIVING_GEAR_RATIO_NEO / 60)
+                positionConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO_NEO)
+                velocityConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO_NEO / 60)
             }
 
             closedLoop.apply {
@@ -170,7 +170,7 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
         get() = MetersPerSecond.of(inner.encoder.velocity)
         set(value) {
             Logger.recordOutput("/Drivetrain/$id/OutputVel", value)
-            inner.closedLoopController.setReference(value.`in`(MetersPerSecond), SparkBase.ControlType.kVelocity)
+            inner.closedLoopController.setReference(value.metersPerSecond, SparkBase.ControlType.kVelocity)
         }
 }
 //
@@ -191,7 +191,7 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            sim.driveWheelFinalSpeed.`in`(RadiansPerSecond) * WHEEL_RADIUS.`in`(Meters),
+            sim.driveWheelFinalSpeed.radiansPerSecond * WHEEL_RADIUS.meters,
             sim.steerAbsoluteFacing
         )
 
@@ -204,7 +204,7 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
     override val position: SwerveModulePosition
         get() = SwerveModulePosition(
-            sim.driveWheelFinalPosition.`in`(Radians) * WHEEL_RADIUS.`in`(Meters), sim.steerAbsoluteFacing
+            sim.driveWheelFinalPosition.radians * WHEEL_RADIUS.meters, sim.steerAbsoluteFacing
         )
 
     override fun periodic() {
@@ -232,13 +232,13 @@ private const val DRIVING_MOTOR_PINION_TEETH = 14
 internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
 const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
-internal val NEO_DRIVING_FREE_SPEED = MetersPerSecond.of((NEO_FREE_SPEED.`in`(RotationsPerSecond) * WHEEL_CIRCUMFERENCE.`in`(Meters)) / DRIVING_GEAR_RATIO_NEO)
+internal val NEO_DRIVING_FREE_SPEED = MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO_NEO)
 
 internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(4.0, 0.0, 0.1)
 internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
 internal val DRIVING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(5.75, 0.0)
 internal val DRIVING_FF_GAINS_NEO: MotorFFGains =
-    MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED.`in`(MetersPerSecond), 0.0) // TODO: ensure this is right
+    MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED.metersPerSecond, 0.0) // TODO: ensure this is right
 
 internal val TURNING_PID_GAINS: PIDGains = PIDGains(1.7, 0.0, 0.125)
 internal val DRIVING_CURRENT_LIMIT = Amps.of(35.0)
