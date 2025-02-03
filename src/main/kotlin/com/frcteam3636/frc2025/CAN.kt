@@ -22,6 +22,8 @@ enum class REVMotorControllerId(val num: Int) {
 
     IndexerMotor(13),
 
+    RollerMotor(14),
+
     IntakeMotor(21),
 }
 
