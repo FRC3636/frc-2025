@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
 
 @Logged
-
 open class ManipulatorInputs {
     var velocity = RotationsPerSecond.zero()!!
     var current = Amps.zero()!!
