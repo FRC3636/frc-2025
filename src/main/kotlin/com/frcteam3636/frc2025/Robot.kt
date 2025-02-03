@@ -154,6 +154,10 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
+        JoystickButton(joystickLeft, 14).onTrue(Commands.runOnce({
+            println("Homing elevator.")
+            Elevator.runHoming()
+        }))
     }
 
     /** Add data to the driver station dashboard. */

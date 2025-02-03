@@ -1,7 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
 import com.frcteam3636.frc2025.Robot
-import edu.wpi.first.units.Units.Meters
+import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
@@ -16,6 +16,9 @@ object Elevator: Subsystem {
 
     var inputs = LoggedElevatorInputs()
 
+    val isPressed get() = inputs.leftCurrent > Amps.of(30.0) || inputs.rightCurrent > Amps.of(30.0)
+
+
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Elevator", inputs)
@@ -27,6 +30,19 @@ object Elevator: Subsystem {
     }, {
         io.runToHeight(inputs.height)
     })!!
+
+    fun runHoming(): Command =
+        runEnd({
+            io.setVoltage(Volts.of(-0.05))
+        }, {
+            if (isPressed) {
+                io.setEncoderPosition(Meters.of(0.0))
+            }
+            io.setVoltage(Volts.of(0.0))
+        }).until {
+            isPressed
+        }
+
 
 //    fun sysIdQuasistatic(direction: Direction) =
 //        sysID.quasistatic(direction)!!

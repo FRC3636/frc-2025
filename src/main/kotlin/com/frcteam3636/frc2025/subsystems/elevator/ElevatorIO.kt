@@ -12,26 +12,17 @@ import com.frcteam3636.frc2025.CANcoder
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
-import com.frcteam3636.frc2025.utils.math.MotorFFGains
-import com.frcteam3636.frc2025.utils.math.PIDGains
-import com.frcteam3636.frc2025.utils.math.meters
-import com.frcteam3636.frc2025.utils.math.motorFFGains
-import com.frcteam3636.frc2025.utils.math.pidGains
-import com.frcteam3636.frc2025.utils.math.rotationsPerSecond
-import com.frcteam3636.frc2025.utils.math.toAngular
-import com.frcteam3636.frc2025.utils.math.toLinear
-import com.frcteam3636.frc2025.utils.math.volts
+import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.math.controller.ElevatorFeedforward
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Voltage
-import edu.wpi.first.wpilibj.simulation.*
+import edu.wpi.first.wpilibj.simulation.BatterySim
+import edu.wpi.first.wpilibj.simulation.ElevatorSim
+import edu.wpi.first.wpilibj.simulation.RoboRioSim
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 
@@ -51,6 +42,7 @@ interface ElevatorIO{
 
     fun setVoltage(volts: Voltage)
 
+    fun setEncoderPosition(position: Distance)
 }
 
 class ElevatorIOReal: ElevatorIO {
@@ -128,6 +120,12 @@ class ElevatorIOReal: ElevatorIO {
         leftElevatorMotor.setControl(controlRequest)
     }
 
+    override fun setEncoderPosition(position: Distance) {
+        assert(position in Meters.of(0.0)..Meters.of(1.3))
+        rightElevatorMotor.setPosition(position.toAngular(SPOOL_RADIUS))
+        leftElevatorMotor.setPosition(position.toAngular(SPOOL_RADIUS))
+    }
+
     internal companion object Constants {
         // https://www.reca.lc/linear?angle=%7B%22s%22%3A90%2C%22u%22%3A%22deg%22%7D&currentLimit=%7B%22s%22%3A37%2C%22u%22%3A%22A%22%7D&efficiency=85.4&limitAcceleration=0&limitDeceleration=0&limitVelocity=0&limitedAcceleration=%7B%22s%22%3A400%2C%22u%22%3A%22in%2Fs2%22%7D&limitedDeceleration=%7B%22s%22%3A50%2C%22u%22%3A%22in%2Fs2%22%7D&limitedVelocity=%7B%22s%22%3A10%2C%22u%22%3A%22in%2Fs%22%7D&load=%7B%22s%22%3A12%2C%22u%22%3A%22lbs%22%7D&motor=%7B%22quantity%22%3A2%2C%22name%22%3A%22Kraken%20X60%20%28FOC%29%2A%22%7D&ratio=%7B%22magnitude%22%3A8%2C%22ratioType%22%3A%22Reduction%22%7D&spoolDiameter=%7B%22s%22%3A1.54%2C%22u%22%3A%22in%22%7D&travelDistance=%7B%22s%22%3A48%2C%22u%22%3A%22in%22%7D
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 4.0
@@ -190,6 +188,10 @@ class ElevatorIOSim: ElevatorIO {
     override fun setVoltage(voltage: Voltage) {
         elevatorSim.setInputVoltage(voltage.volts)
         Logger.recordOutput("/Elevator/OutVolt", voltage)
+    }
+
+    override fun setEncoderPosition(position: Distance) {
+        TODO("Not yet implemented")
     }
 
     internal companion object Constants {
