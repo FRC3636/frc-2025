@@ -3,6 +3,7 @@ package com.frcteam3636.frc2025.subsystems.funnel
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.SparkFlex
+import com.frcteam3636.frc2025.utils.math.amps
 import com.revrobotics.spark.SparkBase
 import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode
@@ -32,7 +33,7 @@ class FunnelIOReal : FunnelIO{
     ).apply { configure(
         SparkFlexConfig().apply{
             idleMode(IdleMode.kBrake)
-            smartCurrentLimit(MOTOR_CURRENT_LIMIT.`in`(Amps).roundToInt())
+            smartCurrentLimit(MOTOR_CURRENT_LIMIT.amps.roundToInt())
         },
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters)

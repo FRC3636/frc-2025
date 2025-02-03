@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.funnel
 
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
@@ -32,7 +33,7 @@ object Funnel : Subsystem {
         io.updateInputs(inputs)
         Logger.processInputs("Funnel", inputs)
 
-        motorAngleVisualiser.angle += inputs.rollerVelocity.`in`(DegreesPerSecond) * Robot.period
+        motorAngleVisualiser.angle += inputs.rollerVelocity.degreesPerSecond * Robot.period
         Logger.recordOutput("/Funnel/mechanism", mechanism)
     }
 
