@@ -6,6 +6,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
+import com.frcteam3636.frc2025.utils.math.range
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
@@ -52,8 +53,8 @@ class ManipulatorIOReal: ManipulatorIO {
         inputs.velocity = manipulatorMotor.velocity.value
         inputs.current = manipulatorMotor.torqueCurrent.value
 
-        inputs.backUltrasonicDistance = Meters.of(backUltrasonic.rangeMM * 1000)
-        inputs.frontUltrasonicDistance = Meters.of(frontUltrasonic.rangeMM * 1000)
+        inputs.backUltrasonicDistance = backUltrasonic.range
+        inputs.frontUltrasonicDistance = frontUltrasonic.range
     }
 
     internal companion object Constants {

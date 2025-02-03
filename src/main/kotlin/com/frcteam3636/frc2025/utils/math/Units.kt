@@ -8,6 +8,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.Ultrasonic
 
 val Distance.meters get() = `in`(Meters)
 val Distance.centimeters get() = `in`(Centimeters)
@@ -40,3 +41,5 @@ val Current.milliamps get() = `in`(Milliamps)
 val Time.seconds get() = `in`(Seconds)
 val Time.milliseconds get() = `in`(Milliseconds)
 val Time.minutes get() = `in`(Minutes)
+
+val Ultrasonic.range: Distance get() = Meters.of(rangeMM * 1000)
