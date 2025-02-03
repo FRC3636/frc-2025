@@ -11,6 +11,7 @@ import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
+import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
@@ -144,6 +145,22 @@ object Robot : LoggedRobot() {
 //                Shooter.Flywheels.rev(580.0, 0.0)
 //            )
 //        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL4",
+            Elevator.setTargetHeight(Elevator.Position.HighBar)
+        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL3",
+            Elevator.setTargetHeight(Elevator.Position.MidBar)
+        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL2",
+            Elevator.setTargetHeight(Elevator.Position.LowBar)
+        )
+        NamedCommands.registerCommand(
+            "stowElevator",
+            Elevator.setTargetHeight(Elevator.Position.Stowed)
+        )
     }
 
     /** Configure which commands each joystick button triggers. */
