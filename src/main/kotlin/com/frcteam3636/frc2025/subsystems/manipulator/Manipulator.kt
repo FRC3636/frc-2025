@@ -1,7 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
-import edu.wpi.first.units.Units.DegreesPerSecond
+import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
@@ -26,34 +26,29 @@ object Manipulator: Subsystem {
     private var motorAngleVisualizer = LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     init {
-        mechanism.getRoot("Manipulator", 50.0, 50.0).apply { append(motorAngleVisualizer) }
+        mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
+            append(motorAngleVisualizer)
+        }
     }
 
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Manipulator", inputs)
 
-        motorAngleVisualizer.angle += inputs.velocity.`in`(DegreesPerSecond) * Robot.period
+        motorAngleVisualizer.angle += inputs.velocity.degreesPerSecond * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
     }
 
-    private val coralInIntakeBack = Trigger{inputs.backUltrasonicDistance < Meters.zero()}
-    private val coralInIntakeFront = Trigger{inputs.frontUltrasonicDistance < Meters.zero()}
+    private val coralInIntakeBack get() = inputs.backUltrasonicDistance < Meters.zero()
+    private val coralInIntakeFront get() = inputs.frontUltrasonicDistance < Meters.zero()
 
     fun intake(): Command = startEnd(
         { io.setSpeed(0.5) },
         { io.setSpeed(0.0) }
-    )
-        .raceWith(
-            Commands.waitUntil(coralInIntakeBack)
-        )
+    ).until { coralInIntakeBack }
 
     fun outtake(): Command = startEnd(
         { io.setSpeed(-0.5) },
         { io.setSpeed(0.0) }
-    )
-        .raceWith(
-            Commands.waitUntil(coralInIntakeBack.negate().and(coralInIntakeFront.negate()))
-        )
-
+    ).until { !(coralInIntakeBack || coralInIntakeFront) }
 }
