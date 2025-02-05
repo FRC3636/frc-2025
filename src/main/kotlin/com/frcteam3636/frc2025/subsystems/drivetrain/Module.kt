@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
-import com.ctre.phoenix6.configs.Slot0Configs
-import com.ctre.phoenix6.configs.TorqueCurrentConfigs
+import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC
 import com.frcteam3636.frc2025.*
 import com.frcteam3636.frc2025.utils.math.*
@@ -114,19 +113,20 @@ interface DrivingMotor {
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
-
     private val inner = TalonFX(id).apply {
-        configurator.apply(Slot0Configs().apply {
-            pidGains = DRIVING_PID_GAINS_TALON
-            motorFFGains = DRIVING_FF_GAINS_TALON
+        configurator.apply(TalonFXConfiguration().apply {
+            Feedback.apply {
+                SensorToMechanismRatio = DRIVING_GEAR_RATIO_TALON
+            }
+            Slot0.apply {
+                pidGains = DRIVING_PID_GAINS_TALON
+                motorFFGains = DRIVING_FF_GAINS_TALON
+            }
+            CurrentLimits.apply {
+                StatorCurrentLimit = DRIVING_CURRENT_LIMIT.amps
+                StatorCurrentLimitEnable = true
+            }
         })
-        // https://v6.docs.ctr-electronics.com/en/stable/docs/hardware-reference/talonfx/improving-performance-with-current-limits.html#stator-and-supply-current-limits
-        configurator.apply(
-            TorqueCurrentConfigs().apply {
-                withPeakForwardTorqueCurrent(DRIVING_CURRENT_LIMIT)
-                withPeakReverseTorqueCurrent(-DRIVING_CURRENT_LIMIT)
-            })
-
     }
 
     init {
@@ -134,14 +134,16 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     override val position: Distance
-        get() = Meters.of(inner.position.value.rotations * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.meters)
+        get() = inner.position.value.toLinear(WHEEL_CIRCUMFERENCE)
 
     override val velocity: LinearVelocity
-        get() = MetersPerSecond.of(inner.velocity.value.rotationsPerSecond * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.meters)
+        get() = inner.velocity.value.toLinear(WHEEL_CIRCUMFERENCE)
 
+    private val velocityControlRequest = VelocityTorqueCurrentFOC(0.0)
     override var desiredVelocity: LinearVelocity = MetersPerSecond.zero()
         set(value) {
-            inner.setControl(VelocityTorqueCurrentFOC(value.metersPerSecond / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.meters))
+            val velocity = value.toAngular(WHEEL_CIRCUMFERENCE)
+            inner.setControl(velocityControlRequest.withVelocity(velocity))
             field = value
         }
 }
@@ -238,7 +240,7 @@ internal val NEO_FREE_SPEED = RPM.of(5676.0)
 
 private const val DRIVING_MOTOR_PINION_TEETH = 14
 
-internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
+internal const val DRIVING_GEAR_RATIO_TALON = 3.56
 const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
 internal val NEO_DRIVING_FREE_SPEED =
