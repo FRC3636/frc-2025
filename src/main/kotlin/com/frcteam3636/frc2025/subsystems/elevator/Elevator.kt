@@ -52,7 +52,6 @@ object Elevator: Subsystem {
 
     enum class Position(val height: Distance) {
         Stowed(Meters.of(0.254000)),
-        Trough(Meters.of(0.254000)),
         LowBar(Meters.of(0.050800)),
         MidBar(Meters.of(0.254000)),
         HighBar(Meters.of(1.219200)),

@@ -26,12 +26,7 @@ val Joystick.fieldRelativeTranslation2d: Translation2d
 val Joystick.translation2d: Translation2d
     // The field-space translation returned by this method is rotated 90 degrees from the joystick's
     // perspective. (x, y) -> (y, -x) The joystick's Y-axis is also inverted because of our physical
-    // hardware, but this isn't an issue in simulation.
+    // hardware.
     get() = Translation2d(
-        if (Robot.model == Robot.Model.SIMULATION) {
-            y
-        } else {
-            -y
-        },
-        -x
+        -y, -x
     )

@@ -5,7 +5,6 @@ import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
@@ -21,15 +20,12 @@ object Dashboard {
     fun showTeleopTab(tab: ShuffleboardTab) {
         PathPlannerLogging.setLogTargetPoseCallback {
             field.getObject("target pose").pose = it
+//            Logger.recordOutput("/Drivetrain/Target Pose", it)
         }
         PathPlannerLogging.setLogActivePathCallback {
             field.getObject("path").poses = it
+//            Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
         }
-
-        tab.add("Swerve Drive", Drivetrain)!!
-            .withWidget(ElasticWidgets.SwerveDrive.widgetName)
-            .withSize(4, 4)
-            .withPosition(6, 0)
 
 //        tab.addNumber("Velocity, meters per second") {
 //            Translation2d(
@@ -64,10 +60,10 @@ object Dashboard {
             .withPosition(10, 6)
 
         // Status Indicators
-        tab.addNumber("Battery Voltage") { RobotController.getBatteryVoltage() }
-            .withWidget(BuiltInWidgets.kVoltageView)
-            .withSize(6, 2)
-            .withPosition(0, 2)
+//        tab.addNumber("Battery Voltage") { RobotController.getBatteryVoltage() }
+//            .withWidget(BuiltInWidgets.kVoltageView)
+//            .withSize(6, 2)
+//            .withPosition(0, 2)
 
         tab.addBoolean("NavX OK") { Diagnostics.latest.navXConnected }
             .withPosition(10, 0)
@@ -81,9 +77,9 @@ object Dashboard {
         tab.addBoolean("TalonFX OK") { Diagnostics.latest.errorStatusCodes.isEmpty() }
             .withPosition(10, 3)
             .withSize(2, 1)
-        tab.addBoolean("Battery Full") { RobotController.getBatteryVoltage() >= 12.3 }
-            .withPosition(10, 4)
-            .withSize(2, 2)
+//        tab.addBoolean("Battery Full") { RobotController.getBatteryVoltage() >= 12.3 }
+//            .withPosition(10, 4)
+//            .withSize(2, 2)
         tab.addNumber("CAN Bus Utilization") { Diagnostics.latest.canStatus.percentBusUtilization * 100.0 }
             .withWidget(BuiltInWidgets.kNumberBar)
             .withProperties(mapOf("min_value" to 0.0, "max_value" to 100.0))

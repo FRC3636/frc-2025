@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
@@ -12,10 +13,14 @@ import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
+import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.wpilibj.*
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.Joystick
+import edu.wpi.first.wpilibj.PowerDistribution
+import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
@@ -65,7 +70,7 @@ object Robot : LoggedRobot() {
         )
 
         // Joysticks are likely to be missing in simulation, which usually isn't a problem.
-        DriverStation.silenceJoystickConnectionWarning(!isReal())
+        DriverStation.silenceJoystickConnectionWarning(model != Model.COMPETITION)
 
         configureAdvantageKit()
         configureSubsystems()
@@ -144,11 +149,51 @@ object Robot : LoggedRobot() {
 //                Shooter.Flywheels.rev(580.0, 0.0)
 //            )
 //        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL4",
+            Elevator.setTargetHeight(Elevator.Position.HighBar)
+        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL3",
+            Elevator.setTargetHeight(Elevator.Position.MidBar)
+        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL2",
+            Elevator.setTargetHeight(Elevator.Position.LowBar)
+        )
+        NamedCommands.registerCommand(
+            "stowElevator",
+            Elevator.setTargetHeight(Elevator.Position.Stowed)
+        )
     }
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
+
+        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
+            println("Setting desired target node to left branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+        }))
+
+        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
+            println("Setting desired target node to right branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+        }))
+
+        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOV().repeatedly())
+
+        controller.a().whileTrue(Drivetrain.alignToClosestPOV())
+
+        controller.b().onTrue(Commands.runOnce({
+            println("Setting desired target node to left branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+        }))
+
+        controller.x().onTrue(Commands.runOnce({
+            println("Setting desired target node to right branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+        }))
 
         // (The button with the yellow tape on it)
         JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
@@ -176,10 +221,14 @@ object Robot : LoggedRobot() {
     override fun simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic()
 
-        Logger.recordOutput("FieldSimulation/Algae",
-            *SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"))
-        Logger.recordOutput("FieldSimulation/Coral",
-            *SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"))
+        Logger.recordOutput(
+            "FieldSimulation/Algae",
+            *SimulatedArena.getInstance().getGamePiecesArrayByType("Algae")
+        )
+        Logger.recordOutput(
+            "FieldSimulation/Coral",
+            *SimulatedArena.getInstance().getGamePiecesArrayByType("Coral")
+        )
 
     }
 
@@ -211,10 +260,10 @@ object Robot : LoggedRobot() {
     }
 
     /** The model of this robot. */
-    val model: Model = if (RobotBase.isSimulation()) {
+    val model: Model = if (isSimulation()) {
         Model.SIMULATION
     } else {
-        when (val key = Preferences.getString("Model", "prototype")) {
+        when (val key = Preferences.getString("Model", "competition")) {
             "competition" -> Model.COMPETITION
             "prototype" -> Model.PROTOTYPE
             else -> throw AssertionError("Invalid model found in preferences: $key")
