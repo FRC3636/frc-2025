@@ -3,7 +3,6 @@ package com.frcteam3636.frc2025.subsystems.elevator
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
 import com.ctre.phoenix6.controls.VoltageOut
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2025.CTREDeviceId
@@ -57,11 +56,6 @@ class ElevatorIOReal: ElevatorIO {
     val config = TalonFXConfiguration().apply {
         MotorOutput.apply {
             NeutralMode = NeutralModeValue.Brake
-        }
-
-        Feedback.apply {
-            FeedbackRemoteSensorID = CTREDeviceId.ElevatorEncoder.num
-            FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor
         }
 
         Slot0.apply {
