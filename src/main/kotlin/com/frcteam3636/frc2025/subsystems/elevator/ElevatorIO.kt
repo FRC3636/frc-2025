@@ -60,9 +60,7 @@ class ElevatorIOReal: ElevatorIO {
         }
 
         Feedback.apply {
-//            SensorToMechanismRatio = SENSOR_TO_MECHANISM_GEAR_RATIO
-            RotorToSensorRatio = ROTOR_TO_SENSOR_GEAR_RATIO
-//            FeedbackRemoteSensorID = CTREDeviceId.ElevatorEncoder.num
+            FeedbackRemoteSensorID = CTREDeviceId.ElevatorEncoder.num
             FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor
         }
 
