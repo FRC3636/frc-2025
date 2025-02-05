@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025
 
+import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
@@ -27,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.JoystickButton
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
@@ -168,42 +170,49 @@ object Robot : LoggedRobot() {
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
-        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
+//        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
 
-        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
-            println("Setting desired target node to left branch.")
-            Drivetrain.currentTargetSelection = ReefBranchSide.Left
-        }))
+//        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
+//            println("Setting desired target node to left branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+//        }))
+//
+//        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
+//            println("Setting desired target node to right branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+//        }))
+//
+//        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOV().repeatedly())
+//
+//        controller.a().whileTrue(Drivetrain.alignToClosestPOV())
+//
+//        controller.b().onTrue(Commands.runOnce({
+//            println("Setting desired target node to left branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+//        }))
+//
+//        controller.x().onTrue(Commands.runOnce({
+//            println("Setting desired target node to right branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+//        }))
+//
+//        // (The button with the yellow tape on it)
+//        JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
+//            println("Zeroing gyro.")
+//            Drivetrain.zeroGyro()
+//        }).ignoringDisable(true))
+//
+//        JoystickButton(joystickLeft, 14).onTrue(Commands.runOnce({
+//            println("Homing elevator.")
+//            Elevator.runHoming()
+//        }))
+        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
+        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
 
-        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
-            println("Setting desired target node to right branch.")
-            Drivetrain.currentTargetSelection = ReefBranchSide.Right
-        }))
-
-        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOV().repeatedly())
-
-        controller.a().whileTrue(Drivetrain.alignToClosestPOV())
-
-        controller.b().onTrue(Commands.runOnce({
-            println("Setting desired target node to left branch.")
-            Drivetrain.currentTargetSelection = ReefBranchSide.Left
-        }))
-
-        controller.x().onTrue(Commands.runOnce({
-            println("Setting desired target node to right branch.")
-            Drivetrain.currentTargetSelection = ReefBranchSide.Right
-        }))
-
-        // (The button with the yellow tape on it)
-        JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
-            println("Zeroing gyro.")
-            Drivetrain.zeroGyro()
-        }).ignoringDisable(true))
-
-        JoystickButton(joystickLeft, 14).onTrue(Commands.runOnce({
-            println("Homing elevator.")
-            Elevator.runHoming()
-        }))
+        controller.y().whileTrue(Elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        controller.a().whileTrue(Elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        controller.b().whileTrue(Elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        controller.x().whileTrue(Elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     }
 
     /** Add data to the driver station dashboard. */

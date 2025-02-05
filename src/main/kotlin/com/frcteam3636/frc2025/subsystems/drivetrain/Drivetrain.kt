@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
@@ -45,6 +46,7 @@ import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
@@ -147,7 +149,7 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         if (Robot.model != Robot.Model.SIMULATION) {
-            PathfindingCommand.warmupCommand().schedule();
+            PathfindingCommand.warmupCommand().schedule()
         }
 
         if (io is DrivetrainIOSim) {
@@ -371,6 +373,28 @@ object Drivetrain : Subsystem, Sendable {
         estimatedPose = Pose2d(estimatedPose.translation, zeroPos)
 //        io.setGyro(zeroPos)
     }
+
+    var sysID = SysIdRoutine(
+        SysIdRoutine.Config(
+            null,
+            Volts.of(4.0),
+            null,
+            {
+                SignalLogger.writeString("state", it.toString())
+            }
+        ),
+        SysIdRoutine.Mechanism(
+            io::runCharacterization,
+            null,
+            this,
+        )
+    )
+
+    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
+        sysID.quasistatic(direction)!!
+
+    fun sysIdDynamic(direction: SysIdRoutine.Direction) =
+        sysID.dynamic(direction)!!
 
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls

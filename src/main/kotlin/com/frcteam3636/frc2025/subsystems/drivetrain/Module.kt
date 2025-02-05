@@ -19,6 +19,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.units.measure.Voltage
 import org.ironmaple.simulation.drivesims.SwerveModuleSimulation
 import org.ironmaple.simulation.motorsims.SimulatedMotorController
 import org.littletonrobotics.junction.Logger
@@ -44,6 +45,7 @@ interface SwerveModule {
     val position: SwerveModulePosition
 
     fun periodic() {}
+    fun characterize(voltage: Voltage)
 }
 
 class MAXSwerveModule(
@@ -87,6 +89,11 @@ class MAXSwerveModule(
             drivingMotor.position, Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
         )
 
+    override fun characterize(voltage: Voltage) {
+        drivingMotor.setVoltage(voltage)
+        turningPIDController.setReference(-chassisAngle.radians, SparkBase.ControlType.kPosition)
+    }
+
     override var desiredState: SwerveModuleState = SwerveModuleState(0.0, -chassisAngle)
         get() = SwerveModuleState(field.speedMetersPerSecond, field.angle + chassisAngle)
         set(value) {
@@ -110,6 +117,7 @@ class MAXSwerveModule(
 interface DrivingMotor {
     val position: Distance
     var velocity: LinearVelocity
+    fun setVoltage(voltage: Voltage)
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
@@ -140,6 +148,10 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
         set(value) {
             inner.setControl(VelocityTorqueCurrentFOC(value.metersPerSecond / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.meters))
         }
+
+    override fun setVoltage(voltage: Voltage) {
+        inner.setVoltage(voltage.volts)
+    }
 }
 
 class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
@@ -172,6 +184,10 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
             Logger.recordOutput("/Drivetrain/$id/OutputVel", value)
             inner.closedLoopController.setReference(value.metersPerSecond, SparkBase.ControlType.kVelocity)
         }
+
+    override fun setVoltage(voltage: Voltage) {
+        inner.setVoltage(voltage.volts)
+    }
 }
 //
 class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
@@ -217,6 +233,10 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
                 state.speedMetersPerSecond, desiredState.speedMetersPerSecond)
             )
         )
+    }
+
+    override fun characterize(voltage: Voltage) {
+        TODO("Not yet implemented")
     }
 }
 

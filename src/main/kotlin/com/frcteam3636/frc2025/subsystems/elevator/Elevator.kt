@@ -1,10 +1,12 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
+import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.Robot
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 
 object Elevator: Subsystem {
@@ -18,6 +20,21 @@ object Elevator: Subsystem {
 
     val isPressed get() = inputs.leftCurrent > Amps.of(30.0) || inputs.rightCurrent > Amps.of(30.0)
 
+    var sysID = SysIdRoutine(
+        SysIdRoutine.Config(
+            null,
+            Volts.of(4.0),
+            null,
+            {
+                SignalLogger.writeString("state", it.toString())
+            }
+        ),
+        SysIdRoutine.Mechanism(
+            io::setVoltage,
+            null,
+            this,
+        )
+    )
 
     override fun periodic() {
         io.updateInputs(inputs)
@@ -44,11 +61,11 @@ object Elevator: Subsystem {
         }
 
 
-//    fun sysIdQuasistatic(direction: Direction) =
-//        sysID.quasistatic(direction)!!
-//
-//    fun sysIdDynamic(direction: Direction) =
-//        sysID.dynamic(direction)!!
+    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
+        sysID.quasistatic(direction)!!
+
+    fun sysIdDynamic(direction: SysIdRoutine.Direction) =
+        sysID.dynamic(direction)!!
 
     enum class Position(val height: Distance) {
         Stowed(Meters.of(0.254000)),
