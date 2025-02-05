@@ -81,12 +81,12 @@ class ElevatorIOReal: ElevatorIO {
 
     }
 
-    private val rightElevatorMotor = TalonFX(CTREDeviceId.ElevatorMotor).apply {
+    private val rightElevatorMotor = TalonFX(CTREDeviceId.RightElevatorMotor).apply {
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
         configurator.apply(config)
     }
 
-    private val leftElevatorMotor = TalonFX(CTREDeviceId.ElevatorMotor).apply {
+    private val leftElevatorMotor = TalonFX(CTREDeviceId.LeftElevatorMotor).apply {
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive
         configurator.apply(config)
     }

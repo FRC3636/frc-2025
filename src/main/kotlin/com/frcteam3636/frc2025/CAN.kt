@@ -3,9 +3,9 @@ package com.frcteam3636.frc2025
 import com.ctre.phoenix6.hardware.CANcoder
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.ctre.phoenix6.hardware.TalonFX
-import com.revrobotics.spark.SparkMax
-import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.SparkFlex
+import com.revrobotics.spark.SparkLowLevel
+import com.revrobotics.spark.SparkMax
 
 // This module contains one enum for each (device type, manufacturer) pair we use.
 
@@ -34,8 +34,9 @@ enum class CTREDeviceId(val num: Int, val bus: String) {
     BackLeftDrivingMotor(2, "*"),
     BackRightDrivingMotor(3, "*"),
     FrontRightDrivingMotor(4, "*"),
-    ElevatorMotor(11, "*"),
-    ManipulatorMotor(12, "*"),
+    LeftElevatorMotor(11, "*"),
+    RightElevatorMotor(12, "*"),
+    ManipulatorMotor(13, "*"),
     PigeonGyro(20, "*"),
     ElevatorEncoder(30, "*"),
 }
