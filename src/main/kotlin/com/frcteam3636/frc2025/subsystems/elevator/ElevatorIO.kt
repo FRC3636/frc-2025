@@ -64,6 +64,10 @@ class ElevatorIOReal: ElevatorIO {
             kG = GRAVITY_GAIN
         }
 
+        Feedback.apply {
+            SensorToMechanismRatio = SENSOR_TO_MECHANISM_GEAR_RATIO * ROTOR_TO_SENSOR_GEAR_RATIO
+        }
+
         MotionMagic.apply {
             MotionMagicCruiseVelocity = PROFILE_VELOCITY.rotationsPerSecond
             MotionMagicAcceleration = PROFILE_ACCELERATION
