@@ -96,7 +96,7 @@ class MAXSwerveModule(
                 Rotation2d.fromRadians(turningEncoder.position)
             )
 
-            drivingMotor.velocity = corrected.speed
+            drivingMotor.desiredVelocity = corrected.speed
 
             turningPIDController.setReference(
                 corrected.angle.radians, SparkBase.ControlType.kPosition
@@ -109,7 +109,8 @@ class MAXSwerveModule(
 
 interface DrivingMotor {
     val position: Distance
-    var velocity: LinearVelocity
+    val velocity: LinearVelocity
+    var desiredVelocity: LinearVelocity
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
@@ -135,10 +136,13 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     override val position: Distance
         get() = Meters.of(inner.position.value.rotations * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.meters)
 
-    override var velocity: LinearVelocity
+    override val velocity: LinearVelocity
         get() = MetersPerSecond.of(inner.velocity.value.rotationsPerSecond * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.meters)
+
+    override var desiredVelocity: LinearVelocity = MetersPerSecond.zero()
         set(value) {
             inner.setControl(VelocityTorqueCurrentFOC(value.metersPerSecond / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.meters))
+            field = value
         }
 }
 
@@ -166,13 +170,16 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
     override val position: Distance
         get() = Meters.of(inner.encoder.position)
 
-    override var velocity: LinearVelocity
+    override val velocity: LinearVelocity
         get() = MetersPerSecond.of(inner.encoder.velocity)
+
+    override var desiredVelocity: LinearVelocity = MetersPerSecond.zero()
         set(value) {
             Logger.recordOutput("/Drivetrain/$id/OutputVel", value)
             inner.closedLoopController.setReference(value.metersPerSecond, SparkBase.ControlType.kVelocity)
         }
 }
+
 //
 class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
@@ -213,8 +220,10 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
             Volts.of(turningFeedback.calculate(state.angle.radians, desiredState.angle.radians))
         )
         driveMotor.requestVoltage(
-            Volts.of(drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
-                state.speedMetersPerSecond, desiredState.speedMetersPerSecond)
+            Volts.of(
+                drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
+                    state.speedMetersPerSecond, desiredState.speedMetersPerSecond
+                )
             )
         )
     }
@@ -232,7 +241,8 @@ private const val DRIVING_MOTOR_PINION_TEETH = 14
 internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
 const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
-internal val NEO_DRIVING_FREE_SPEED = MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO_NEO)
+internal val NEO_DRIVING_FREE_SPEED =
+    MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO_NEO)
 
 internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(4.0, 0.0, 0.1)
 internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
