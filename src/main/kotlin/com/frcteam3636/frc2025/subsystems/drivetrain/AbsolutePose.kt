@@ -5,6 +5,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.QuestNav
+import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
@@ -296,7 +297,7 @@ data class AbsolutePoseMeasurement(
 fun SwerveDrivePoseEstimator.addAbsolutePoseMeasurement(measurement: AbsolutePoseMeasurement) {
     addVisionMeasurement(
         measurement.pose,
-        measurement.timestamp.`in`(Seconds),
+        measurement.timestamp.seconds,
         measurement.stdDeviation // FIXME: seems to fire the bot into orbit...?
     )
 }
@@ -319,7 +320,7 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 
     override fun pack(bb: ByteBuffer, value: AbsolutePoseMeasurement) {
         Pose2d.struct.pack(bb, value.pose)
-        bb.putDouble(value.timestamp.`in`(Seconds))
+        bb.putDouble(value.timestamp.seconds)
         bb.putDouble(value.stdDeviation[0, 0])
         bb.putDouble(value.stdDeviation[1, 0])
         bb.putDouble(value.stdDeviation[2, 0])

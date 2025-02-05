@@ -1,38 +1,24 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
-import com.ctre.phoenix6.configs.CANcoderConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
 import com.ctre.phoenix6.controls.VoltageOut
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
-import com.ctre.phoenix6.signals.SensorDirectionValue
-import com.ctre.phoenix6.sim.TalonFXSimState
-import com.frcteam3636.frc2025.CANcoder
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
-import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants
-import com.frcteam3636.frc2025.utils.math.MotorFFGains
-import com.frcteam3636.frc2025.utils.math.PIDGains
-import com.frcteam3636.frc2025.utils.math.motorFFGains
-import com.frcteam3636.frc2025.utils.math.pidGains
+import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.math.controller.ElevatorFeedforward
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Voltage
-import edu.wpi.first.wpilibj.Encoder
-import edu.wpi.first.wpilibj.RobotController
-import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax
-import edu.wpi.first.wpilibj.simulation.*
+import edu.wpi.first.wpilibj.simulation.BatterySim
+import edu.wpi.first.wpilibj.simulation.ElevatorSim
+import edu.wpi.first.wpilibj.simulation.RoboRioSim
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 
@@ -52,29 +38,24 @@ interface ElevatorIO{
 
     fun setVoltage(volts: Voltage)
 
+    fun setEncoderPosition(position: Distance)
 }
 
 class ElevatorIOReal: ElevatorIO {
 
-    private val encoder = CANcoder(CTREDeviceId.ElevatorEncoder).apply {
-        val config = CANcoderConfiguration().apply {
-            MagnetSensor.apply {
-                withAbsoluteSensorDiscontinuityPoint(Rotations.one())
-                SensorDirection = SensorDirectionValue.Clockwise_Positive
-            }
-        }
-        configurator.apply(config)
-    }
+//    private val encoder = CANcoder(CTREDeviceId.ElevatorEncoder).apply {
+//        val config = CANcoderConfiguration().apply {
+//            MagnetSensor.apply {
+//                withAbsoluteSensorDiscontinuityPoint(Rotations.one())
+//                SensorDirection = SensorDirectionValue.Clockwise_Positive
+//            }
+//        }
+//        configurator.apply(config)
+//    }
 
     val config = TalonFXConfiguration().apply {
         MotorOutput.apply {
             NeutralMode = NeutralModeValue.Brake
-        }
-
-        Feedback.apply {
-            SensorToMechanismRatio = GEAR_RATIO
-            FeedbackRemoteSensorID = CTREDeviceId.ElevatorEncoder.num
-            FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder
         }
 
         Slot0.apply {
@@ -83,11 +64,21 @@ class ElevatorIOReal: ElevatorIO {
             kG = GRAVITY_GAIN
         }
 
+        Feedback.apply {
+            SensorToMechanismRatio = SENSOR_TO_MECHANISM_GEAR_RATIO * ROTOR_TO_SENSOR_GEAR_RATIO
+        }
+
         MotionMagic.apply {
-            MotionMagicCruiseVelocity = PROFILE_VELOCITY
+            MotionMagicCruiseVelocity = PROFILE_VELOCITY.rotationsPerSecond
             MotionMagicAcceleration = PROFILE_ACCELERATION
             MotionMagicJerk = PROFILE_JERK
         }
+
+        CurrentLimits.apply {
+            StatorCurrentLimitEnable = true
+            StatorCurrentLimit = 37.0
+        }
+
     }
 
     private val rightElevatorMotor = TalonFX(CTREDeviceId.ElevatorMotor).apply {
@@ -101,36 +92,45 @@ class ElevatorIOReal: ElevatorIO {
     }
 
     override fun updateInputs(inputs: ElevatorInputs) {
-        inputs.height = (DISTANCE_PER_TURN * encoder.position.value) as Distance
-        inputs.velocity = (DISTANCE_PER_TURN * encoder.velocity.value) as LinearVelocity
+        inputs.height = leftElevatorMotor.position.value.toLinear(SPOOL_RADIUS)
+        inputs.velocity = leftElevatorMotor.velocity.value.toLinear(SPOOL_RADIUS)
         inputs.rightCurrent = rightElevatorMotor.torqueCurrent.value
         inputs.leftCurrent = leftElevatorMotor.torqueCurrent.value
     }
 
     override fun runToHeight(height: Distance) {
         Logger.recordOutput("Elevator/Height Setpoint", height)
-        var desiredMotorAngle = (height / DISTANCE_PER_TURN) as Angle
-        var controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
+        val desiredMotorAngle = height.toAngular(SPOOL_RADIUS)
+        val controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
 
-    override fun setVoltage(volts: Voltage){
+    override fun setVoltage(volts: Voltage) {
         assert(volts in Volts.of(-12.0)..Volts.of(12.0))
-        val controlRequest = VoltageOut(volts.`in`(Volts))
+        val controlRequest = VoltageOut(volts.volts)
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
+    }
+
+    override fun setEncoderPosition(position: Distance) {
+        assert(position in Meters.of(0.0)..Meters.of(1.5))
+        rightElevatorMotor.setPosition(position.toAngular(SPOOL_RADIUS))
+        leftElevatorMotor.setPosition(position.toAngular(SPOOL_RADIUS))
     }
 
     internal companion object Constants {
-        val DISTANCE_PER_TURN = Meters.per(Rotation).of(0.0)!!
-        private const val GEAR_RATIO = 0.0
-        val PID_GAINS = PIDGains(0.0, 0.0, 0.0)
-        val FF_GAINS = MotorFFGains(0.0, 0.0, 0.0)
-        private const val GRAVITY_GAIN = 0.0
-        private const val PROFILE_ACCELERATION = 0.0
+        // https://www.reca.lc/linear?angle=%7B%22s%22%3A90%2C%22u%22%3A%22deg%22%7D&currentLimit=%7B%22s%22%3A37%2C%22u%22%3A%22A%22%7D&efficiency=85.4&limitAcceleration=0&limitDeceleration=0&limitVelocity=0&limitedAcceleration=%7B%22s%22%3A400%2C%22u%22%3A%22in%2Fs2%22%7D&limitedDeceleration=%7B%22s%22%3A50%2C%22u%22%3A%22in%2Fs2%22%7D&limitedVelocity=%7B%22s%22%3A10%2C%22u%22%3A%22in%2Fs%22%7D&load=%7B%22s%22%3A12%2C%22u%22%3A%22lbs%22%7D&motor=%7B%22quantity%22%3A2%2C%22name%22%3A%22Kraken%20X60%20%28FOC%29%2A%22%7D&ratio=%7B%22magnitude%22%3A8%2C%22ratioType%22%3A%22Reduction%22%7D&spoolDiameter=%7B%22s%22%3A1.54%2C%22u%22%3A%22in%22%7D&travelDistance=%7B%22s%22%3A48%2C%22u%22%3A%22in%22%7D
+        private const val ROTOR_TO_SENSOR_GEAR_RATIO = 4.0
+        private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 2.0
+        private val SPOOL_RADIUS = Inches.of(0.77)!!
+//        private val DISTANCE_PER_TURN = Meters.per(Radian).of(SPOOL_RADIUS.meters)
+        private val PID_GAINS = PIDGains(0.0, 0.0, 0.0)
+        private val FF_GAINS = MotorFFGains(0.0, 8.08, 0.01)
+        private const val GRAVITY_GAIN = 0.07
+        private const val PROFILE_ACCELERATION = 5.0
         private const val PROFILE_JERK = 0.0
-        private const val PROFILE_VELOCITY = 0.0
+        private val PROFILE_VELOCITY = InchesPerSecond.of(25.0).toAngular(SPOOL_RADIUS)
     }
 
 }
@@ -147,8 +147,7 @@ class ElevatorIOSim: ElevatorIO {
         MIN_HEIGHT,
         MAX_HEIGHT,
         true,
-        0.01,
-        0.0
+        0.01
     )
 
     private var controller = ProfiledPIDController(
@@ -180,8 +179,12 @@ class ElevatorIOSim: ElevatorIO {
     }
 
     override fun setVoltage(volts: Voltage) {
-        elevatorSim.setInputVoltage(volts.`in`(Volts))
+        elevatorSim.setInputVoltage(volts.volts)
         Logger.recordOutput("/Elevator/OutVolt", volts)
+    }
+
+    override fun setEncoderPosition(position: Distance) {
+        TODO("Not yet implemented")
     }
 
     internal companion object Constants {

@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.utils.swerve
 
+import com.frcteam3636.frc2025.utils.math.metersPerSecond
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
@@ -80,7 +81,7 @@ fun SwerveDriveKinematics(translations: PerCorner<Translation2d>) =
 var SwerveModuleState.speed: LinearVelocity
     get() = MetersPerSecond.of(speedMetersPerSecond)
     set(value) {
-        speedMetersPerSecond = value.`in`(MetersPerSecond)
+        speedMetersPerSecond = value.metersPerSecond
     }
 
 /** This swerve module state as a `Translation2d`. */
