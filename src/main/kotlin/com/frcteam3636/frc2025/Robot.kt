@@ -1,9 +1,7 @@
 package com.frcteam3636.frc2025
 
-import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
@@ -25,10 +23,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.button.JoystickButton
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
@@ -206,13 +201,21 @@ object Robot : LoggedRobot() {
 //            println("Homing elevator.")
 //            Elevator.runHoming()
 //        }))
-        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
-        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
 
-        controller.y().whileTrue(Elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        controller.a().whileTrue(Elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        controller.b().whileTrue(Elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        controller.x().whileTrue(Elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
+        controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
+        controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
+        controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
+
+        controller.leftBumper().whileTrue(Manipulator.outtake())
+        controller.rightBumper().whileTrue(Manipulator.intake())
+//        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
+//        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
+//
+//        controller.y().whileTrue(Elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+//        controller.a().whileTrue(Elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+//        controller.b().whileTrue(Elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
+//        controller.x().whileTrue(Elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     }
 
     /** Add data to the driver station dashboard. */

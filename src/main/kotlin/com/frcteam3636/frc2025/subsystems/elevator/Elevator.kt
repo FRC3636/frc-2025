@@ -2,6 +2,9 @@ package com.frcteam3636.frc2025.subsystems.elevator
 
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants.SPOOL_RADIUS
+import com.frcteam3636.frc2025.utils.math.meters
+import com.frcteam3636.frc2025.utils.math.radians
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
@@ -9,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 
-object Elevator: Subsystem {
+object Elevator : Subsystem {
     private val io: ElevatorIO = when (Robot.model) {
         Robot.Model.SIMULATION -> ElevatorIOSim()
         Robot.Model.COMPETITION -> ElevatorIOReal()
@@ -22,8 +25,8 @@ object Elevator: Subsystem {
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
-            null,
-            Volts.of(4.0),
+            Volts.per(Second).of(0.5),
+            Volts.of(2.0),
             null,
             {
                 SignalLogger.writeString("state", it.toString())
@@ -43,10 +46,10 @@ object Elevator: Subsystem {
 
     fun setTargetHeight(position: Position): Command =
         startEnd({
-        io.runToHeight(position.height)
-    }, {
-        io.runToHeight(inputs.height)
-    })!!
+            io.runToHeight(position.height)
+        }, {
+            io.runToHeight(inputs.height)
+        })!!
 
     fun runHoming(): Command =
         runEnd({
@@ -68,10 +71,10 @@ object Elevator: Subsystem {
         sysID.dynamic(direction)!!
 
     enum class Position(val height: Distance) {
-        Stowed(Meters.of(0.254000)),
-        LowBar(Meters.of(0.050800)),
-        MidBar(Meters.of(0.254000)),
-        HighBar(Meters.of(1.219200)),
+        Stowed(Meters.of(0.0)),
+        LowBar(Meters.of(Rotations.of(0.79).radians * SPOOL_RADIUS.meters)),
+        MidBar(Meters.of(Rotations.of(2.18).radians * SPOOL_RADIUS.meters)),
+        HighBar(Meters.of(Rotations.of(4.47).radians * SPOOL_RADIUS.meters)),
 //        LowAlgae(Meters.of(0.0)),
 //        HighAlgae(Meters.of(0.0)),
     }

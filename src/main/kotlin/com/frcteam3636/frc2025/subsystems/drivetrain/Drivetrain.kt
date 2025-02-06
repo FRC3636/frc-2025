@@ -69,11 +69,11 @@ object Drivetrain : Subsystem, Sendable {
 
     var currentTargetSelection: ReefBranchSide = ReefBranchSide.Right
 
-    private val mt2Algo = LimelightAlgorithm.MegaTag2 ( {
+    private val mt2Algo = LimelightAlgorithm.MegaTag2({
         poseEstimator.estimatedPosition.rotation
     }, {
         inputs.gyroVelocity
-    } )
+    })
 
     private val absolutePoseIOs = when (Robot.model) {
         Robot.Model.SIMULATION -> mapOf(
@@ -81,14 +81,14 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         else -> mapOf(
-                "Limelight Front" to LimelightPoseProvider(
-                        "limelight-front",
-                        algorithm = mt2Algo
-                ),
-                "Limelight Rear" to LimelightPoseProvider(
-                        "limelight-rear",
-                        algorithm = mt2Algo
-                ),
+            "Limelight Front" to LimelightPoseProvider(
+                "limelight-front",
+                algorithm = mt2Algo
+            ),
+            "Limelight Rear" to LimelightPoseProvider(
+                "limelight-rear",
+                algorithm = mt2Algo
+            ),
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
@@ -163,7 +163,7 @@ object Drivetrain : Subsystem, Sendable {
         Logger.processInputs("Drivetrain", inputs)
 
         // Update absolute pose sensors and add their measurements to the pose estimator
-        for ((name, ioPair) in absolutePoseIOs) {
+        for ((_, ioPair) in absolutePoseIOs) {
             val (sensorIO, inputs) = ioPair
 
             sensorIO.updateInputs(inputs)
@@ -184,8 +184,8 @@ object Drivetrain : Subsystem, Sendable {
             inputs.measuredPositions.toTypedArray()
         )
 
-//        questNavLocalizer.updateInputs(questNavInputs)
-//        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
+        questNavLocalizer.updateInputs(questNavInputs)
+        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
 //        updateQuestNavOrigin()
 
 //        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
@@ -255,9 +255,9 @@ object Drivetrain : Subsystem, Sendable {
         }
         private set(value) {
             poseEstimator.resetPosition(
-                    inputs.gyroRotation,
-                    inputs.measuredPositions.toTypedArray(),
-                    value
+                inputs.gyroRotation,
+                inputs.measuredPositions.toTypedArray(),
+                value
             )
         }
 
@@ -444,7 +444,7 @@ object Drivetrain : Subsystem, Sendable {
 
         //        // Pathing
         val DEFAULT_PATHING_CONSTRAINTS =
-                PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879 * 1.5, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
+            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879 * 1.5, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
 
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(
