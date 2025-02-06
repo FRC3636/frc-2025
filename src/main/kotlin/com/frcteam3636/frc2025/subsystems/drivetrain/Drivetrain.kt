@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
@@ -45,6 +46,7 @@ import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
@@ -67,11 +69,11 @@ object Drivetrain : Subsystem, Sendable {
 
     var currentTargetSelection: ReefBranchSide = ReefBranchSide.Right
 
-    private val mt2Algo = LimelightAlgorithm.MegaTag2 ( {
+    private val mt2Algo = LimelightAlgorithm.MegaTag2({
         poseEstimator.estimatedPosition.rotation
     }, {
         inputs.gyroVelocity
-    } )
+    })
 
     private val absolutePoseIOs = when (Robot.model) {
         Robot.Model.SIMULATION -> mapOf(
@@ -79,14 +81,14 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         else -> mapOf(
-                "Limelight Front" to LimelightPoseProvider(
-                        "limelight-front",
-                        algorithm = mt2Algo
-                ),
-                "Limelight Rear" to LimelightPoseProvider(
-                        "limelight-rear",
-                        algorithm = mt2Algo
-                ),
+            "Limelight Front" to LimelightPoseProvider(
+                "limelight-front",
+                algorithm = mt2Algo
+            ),
+            "Limelight Rear" to LimelightPoseProvider(
+                "limelight-rear",
+                algorithm = mt2Algo
+            ),
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
@@ -147,7 +149,7 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         if (Robot.model != Robot.Model.SIMULATION) {
-            PathfindingCommand.warmupCommand().schedule();
+            PathfindingCommand.warmupCommand().schedule()
         }
 
         if (io is DrivetrainIOSim) {
@@ -161,7 +163,7 @@ object Drivetrain : Subsystem, Sendable {
         Logger.processInputs("Drivetrain", inputs)
 
         // Update absolute pose sensors and add their measurements to the pose estimator
-        for ((name, ioPair) in absolutePoseIOs) {
+        for ((_, ioPair) in absolutePoseIOs) {
             val (sensorIO, inputs) = ioPair
 
             sensorIO.updateInputs(inputs)
@@ -182,8 +184,8 @@ object Drivetrain : Subsystem, Sendable {
             inputs.measuredPositions.toTypedArray()
         )
 
-//        questNavLocalizer.updateInputs(questNavInputs)
-//        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
+        questNavLocalizer.updateInputs(questNavInputs)
+        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
 //        updateQuestNavOrigin()
 
 //        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
@@ -253,9 +255,9 @@ object Drivetrain : Subsystem, Sendable {
         }
         private set(value) {
             poseEstimator.resetPosition(
-                    inputs.gyroRotation,
-                    inputs.measuredPositions.toTypedArray(),
-                    value
+                inputs.gyroRotation,
+                inputs.measuredPositions.toTypedArray(),
+                value
             )
         }
 
@@ -372,6 +374,28 @@ object Drivetrain : Subsystem, Sendable {
 //        io.setGyro(zeroPos)
     }
 
+    var sysID = SysIdRoutine(
+        SysIdRoutine.Config(
+            null,
+            Volts.of(4.0),
+            null,
+            {
+                SignalLogger.writeString("state", it.toString())
+            }
+        ),
+        SysIdRoutine.Mechanism(
+            io::runCharacterization,
+            null,
+            this,
+        )
+    )
+
+    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
+        sysID.quasistatic(direction)!!
+
+    fun sysIdDynamic(direction: SysIdRoutine.Direction) =
+        sysID.dynamic(direction)!!
+
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
@@ -420,7 +444,7 @@ object Drivetrain : Subsystem, Sendable {
 
         //        // Pathing
         val DEFAULT_PATHING_CONSTRAINTS =
-                PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879 * 1.5, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
+            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879 * 1.5, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
 
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(

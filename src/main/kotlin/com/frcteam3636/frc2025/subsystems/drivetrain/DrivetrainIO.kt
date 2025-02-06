@@ -19,6 +19,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.measure.Voltage
 import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.drivesims.COTS
 import org.ironmaple.simulation.drivesims.COTS.WHEELS
@@ -60,6 +61,12 @@ abstract class DrivetrainIO {
         set(value) {
             modules.zip(value).forEach { (module, state) -> module.desiredState = state }
         }
+
+    fun runCharacterization(voltage: Voltage){
+        for (module in modules){
+            module.characterize(voltage)
+        }
+    }
 }
 
 /** Drivetrain I/O layer that uses real swerve modules along with a NavX gyro. */

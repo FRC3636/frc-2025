@@ -31,7 +31,7 @@ open class ElevatorInputs {
     var velocity = MetersPerSecond.zero()!!
 }
 
-interface ElevatorIO{
+interface ElevatorIO {
     fun updateInputs(inputs: ElevatorInputs)
 
     fun runToHeight(height: Distance)
@@ -41,7 +41,7 @@ interface ElevatorIO{
     fun setEncoderPosition(position: Distance)
 }
 
-class ElevatorIOReal: ElevatorIO {
+class ElevatorIOReal : ElevatorIO {
 
 //    private val encoder = CANcoder(CTREDeviceId.ElevatorEncoder).apply {
 //        val config = CANcoderConfiguration().apply {
@@ -65,7 +65,7 @@ class ElevatorIOReal: ElevatorIO {
         }
 
         Feedback.apply {
-            SensorToMechanismRatio = SENSOR_TO_MECHANISM_GEAR_RATIO * ROTOR_TO_SENSOR_GEAR_RATIO
+            SensorToMechanismRatio = ROTOR_TO_MECHANISM_GEAR_RATIO
         }
 
         MotionMagic.apply {
@@ -82,12 +82,12 @@ class ElevatorIOReal: ElevatorIO {
     }
 
     private val rightElevatorMotor = TalonFX(CTREDeviceId.RightElevatorMotor).apply {
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive
         configurator.apply(config)
     }
 
     private val leftElevatorMotor = TalonFX(CTREDeviceId.LeftElevatorMotor).apply {
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
         configurator.apply(config)
     }
 
@@ -121,21 +121,21 @@ class ElevatorIOReal: ElevatorIO {
 
     internal companion object Constants {
         // https://www.reca.lc/linear?angle=%7B%22s%22%3A90%2C%22u%22%3A%22deg%22%7D&currentLimit=%7B%22s%22%3A37%2C%22u%22%3A%22A%22%7D&efficiency=85.4&limitAcceleration=0&limitDeceleration=0&limitVelocity=0&limitedAcceleration=%7B%22s%22%3A400%2C%22u%22%3A%22in%2Fs2%22%7D&limitedDeceleration=%7B%22s%22%3A50%2C%22u%22%3A%22in%2Fs2%22%7D&limitedVelocity=%7B%22s%22%3A10%2C%22u%22%3A%22in%2Fs%22%7D&load=%7B%22s%22%3A12%2C%22u%22%3A%22lbs%22%7D&motor=%7B%22quantity%22%3A2%2C%22name%22%3A%22Kraken%20X60%20%28FOC%29%2A%22%7D&ratio=%7B%22magnitude%22%3A8%2C%22ratioType%22%3A%22Reduction%22%7D&spoolDiameter=%7B%22s%22%3A1.54%2C%22u%22%3A%22in%22%7D&travelDistance=%7B%22s%22%3A48%2C%22u%22%3A%22in%22%7D
-        private const val ROTOR_TO_SENSOR_GEAR_RATIO = 4.0
-        private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 2.0
-        private val SPOOL_RADIUS = Inches.of(0.77)!!
-//        private val DISTANCE_PER_TURN = Meters.per(Radian).of(SPOOL_RADIUS.meters)
-        private val PID_GAINS = PIDGains(0.0, 0.0, 0.0)
-        private val FF_GAINS = MotorFFGains(0.0, 8.08, 0.01)
-        private const val GRAVITY_GAIN = 0.07
-        private const val PROFILE_ACCELERATION = 5.0
+        private const val ROTOR_TO_MECHANISM_GEAR_RATIO = 8.0
+        val SPOOL_RADIUS = Inches.of(0.77)!!
+
+        //        private val DISTANCE_PER_TURN = Meters.per(Radian).of(SPOOL_RADIUS.meters)
+        private val PID_GAINS = PIDGains(160.92, 0.0, 5.3624)
+        private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
+        private const val GRAVITY_GAIN = 0.27592
+        private const val PROFILE_ACCELERATION = 7.0
         private const val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = InchesPerSecond.of(25.0).toAngular(SPOOL_RADIUS)
+        private val PROFILE_VELOCITY = InchesPerSecond.of(45.0).toAngular(SPOOL_RADIUS)
     }
 
 }
 
-class ElevatorIOSim: ElevatorIO {
+class ElevatorIOSim : ElevatorIO {
     // Simulation classes help us simulate what's going on, including gravity.
     private var motor: DCMotor = DCMotor.getKrakenX60Foc(2)
 
@@ -192,7 +192,7 @@ class ElevatorIOSim: ElevatorIO {
         private const val CARRIAGE_MASS = 1.62519701308126
         private const val MIN_HEIGHT = 0.254000
         private const val MAX_HEIGHT = 2.298700
-        private const val DRUM_RADIUS = 0.028575/2
+        private const val DRUM_RADIUS = 0.028575 / 2
         val PID_GAINS = PIDGains(0.0, 0.0, 0.0)
         val FF_GAINS = MotorFFGains(0.0, 2.77, 0.05)
         var TRAPEZOID_CONSTRAINTS = TrapezoidProfile.Constraints(4.16, 8.2119724)
