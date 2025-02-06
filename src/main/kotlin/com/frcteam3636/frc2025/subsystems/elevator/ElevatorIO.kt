@@ -94,8 +94,8 @@ class ElevatorIOReal : ElevatorIO {
     override fun updateInputs(inputs: ElevatorInputs) {
         inputs.height = leftElevatorMotor.position.value.toLinear(SPOOL_RADIUS)
         inputs.velocity = leftElevatorMotor.velocity.value.toLinear(SPOOL_RADIUS)
-        inputs.rightCurrent = rightElevatorMotor.torqueCurrent.value
-        inputs.leftCurrent = leftElevatorMotor.torqueCurrent.value
+        inputs.rightCurrent = rightElevatorMotor.supplyCurrent.value
+        inputs.leftCurrent = leftElevatorMotor.supplyCurrent.value
     }
 
     override fun runToHeight(height: Distance) {
@@ -130,7 +130,7 @@ class ElevatorIOReal : ElevatorIO {
         private const val GRAVITY_GAIN = 0.27592
         private const val PROFILE_ACCELERATION = 7.0
         private const val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = InchesPerSecond.of(45.0).toAngular(SPOOL_RADIUS)
+        private val PROFILE_VELOCITY = InchesPerSecond.of(140.0).toAngular(SPOOL_RADIUS)
     }
 
 }

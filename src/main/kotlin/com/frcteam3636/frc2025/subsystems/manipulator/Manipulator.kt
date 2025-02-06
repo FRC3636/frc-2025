@@ -25,6 +25,16 @@ object Manipulator : Subsystem {
     private var motorAngleVisualizer =
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
+    var numberOfSpikes: Int = 0
+    private val isStalled: () -> Boolean
+        get() = {
+            val isSpiking: Boolean = inputs.current > Amps.of(2.0)
+            if (isSpiking) {
+                numberOfSpikes++
+            }
+            isSpiking && numberOfSpikes > 1
+        }
+
     init {
         mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
             append(motorAngleVisualizer)
@@ -37,18 +47,28 @@ object Manipulator : Subsystem {
 
         motorAngleVisualizer.angle += inputs.velocity.degreesPerSecond * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
+        Logger.recordOutput("/Manipulator/Spikes", numberOfSpikes)
     }
 
     private val coralInIntakeBack get() = inputs.backUltrasonicDistance < Meters.zero()
     private val coralInIntakeFront get() = inputs.frontUltrasonicDistance < Meters.zero()
 
     fun intake(): Command = startEnd(
-        { io.setSpeed(-0.25) },
-        { io.setSpeed(0.0) }
-    ).until { coralInIntakeBack }
+        { io.setSpeed(0.25) },
+        {
+            io.setSpeed(0.0)
+            numberOfSpikes = 0
+        }
+    ).until {
+        isStalled()
+    }
+    // FIXME: Uncomment when ultrasonic
+//        .until { coralInIntakeBack || isStalled }
 
     fun outtake(): Command = startEnd(
         { io.setCurrent(Amps.of(37.0)) },
         { io.setSpeed(0.0) }
-    ).until { !(coralInIntakeBack || coralInIntakeFront) }
+    )
+    // FIXME: Uncomment when ultrasonic
+//    .until { !(coralInIntakeBack || coralInIntakeFront) }
 }

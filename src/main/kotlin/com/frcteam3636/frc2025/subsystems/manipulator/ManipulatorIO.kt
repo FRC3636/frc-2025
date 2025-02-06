@@ -38,7 +38,7 @@ class ManipulatorIOReal : ManipulatorIO {
             TalonFXConfiguration().apply {
                 MotorOutput.apply {
                     NeutralMode = NeutralModeValue.Brake
-                    Inverted = InvertedValue.Clockwise_Positive
+                    Inverted = InvertedValue.CounterClockwise_Positive
                 }
             }
         )
@@ -60,7 +60,7 @@ class ManipulatorIOReal : ManipulatorIO {
 
     override fun updateInputs(inputs: ManipulatorInputs) {
         inputs.velocity = manipulatorMotor.velocity.value
-        inputs.current = manipulatorMotor.torqueCurrent.value
+        inputs.current = manipulatorMotor.supplyCurrent.value
 
         inputs.backUltrasonicDistance = backUltrasonic.range
         inputs.frontUltrasonicDistance = frontUltrasonic.range

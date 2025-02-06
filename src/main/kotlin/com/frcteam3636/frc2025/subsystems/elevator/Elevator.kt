@@ -21,7 +21,7 @@ object Elevator : Subsystem {
 
     var inputs = LoggedElevatorInputs()
 
-    val isPressed get() = inputs.leftCurrent > Amps.of(30.0) || inputs.rightCurrent > Amps.of(30.0)
+    val isPressed get() = inputs.leftCurrent > Amps.of(1.9) || inputs.rightCurrent > Amps.of(1.9)
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
@@ -53,7 +53,7 @@ object Elevator : Subsystem {
 
     fun runHoming(): Command =
         runEnd({
-            io.setVoltage(Volts.of(-0.05))
+            io.setVoltage(Volts.of(-1.0))
         }, {
             if (isPressed) {
                 io.setEncoderPosition(Meters.of(0.0))

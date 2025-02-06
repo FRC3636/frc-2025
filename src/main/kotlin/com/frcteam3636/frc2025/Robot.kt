@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.runOnce
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
@@ -209,6 +210,9 @@ object Robot : LoggedRobot() {
 
         controller.leftBumper().whileTrue(Manipulator.outtake())
         controller.rightBumper().whileTrue(Manipulator.intake())
+            .onFalse(runOnce {
+                Manipulator.numberOfSpikes = 0 // holy shit kill me
+            })
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
 //
