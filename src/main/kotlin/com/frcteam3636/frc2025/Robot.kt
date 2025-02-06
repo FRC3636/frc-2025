@@ -3,7 +3,9 @@ package com.frcteam3636.frc2025
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.runOnce
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
+import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
@@ -24,7 +26,9 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.button.JoystickButton
 import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
@@ -134,7 +138,7 @@ object Robot : LoggedRobot() {
         Drivetrain.register()
         Manipulator.register()
         Elevator.register()
-//        Funnel.register()
+        Funnel.register()
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
@@ -166,20 +170,20 @@ object Robot : LoggedRobot() {
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
-//        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
+        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
 
-//        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
-//            println("Setting desired target node to left branch.")
-//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
-//        }))
-//
-//        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
-//            println("Setting desired target node to right branch.")
-//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
-//        }))
-//
-//        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOV().repeatedly())
-//
+        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
+            println("Setting desired target node to left branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+        }))
+
+        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
+            println("Setting desired target node to right branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+        }))
+
+        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOV().repeatedly())
+
 //        controller.a().whileTrue(Drivetrain.alignToClosestPOV())
 //
 //        controller.b().onTrue(Commands.runOnce({
@@ -209,7 +213,12 @@ object Robot : LoggedRobot() {
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
 
         controller.leftBumper().whileTrue(Manipulator.outtake())
-        controller.rightBumper().whileTrue(Manipulator.intake())
+        controller.rightBumper().whileTrue(
+            Commands.race(
+                Manipulator.intake(),
+                Funnel.intake()
+            )
+        )
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
 //
