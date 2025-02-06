@@ -2,11 +2,11 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
-import edu.wpi.first.units.Units.Amps
-import edu.wpi.first.units.Units.Meters
+import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d
@@ -25,15 +25,15 @@ object Manipulator : Subsystem {
     private var motorAngleVisualizer =
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
-    var numberOfSpikes: Int = 0
-    private val isStalled: () -> Boolean
-        get() = {
-            val isSpiking: Boolean = inputs.current > Amps.of(2.0)
-            if (isSpiking) {
-                numberOfSpikes++
-            }
-            isSpiking && numberOfSpikes > 1
+    private fun isStalled(waitTimes: Int): Command {
+        val listOfTimes = mutableListOf<Command>()
+        repeat(waitTimes) {
+            // holy cursed
+            listOfTimes.add(Commands.waitUntil { inputs.current > Amps.of(2.0) })
+            listOfTimes.add(Commands.waitUntil { inputs.current < Amps.of(2.0) })
         }
+        return Commands.sequence(*listOfTimes.toTypedArray())
+    }
 
     init {
         mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
@@ -47,7 +47,6 @@ object Manipulator : Subsystem {
 
         motorAngleVisualizer.angle += inputs.velocity.degreesPerSecond * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
-        Logger.recordOutput("/Manipulator/Spikes", numberOfSpikes)
     }
 
     private val coralInIntakeBack get() = inputs.backUltrasonicDistance < Meters.zero()
@@ -55,13 +54,13 @@ object Manipulator : Subsystem {
 
     fun intake(): Command = startEnd(
         { io.setSpeed(0.25) },
-        {
-            io.setSpeed(0.0)
-            numberOfSpikes = 0
-        }
-    ).until {
-        isStalled()
-    }
+        { io.setSpeed(0.0) }
+    ).raceWith(
+        Commands.sequence(
+            isStalled(2),
+            Commands.waitTime(Seconds.of(0.05)) // FIXME: Tune
+        )
+    )
     // FIXME: Uncomment when ultrasonic
 //        .until { coralInIntakeBack || isStalled }
 

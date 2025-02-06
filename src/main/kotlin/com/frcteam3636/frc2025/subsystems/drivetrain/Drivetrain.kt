@@ -63,7 +63,7 @@ object Drivetrain : Subsystem, Sendable {
 
     private val questNavInactiveAlert = Alert("QuestNav localizer is not active.", Alert.AlertType.kInfo)
 
-    private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
+//    private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
     private val questNavInputs = LoggedQuestNavInputs()
     private var questNavCalibrated = false
 
@@ -184,8 +184,8 @@ object Drivetrain : Subsystem, Sendable {
             inputs.measuredPositions.toTypedArray()
         )
 
-        questNavLocalizer.updateInputs(questNavInputs)
-        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
+//        questNavLocalizer.updateInputs(questNavInputs)
+//        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
 //        updateQuestNavOrigin()
 
 //        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
@@ -264,14 +264,14 @@ object Drivetrain : Subsystem, Sendable {
     /**
      * Update the QuestNav pose to keep its origin correct.
      */
-    private fun updateQuestNavOrigin() {
-        val hasHighQualityData = absolutePoseIOs.values.any {
-            it.second.measurement != null
-        }
-        if (!hasHighQualityData || isMoving) return
-        questNavLocalizer.resetPose(poseEstimator.estimatedPosition)
-        questNavCalibrated = true
-    }
+//    private fun updateQuestNavOrigin() {
+//        val hasHighQualityData = absolutePoseIOs.values.any {
+//            it.second.measurement != null
+//        }
+//        if (!hasHighQualityData || isMoving) return
+//        questNavLocalizer.resetPose(poseEstimator.estimatedPosition)
+//        questNavCalibrated = true
+//    }
 
     override fun initSendable(builder: SendableBuilder) {
         builder.setSmartDashboardType(ElasticWidgets.SwerveDrive.widgetName)

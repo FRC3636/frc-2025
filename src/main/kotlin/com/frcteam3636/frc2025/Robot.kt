@@ -210,9 +210,6 @@ object Robot : LoggedRobot() {
 
         controller.leftBumper().whileTrue(Manipulator.outtake())
         controller.rightBumper().whileTrue(Manipulator.intake())
-            .onFalse(runOnce {
-                Manipulator.numberOfSpikes = 0 // holy shit kill me
-            })
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
 //
