@@ -1,7 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
+import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
@@ -91,6 +91,11 @@ class ElevatorIOReal : ElevatorIO {
         configurator.apply(config)
     }
 
+    private val voltageControl = VoltageOut(0.0)
+    private val positionControl = MotionMagicVoltage(0.0).apply {
+        EnableFOC = true
+    }
+
     override fun updateInputs(inputs: ElevatorInputs) {
         inputs.height = leftElevatorMotor.position.value.toLinear(SPOOL_RADIUS)
         inputs.velocity = leftElevatorMotor.velocity.value.toLinear(SPOOL_RADIUS)
@@ -100,15 +105,18 @@ class ElevatorIOReal : ElevatorIO {
 
     override fun runToHeight(height: Distance) {
         Logger.recordOutput("Elevator/Height Setpoint", height)
-        val desiredMotorAngle = height.toAngular(SPOOL_RADIUS)
-        val controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
+        val controlRequest = positionControl.withPosition(
+            height.toAngular(SPOOL_RADIUS)
+        )
+
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
 
     override fun setVoltage(volts: Voltage) {
         assert(volts in Volts.of(-12.0)..Volts.of(12.0))
-        val controlRequest = VoltageOut(volts.volts)
+        val controlRequest = voltageControl.withOutput(volts.volts)
+
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
