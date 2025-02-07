@@ -170,6 +170,12 @@ object Robot : LoggedRobot() {
     private fun configureBindings() {
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
 
+        controller.x()
+            .toggleOnTrue(
+                Drivetrain.playMusic("grasswalk.chrp")
+                    .onlyWhile { Robot.isDisabled }
+                    .ignoringDisable(true))
+
         JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
             println("Setting desired target node to left branch.")
             Drivetrain.currentTargetSelection = ReefBranchSide.Left

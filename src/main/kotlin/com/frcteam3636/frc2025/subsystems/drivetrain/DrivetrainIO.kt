@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.Orchestra
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Pigeon2
 import com.frcteam3636.frc2025.Robot
@@ -8,7 +9,6 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRACK_WIDTH
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_BASE
-import com.frcteam3636.frc2025.utils.math.TAU
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.studica.frc.AHRS
 import edu.wpi.first.apriltag.AprilTagFieldLayout
@@ -44,6 +44,8 @@ abstract class DrivetrainIO {
     protected abstract val gyro: Gyro
     abstract val modules: PerCorner<out SwerveModule>
 
+    open fun startSong(song: String) {}
+    open fun endSong() {}
 
     open fun updateInputs(inputs: DrivetrainInputs) {
         gyro.periodic()
@@ -62,8 +64,8 @@ abstract class DrivetrainIO {
             modules.zip(value).forEach { (module, state) -> module.desiredState = state }
         }
 
-    fun runCharacterization(voltage: Voltage){
-        for (module in modules){
+    fun runCharacterization(voltage: Voltage) {
+        for (module in modules) {
             module.characterize(voltage)
         }
     }
@@ -75,6 +77,21 @@ class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : Drivetra
         Robot.Model.SIMULATION -> GyroSim(modules)
         Robot.Model.COMPETITION -> GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
         Robot.Model.PROTOTYPE -> GyroNavX(AHRS(AHRS.NavXComType.kMXP_SPI))
+    }
+
+    private val orchestra = Orchestra().apply {
+        for ((track, module) in modules.iterator().withIndex()) {
+            module.addTalonsToOrchestra(this, track % 2) // allow up to 2 tracks
+        }
+    }
+
+    override fun startSong(song: String) {
+        orchestra.loadMusic(song)
+        orchestra.play()
+    }
+
+    override fun endSong() {
+        orchestra.stop()
     }
 
     companion object {

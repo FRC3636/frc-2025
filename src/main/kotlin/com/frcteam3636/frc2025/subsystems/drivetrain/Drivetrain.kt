@@ -63,7 +63,7 @@ object Drivetrain : Subsystem, Sendable {
 
     private val questNavInactiveAlert = Alert("QuestNav localizer is not active.", Alert.AlertType.kInfo)
 
-//    private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
+    //    private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
     private val questNavInputs = LoggedQuestNavInputs()
     private var questNavCalibrated = false
 
@@ -373,6 +373,12 @@ object Drivetrain : Subsystem, Sendable {
         estimatedPose = Pose2d(estimatedPose.translation, zeroPos)
 //        io.setGyro(zeroPos)
     }
+
+    fun playMusic(song: String) = startEnd({
+        io.startSong(song)
+    }, {
+        io.endSong()
+    })
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(

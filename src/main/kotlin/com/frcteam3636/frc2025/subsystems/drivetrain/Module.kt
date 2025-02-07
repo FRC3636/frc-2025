@@ -1,5 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.Orchestra
+import com.ctre.phoenix6.configs.AudioConfigs
 import com.ctre.phoenix6.configs.Slot0Configs
 import com.ctre.phoenix6.configs.TorqueCurrentConfigs
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC
@@ -46,6 +48,7 @@ interface SwerveModule {
 
     fun periodic() {}
     fun characterize(voltage: Voltage)
+    fun addTalonsToOrchestra(orchestra: Orchestra, trackNumber: Int) {}
 }
 
 class MAXSwerveModule(
@@ -112,17 +115,25 @@ class MAXSwerveModule(
 
             field = corrected
         }
+
+    override fun addTalonsToOrchestra(orchestra: Orchestra, trackNumber: Int) {
+        drivingMotor.addToOrchestra(orchestra, trackNumber)
+    }
 }
 
 interface DrivingMotor {
     val position: Distance
     var velocity: LinearVelocity
     fun setVoltage(voltage: Voltage)
+    fun addToOrchestra(orchestra: Orchestra, trackNumber: Int) {}
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     private val inner = TalonFX(id).apply {
+        configurator.apply(AudioConfigs().apply {
+            AllowMusicDurDisable = true
+        })
         configurator.apply(Slot0Configs().apply {
             pidGains = DRIVING_PID_GAINS_TALON
             motorFFGains = DRIVING_FF_GAINS_TALON
@@ -151,6 +162,10 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     override fun setVoltage(voltage: Voltage) {
         inner.setVoltage(voltage.volts)
+    }
+
+    override fun addToOrchestra(orchestra: Orchestra, trackNumber: Int) {
+        orchestra.addInstrument(inner, trackNumber)
     }
 }
 
@@ -189,6 +204,7 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
         inner.setVoltage(voltage.volts)
     }
 }
+
 //
 class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
@@ -229,8 +245,10 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
             Volts.of(turningFeedback.calculate(state.angle.radians, desiredState.angle.radians))
         )
         driveMotor.requestVoltage(
-            Volts.of(drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
-                state.speedMetersPerSecond, desiredState.speedMetersPerSecond)
+            Volts.of(
+                drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
+                    state.speedMetersPerSecond, desiredState.speedMetersPerSecond
+                )
             )
         )
     }
@@ -252,7 +270,8 @@ private const val DRIVING_MOTOR_PINION_TEETH = 14
 internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
 const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
-internal val NEO_DRIVING_FREE_SPEED = MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO_NEO)
+internal val NEO_DRIVING_FREE_SPEED =
+    MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO_NEO)
 
 internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(4.0, 0.0, 0.1)
 internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
