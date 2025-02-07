@@ -81,14 +81,14 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         else -> mapOf(
-            "Limelight Front" to LimelightPoseProvider(
-                "limelight-front",
-                algorithm = mt2Algo
-            ),
-            "Limelight Rear" to LimelightPoseProvider(
-                "limelight-rear",
-                algorithm = mt2Algo
-            ),
+//            "Limelight Front" to LimelightPoseProvider(
+//                "limelight-front",
+//                algorithm = mt2Algo
+//            ),
+//            "Limelight Rear" to LimelightPoseProvider(
+//                "limelight-rear",
+//                algorithm = mt2Algo
+//            ),
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
