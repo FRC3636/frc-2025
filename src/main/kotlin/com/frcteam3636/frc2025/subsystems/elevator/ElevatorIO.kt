@@ -91,7 +91,9 @@ class ElevatorIOReal : ElevatorIO {
         configurator.apply(config)
     }
 
-    private val voltageControl = VoltageOut(0.0)
+    private val voltageControl = VoltageOut(0.0).apply {
+        EnableFOC = true
+    }
     private val positionControl = MotionMagicVoltage(0.0).apply {
         EnableFOC = true
     }
