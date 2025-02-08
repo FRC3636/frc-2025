@@ -81,10 +81,10 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         else -> mapOf(
-//            "Limelight Front" to LimelightPoseProvider(
-//                "limelight-front",
-//                algorithm = mt2Algo
-//            ),
+            "Limelight Front" to LimelightPoseProvider(
+                "limelight-front",
+                algorithm = mt2Algo
+            ),
 //            "Limelight Rear" to LimelightPoseProvider(
 //                "limelight-rear",
 //                algorithm = mt2Algo
@@ -190,10 +190,10 @@ object Drivetrain : Subsystem, Sendable {
 
 //        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
-//        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
-//        Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
+        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
+        Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
         Logger.recordOutput("Drivetrain/Localizer", localizer.name)
-//        Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
+        Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
 //        questNavInactiveAlert.set(localizer != Localizer.QuestNav)
 
         Logger.recordOutput(
@@ -361,6 +361,8 @@ object Drivetrain : Subsystem, Sendable {
             .asIterable()
             .closestTargetToWithSelection(estimatedPose, currentTargetSelection)
 
+        Logger.recordOutput("/Drivetrain/Align-Running", true)
+        Logger.recordOutput("Drivetrain/Auto-align Target", target.pose)
         AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS)
     }
 

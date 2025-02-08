@@ -4,6 +4,7 @@ import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
+import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
@@ -136,7 +137,7 @@ object Robot : LoggedRobot() {
         Drivetrain.register()
         Manipulator.register()
         Elevator.register()
-//        Funnel.register()
+        Funnel.register()
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
@@ -209,11 +210,11 @@ object Robot : LoggedRobot() {
 
         controller.leftBumper().whileTrue(Manipulator.outtake())
         controller.rightBumper().whileTrue(
-//            Commands.race(
-//                Manipulator.intake(),
-//                Funnel.intake()
-//            )
-            Manipulator.intake()
+            Commands.race(
+                Manipulator.intake(),
+                Funnel.intake()
+            )
+//            Manipulator.intake()
         )
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))

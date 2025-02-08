@@ -74,7 +74,7 @@ object Elevator : Subsystem {
         Stowed(Meters.of(0.0)),
         LowBar(Meters.of(Rotations.of(0.79).radians * SPOOL_RADIUS.meters)),
         MidBar(Meters.of(Rotations.of(2.18).radians * SPOOL_RADIUS.meters)),
-        HighBar(Meters.of(Rotations.of(4.47).radians * SPOOL_RADIUS.meters)),
+        HighBar(Meters.of(Rotations.of(4.5).radians * SPOOL_RADIUS.meters)),
 //        LowAlgae(Meters.of(0.0)),
 //        HighAlgae(Meters.of(0.0)),
     }
