@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
+import org.littletonrobotics.junction.Logger
 
 object Dashboard {
     private val field = Field2d()
@@ -20,11 +21,11 @@ object Dashboard {
     fun showTeleopTab(tab: ShuffleboardTab) {
         PathPlannerLogging.setLogTargetPoseCallback {
             field.getObject("target pose").pose = it
-//            Logger.recordOutput("/Drivetrain/Target Pose", it)
+            Logger.recordOutput("/Drivetrain/Target Pose", it)
         }
         PathPlannerLogging.setLogActivePathCallback {
             field.getObject("path").poses = it
-//            Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
+            Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
         }
 
 //        tab.addNumber("Velocity, meters per second") {

@@ -58,6 +58,12 @@ object Manipulator : Subsystem {
     private val coralInIntakeBack get() = inputs.backUltrasonicDistance < Meters.zero()
     private val coralInIntakeFront get() = inputs.frontUltrasonicDistance < Meters.zero()
 
+    fun idle(): Command = startEnd({
+        io.setSpeed(-0.02)
+    }, {
+        io.setSpeed(0.0)
+    })
+
     fun intake(): Command = startEnd(
         { io.setSpeed(0.1) },
         { io.setSpeed(0.0) }
