@@ -1,8 +1,8 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
-import com.ctre.phoenix6.configs.Slot0Configs
-import com.ctre.phoenix6.configs.TorqueCurrentConfigs
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC
+import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.VelocityVoltage
+import com.ctre.phoenix6.controls.VoltageOut
 import com.frcteam3636.frc2025.*
 import com.frcteam3636.frc2025.utils.math.*
 import com.frcteam3636.frc2025.utils.swerve.speed
@@ -123,16 +123,16 @@ interface DrivingMotor {
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     private val inner = TalonFX(id).apply {
-        configurator.apply(Slot0Configs().apply {
-            pidGains = DRIVING_PID_GAINS_TALON
-            motorFFGains = DRIVING_FF_GAINS_TALON
+        configurator.apply(TalonFXConfiguration().apply {
+            Slot0.apply {
+                pidGains = DRIVING_PID_GAINS_TALON
+                motorFFGains = DRIVING_FF_GAINS_TALON
+            }
+            CurrentLimits.apply {
+                SupplyCurrentLimit = DRIVING_CURRENT_LIMIT.amps
+                SupplyCurrentLimitEnable = true
+            }
         })
-        // https://v6.docs.ctr-electronics.com/en/stable/docs/hardware-reference/talonfx/improving-performance-with-current-limits.html#stator-and-supply-current-limits
-        configurator.apply(
-            TorqueCurrentConfigs().apply {
-                withPeakForwardTorqueCurrent(DRIVING_CURRENT_LIMIT)
-                withPeakReverseTorqueCurrent(-DRIVING_CURRENT_LIMIT)
-            })
 
     }
 
@@ -143,14 +143,21 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     override val position: Distance
         get() = Meters.of(inner.position.value.rotations * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.meters)
 
+    private var velocityControl = VelocityVoltage(0.0).apply {
+        EnableFOC = true
+    }
     override var velocity: LinearVelocity
         get() = MetersPerSecond.of(inner.velocity.value.rotationsPerSecond * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.meters)
         set(value) {
-            inner.setControl(VelocityTorqueCurrentFOC(value.metersPerSecond / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.meters))
+            inner.setControl(velocityControl.withVelocity(value.metersPerSecond / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.meters))
         }
 
+    private val voltageControl = VoltageOut(0.0).apply {
+        EnableFOC = true
+    }
+
     override fun setVoltage(voltage: Voltage) {
-        inner.setVoltage(voltage.volts)
+        inner.setControl(voltageControl.withOutput(voltage.volts))
     }
 }
 
@@ -162,8 +169,8 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
             inverted(false)
 
             encoder.apply {
-                positionConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO_NEO)
-                velocityConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO_NEO / 60)
+                positionConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO)
+                velocityConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO / 60)
             }
 
             closedLoop.apply {
@@ -189,6 +196,7 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
         inner.setVoltage(voltage.volts)
     }
 }
+
 //
 class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
@@ -229,8 +237,10 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
             Volts.of(turningFeedback.calculate(state.angle.radians, desiredState.angle.radians))
         )
         driveMotor.requestVoltage(
-            Volts.of(drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
-                state.speedMetersPerSecond, desiredState.speedMetersPerSecond)
+            Volts.of(
+                drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
+                    state.speedMetersPerSecond, desiredState.speedMetersPerSecond
+                )
             )
         )
     }
@@ -250,13 +260,14 @@ internal val NEO_FREE_SPEED = RPM.of(5676.0)
 private const val DRIVING_MOTOR_PINION_TEETH = 14
 
 internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
-const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
+const val DRIVING_GEAR_RATIO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
-internal val NEO_DRIVING_FREE_SPEED = MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO_NEO)
+internal val NEO_DRIVING_FREE_SPEED =
+    MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO)
 
-internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(4.0, 0.0, 0.1)
+internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(.19426, 0.0)
 internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
-internal val DRIVING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(5.75, 0.0)
+internal val DRIVING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(0.22852, 0.1256, 0.022584)
 internal val DRIVING_FF_GAINS_NEO: MotorFFGains =
     MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED.metersPerSecond, 0.0) // TODO: ensure this is right
 

@@ -5,7 +5,7 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "sequential",
           "data": {
             "commands": [
               {
@@ -15,16 +15,28 @@
                 }
               },
               {
-                "type": "sequential",
+                "type": "parallel",
                 "data": {
                   "commands": [
                     {
-                      "type": "wait",
+                      "type": "named",
                       "data": {
-                        "waitTime": 1.5
+                        "name": "alignToTarget"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "raiseElevatorL4"
                       }
                     }
                   ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "outtake"
                 }
               }
             ]

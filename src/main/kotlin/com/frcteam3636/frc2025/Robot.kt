@@ -17,6 +17,7 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -165,11 +166,21 @@ object Robot : LoggedRobot() {
             "stowElevator",
             Elevator.setTargetHeight(Elevator.Position.Stowed)
         )
+        NamedCommands.registerCommand(
+            "outtake",
+            Manipulator.outtake().withTimeout(Seconds.one())
+        )
+        NamedCommands.registerCommand(
+            "alignToTarget",
+            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
+                .withTimeout(Seconds.of(3.0))
+        )
     }
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
+        Manipulator.defaultCommand = Manipulator.idle()
 
         JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
             println("Setting desired target node to left branch.")
@@ -181,21 +192,21 @@ object Robot : LoggedRobot() {
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOV().repeatedly())
+        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOI())
 
-//        controller.a().whileTrue(Drivetrain.alignToClosestPOV())
-//
-//        controller.b().onTrue(Commands.runOnce({
-//            println("Setting desired target node to left branch.")
-//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
-//        }))
-//
-//        controller.x().onTrue(Commands.runOnce({
-//            println("Setting desired target node to right branch.")
-//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
-//        }))
-//
-//        // (The button with the yellow tape on it)
+//        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
+
+        controller.b().onTrue(Commands.runOnce({
+            println("Setting desired target node to left branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+        }))
+
+        controller.x().onTrue(Commands.runOnce({
+            println("Setting desired target node to right branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+        }))
+
+        // (The button with the yellow tape on it)
         JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
             Drivetrain.zeroGyro()
@@ -207,7 +218,7 @@ object Robot : LoggedRobot() {
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
-
+//
         controller.leftBumper().whileTrue(Manipulator.outtake())
         controller.rightBumper().whileTrue(
             Commands.race(
@@ -218,11 +229,11 @@ object Robot : LoggedRobot() {
         )
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
-//
-//        controller.y().whileTrue(Elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-//        controller.a().whileTrue(Elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-//        controller.b().whileTrue(Elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
-//        controller.x().whileTrue(Elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+////
+//        controller.y().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+//        controller.a().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+//        controller.b().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kForward));
+//        controller.x().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     }
 
     /** Add data to the driver station dashboard. */
@@ -258,6 +269,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
+        Drivetrain.zeroGyro(true)
         autoCommand = Dashboard.autoChooser.selected
         autoCommand?.schedule()
     }

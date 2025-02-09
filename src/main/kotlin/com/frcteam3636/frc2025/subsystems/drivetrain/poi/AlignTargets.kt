@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.DriverStation
 import kotlin.jvm.optionals.getOrNull
@@ -47,7 +48,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             when (side) {
                 ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET
                 ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET
-            }
+            } - Inches.of(0.5)
         ),
     )
 
@@ -66,14 +67,14 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             Rotation2d.k180deg,
         )
 
-        val offsetWithSpaceForBumpers = Translation2d(
-            -Drivetrain.Constants.BUMPER_LENGTH / 2.0,
+        val offsetFromPoseFacingAprilTagWithBumperSpacer = Translation2d(
             // We don't want to be *on top* of the april tag, so back up a bit from the tag.
+            -Drivetrain.Constants.BUMPER_LENGTH / 2.15,
             Meters.zero()
         )
             .plus(offset)
 
-        pose = poseFacingAprilTag + Transform2d(offsetWithSpaceForBumpers, Rotation2d.kZero)
+        pose = poseFacingAprilTag + Transform2d(offsetFromPoseFacingAprilTagWithBumperSpacer, Rotation2d.kZero)
     }
 
     companion object {
@@ -92,9 +93,9 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val redAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
-                *branchTargetsFromIds(6..11),
+            *branchTargetsFromIds(6..11),
             // Processor
-                TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
+            TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
             // Human Player Stations
             TargetGroup(arrayOf(AprilTagTarget(1, Translation2d()))),
             TargetGroup(arrayOf(AprilTagTarget(2, Translation2d())))
@@ -102,9 +103,9 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val blueAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
-                *branchTargetsFromIds(17..22),
+            *branchTargetsFromIds(17..22),
             // Processor
-                TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
+            TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
             // Human Player Stations
             TargetGroup(arrayOf(AprilTagTarget(13, Translation2d()))),
             TargetGroup(arrayOf(AprilTagTarget(12, Translation2d())))
@@ -137,7 +138,7 @@ fun Iterable<TargetGroup>.closestTargetToWithSelection(pose: Pose2d, reefBranchS
         } else {
             TargetSelection(group, idx = 0)
         }
-    }.minByOrNull { it : TargetSelection ->
+    }.minByOrNull { it: TargetSelection ->
         it.pose.relativeTo(pose).translation.norm
     } ?: error("Can't find closest target")
 

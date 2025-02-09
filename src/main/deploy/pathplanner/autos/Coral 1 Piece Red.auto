@@ -9,6 +9,31 @@
           "data": {
             "pathName": "Coral 1 Piece Red"
           }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "raiseElevatorL4"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "alignToTarget"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "outtake"
+          }
         }
       ]
     }
