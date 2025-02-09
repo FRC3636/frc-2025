@@ -34,6 +34,12 @@
           "data": {
             "name": "outtake"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stowElevator"
+          }
         }
       ]
     }
