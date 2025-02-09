@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
+import kotlin.math.abs
 
 object Elevator : Subsystem {
     private val io: ElevatorIO = when (Robot.model) {
@@ -47,9 +48,8 @@ object Elevator : Subsystem {
     fun setTargetHeight(position: Position): Command =
         startEnd({
             io.runToHeight(position.height)
-        }, {
-            io.runToHeight(inputs.height)
-        })!!
+        }, {})
+            .until { abs(inputs.height.meters - position.height.meters) < Inches.of(0.75).meters }
 
     fun runHoming(): Command =
         runEnd({
@@ -74,7 +74,9 @@ object Elevator : Subsystem {
         Stowed(Meters.of(0.0)),
         LowBar(Meters.of(Rotations.of(0.79).radians * SPOOL_RADIUS.meters)),
         MidBar(Meters.of(Rotations.of(2.18).radians * SPOOL_RADIUS.meters)),
-        HighBar(Meters.of(Rotations.of(4.5).radians * SPOOL_RADIUS.meters)),
+
+        // FIXME: this may be too high after we tune elevator
+        HighBar(Meters.of(Rotations.of(4.54).radians * SPOOL_RADIUS.meters)),
 //        LowAlgae(Meters.of(0.0)),
 //        HighAlgae(Meters.of(0.0)),
     }

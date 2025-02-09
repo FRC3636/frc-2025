@@ -70,7 +70,7 @@ object Manipulator : Subsystem {
     ).raceWith(
         Commands.sequence(
             isStalled(2),
-            Commands.waitTime(Seconds.of(0.325)) // FIXME: Tune
+            Commands.waitTime(Seconds.of(0.6)) // FIXME: Tune
         )
     )
     // FIXME: Uncomment when ultrasonic

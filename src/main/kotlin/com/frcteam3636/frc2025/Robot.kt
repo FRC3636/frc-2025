@@ -17,6 +17,7 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -165,6 +166,15 @@ object Robot : LoggedRobot() {
             "stowElevator",
             Elevator.setTargetHeight(Elevator.Position.Stowed)
         )
+        NamedCommands.registerCommand(
+            "outtake",
+            Manipulator.outtake().withTimeout(Seconds.one())
+        )
+        NamedCommands.registerCommand(
+            "alignToTarget",
+            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
+                .withTimeout(Seconds.of(3.0))
+        )
     }
 
     /** Configure which commands each joystick button triggers. */
@@ -182,9 +192,9 @@ object Robot : LoggedRobot() {
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOV())
+        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToTargetWithPIDController())
 
-        controller.a().whileTrue(Drivetrain.alignToClosestPOV())
+//        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 
         controller.b().onTrue(Commands.runOnce({
             println("Setting desired target node to left branch.")
@@ -259,6 +269,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
+        Drivetrain.zeroGyro(true)
         autoCommand = Dashboard.autoChooser.selected
         autoCommand?.schedule()
     }

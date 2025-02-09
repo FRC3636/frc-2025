@@ -16,7 +16,10 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.closestTargetToWithSelection
 import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
-import com.frcteam3636.frc2025.utils.math.*
+import com.frcteam3636.frc2025.utils.math.PIDController
+import com.frcteam3636.frc2025.utils.math.PIDGains
+import com.frcteam3636.frc2025.utils.math.TAU
+import com.frcteam3636.frc2025.utils.math.toPPLib
 import com.frcteam3636.frc2025.utils.swerve.*
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
@@ -211,7 +214,7 @@ object Drivetrain : Subsystem, Sendable {
                 SwerveDriveKinematics.desaturateWheelSpeeds(stateArr, FREE_SPEED)
 
                 io.desiredStates = PerCorner.fromConventionalArray(stateArr)
-//                Logger.recordOutput("Drivetrain/Desired States", *stateArr)
+                Logger.recordOutput("Drivetrain/Desired States", *stateArr)
             }
         }
 
@@ -355,15 +358,17 @@ object Drivetrain : Subsystem, Sendable {
 
     private val alignController = PIDController(Constants.ALIGN_PID_GAINS)
 
-    fun alignToClosestPOV(): Command = defer {
+    fun alignToClosestPOI(sideOverride: ReefBranchSide? = null): Command = defer {
         val target = AprilTagTarget.currentAllianceTargets
             .asIterable()
-            .closestTargetToWithSelection(estimatedPose, currentTargetSelection)
+            .closestTargetToWithSelection(estimatedPose, sideOverride ?: currentTargetSelection)
 
-        Logger.recordOutput("/Drivetrain/Align-Running", true)
         Logger.recordOutput("Drivetrain/Auto-align Target", target.pose)
         AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS)
-            .andThen(runOnce { alignController.reset() })
+            .andThen(runOnce {
+                alignController.reset()
+                Logger.recordOutput("/Drivetrain/Align-Running", true)
+            })
             .andThen(runEnd({
                 val distanceToTarget = estimatedPose.relativeTo(target.pose).translation.norm
                 val angleToTarget = estimatedPose.relativeTo(target.pose).translation.angle
@@ -376,18 +381,54 @@ object Drivetrain : Subsystem, Sendable {
                 )
             }, {
                 desiredModuleStates = BRAKE_POSITION
+                Logger.recordOutput("/Drivetrain/Align-Running", false)
             }))
-            .onlyWhile {
-                estimatedPose.relativeTo(target.pose).translation.norm >
-                        Inches.of(0.1).meters
-            }
+//            .onlyWhile {
+//                estimatedPose.relativeTo(target.pose).translation.norm >
+//                        Inches.of(0.1).meters
+//            }
     }
 
-    fun zeroGyro() {
+    fun alignToTargetWithPIDController(sideOverride: ReefBranchSide? = null): Command = defer {
+        val target = AprilTagTarget.currentAllianceTargets
+            .asIterable()
+            .closestTargetToWithSelection(estimatedPose, sideOverride ?: currentTargetSelection)
+
+        Logger.recordOutput("Drivetrain/Auto-align Target", target.pose)
+        runOnce {
+            alignController.reset()
+            Logger.recordOutput("/Drivetrain/Align-Running", true)
+        }
+            .andThen(runEnd({
+                val distanceToTarget = estimatedPose.relativeTo(target.pose).translation.norm
+                val angleToTarget = estimatedPose.relativeTo(target.pose).translation.angle
+                val output = alignController.calculate(distanceToTarget, 0.0)
+                val desiredSpeed = Translation2d(output, angleToTarget)
+                val chassisSpeeds = ChassisSpeeds(
+                    desiredSpeed.x,
+                    desiredSpeed.y,
+                    0.0
+                )
+                Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
+                desiredChassisSpeeds = chassisSpeeds
+            }, {
+                desiredModuleStates = BRAKE_POSITION
+                Logger.recordOutput("/Drivetrain/Align-Running", false)
+            }))
+//            .onlyWhile {
+//                estimatedPose.relativeTo(target.pose).translation.norm >
+//                        Inches.of(0.1).meters
+//            }
+    }
+
+    fun zeroGyro(isReversed: Boolean = false) {
         // Tell the gyro that the robot is facing the other alliance.
-        val zeroPos = when (DriverStation.getAlliance().getOrNull()) {
+        var zeroPos = when (DriverStation.getAlliance().getOrNull()) {
             DriverStation.Alliance.Red -> Rotation2d.k180deg
             else -> Rotation2d.kZero
+        }
+        if (isReversed) {
+            zeroPos += Rotation2d.k180deg
         }
         estimatedPose = Pose2d(estimatedPose.translation, zeroPos)
 //        io.setGyro(zeroPos)
@@ -464,7 +505,7 @@ object Drivetrain : Subsystem, Sendable {
             )
 
         // Chassis Control
-        val FREE_SPEED = MetersPerSecond.of(8.132)!!
+        val FREE_SPEED = MetersPerSecond.of(5.5)!!
         private val ROTATION_SPEED = RadiansPerSecond.of(14.604)!!
 
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
@@ -572,7 +613,7 @@ object Drivetrain : Subsystem, Sendable {
             Rotation2d(Degrees.of(0.0))
         )
 
-        val ALIGN_PID_GAINS = PIDGains(5.0, 0.0, 0.5)
+        val ALIGN_PID_GAINS = PIDGains(10.0, 0.0, 0.5)
     }
 
     enum class Localizer {

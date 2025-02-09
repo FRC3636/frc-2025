@@ -169,8 +169,8 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
             inverted(false)
 
             encoder.apply {
-                positionConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO_NEO)
-                velocityConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO_NEO / 60)
+                positionConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO)
+                velocityConversionFactor(WHEEL_CIRCUMFERENCE.meters / DRIVING_GEAR_RATIO / 60)
             }
 
             closedLoop.apply {
@@ -260,10 +260,10 @@ internal val NEO_FREE_SPEED = RPM.of(5676.0)
 private const val DRIVING_MOTOR_PINION_TEETH = 14
 
 internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
-const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
+const val DRIVING_GEAR_RATIO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
 internal val NEO_DRIVING_FREE_SPEED =
-    MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO_NEO)
+    MetersPerSecond.of((NEO_FREE_SPEED.rotationsPerSecond * WHEEL_CIRCUMFERENCE.meters) / DRIVING_GEAR_RATIO)
 
 internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(.19426, 0.0)
 internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
