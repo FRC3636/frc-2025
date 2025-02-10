@@ -38,7 +38,7 @@ object Funnel : Subsystem {
 
     fun intake(): Command = startEnd(
         {
-            io.setSpeed(0.75)
+            io.setSpeed(1.0)
         },
         {
             io.setSpeed(0.0)
