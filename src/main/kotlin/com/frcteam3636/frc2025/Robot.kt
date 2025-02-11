@@ -2,6 +2,8 @@ package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AlignableTarget
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
@@ -17,6 +19,7 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
@@ -270,7 +273,23 @@ object Robot : LoggedRobot() {
 
     override fun autonomousInit() {
         Drivetrain.zeroGyro(true)
-        autoCommand = Dashboard.autoChooser.selected
+        val targets = listOf<AlignableTarget>(
+            // Reef branch
+            AprilTagTarget(20, ReefBranchSide.Left),
+
+            // Source
+            AprilTagTarget(13, Translation2d()),
+
+            // Back to branch
+            AprilTagTarget(19, ReefBranchSide.Left),
+        )
+
+        autoCommand = Commands.sequence(
+            *targets
+                .map {  Drivetrain.pathfindToPose(it.pose) }
+                .toTypedArray()
+        )
+
         autoCommand?.schedule()
     }
 
