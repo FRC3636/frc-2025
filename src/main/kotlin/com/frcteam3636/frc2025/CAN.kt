@@ -20,7 +20,10 @@ enum class REVMotorControllerId(val num: Int) {
     BackRightDrivingMotor(3),
     FrontRightDrivingMotor(4),
 
-    IndexerMotor(13),
+    PivotLeftMotor(10),
+    PivotRightMotor(11),
+    PivotRollerMotor(12),
+
 
     IntakeMotor(21),
 }
