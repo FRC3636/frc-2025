@@ -192,7 +192,8 @@ object Robot : LoggedRobot() {
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOI())
+        JoystickButton(joystickLeft, 1).whileTrue(Drivetrain.alignToClosestPOI())
+        JoystickButton(joystickRight, 1).whileTrue(Manipulator.outtake())
 
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 

@@ -128,9 +128,9 @@ class ElevatorIOReal : ElevatorIO {
         private val PID_GAINS = PIDGains(160.92, 0.0, 5.3624)
         private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
         private const val GRAVITY_GAIN = 0.27592
-        private val PROFILE_ACCELERATION = 10.0
+        private val PROFILE_ACCELERATION = 22.0
         private const val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = InchesPerSecond.of(140.0).toAngular(SPOOL_RADIUS)
+        private val PROFILE_VELOCITY = InchesPerSecond.of(270.0).toAngular(SPOOL_RADIUS)
     }
 
 }

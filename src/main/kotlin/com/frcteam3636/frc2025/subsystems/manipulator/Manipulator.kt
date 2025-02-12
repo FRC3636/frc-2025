@@ -33,7 +33,7 @@ object Manipulator : Subsystem {
         repeat(waitTimes) {
             // holy cursed
             listOfTimes.add(Commands.waitUntil {
-                val condition = inputs.current > Amps.of(1.0) && lastCurrent < Amps.of(1.0)
+                val condition = inputs.current > Amps.of(0.85) && lastCurrent < Amps.of(0.85)
                 lastCurrent = inputs.current
                 condition
             })
@@ -65,12 +65,12 @@ object Manipulator : Subsystem {
     })
 
     fun intake(): Command = startEnd(
-        { io.setSpeed(0.1) },
+        { io.setSpeed(0.065) },
         { io.setSpeed(0.0) }
     ).raceWith(
         Commands.sequence(
-            isStalled(2),
-            Commands.waitTime(Seconds.of(0.6)) // FIXME: Tune
+            isStalled(1),
+            Commands.waitTime(Seconds.of(0.395)) // FIXME: Tune
         )
     )
     // FIXME: Uncomment when ultrasonic
