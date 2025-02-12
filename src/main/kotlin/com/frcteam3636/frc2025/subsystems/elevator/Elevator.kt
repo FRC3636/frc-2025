@@ -24,7 +24,7 @@ object Elevator: Subsystem {
         Logger.processInputs("Elevator", inputs)
     }
 
-    fun setTargetHeight(position: Position): Command =
+        fun setTargetHeight(position: Position): Command =
         startEnd({
         io.runToHeight(position.height)
     }, {

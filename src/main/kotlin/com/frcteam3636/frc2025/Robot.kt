@@ -4,7 +4,11 @@ import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
+import com.frcteam3636.frc2025.subsystems.elevator.Elevator.runHoming
+import com.frcteam3636.frc2025.subsystems.elevator.Elevator.setTargetHeight
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
+import com.frcteam3636.frc2025.subsystems.funnel.Funnel.intake
+import com.frcteam3636.frc2025.subsystems.funnel.Funnel.outtake
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
@@ -30,6 +34,8 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
+import javax.swing.KeyStroke
+import javax.swing.text.JTextComponent.KeyBinding
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -160,6 +166,30 @@ object Robot : LoggedRobot() {
             println("Homing elevator.")
             Elevator.runHoming()
         }))
+
+        controller.a()
+            .debounce(.150)
+            .onTrue(
+                setTargetHeight(Elevator.Position.LowBar)
+            )
+
+        controller.b()
+            .debounce(.150)
+            .whileTrue(
+                Manipulator.intake()
+            )
+
+        controller.x()
+            .debounce(.150)
+            .whileTrue(
+                Funnel.intake()
+            )
+
+        controller.y()
+            .debounce(.150)
+            .whileTrue(
+                Funnel.outtake()
+            )
     }
 
     /** Add data to the driver station dashboard. */
