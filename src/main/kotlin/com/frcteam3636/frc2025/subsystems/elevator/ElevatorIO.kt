@@ -77,6 +77,9 @@ class ElevatorIOReal : ElevatorIO {
         CurrentLimits.apply {
             StatorCurrentLimitEnable = true
             StatorCurrentLimit = 37.0
+
+            SupplyCurrentLimitEnable = true
+            SupplyCurrentLimit = 20.0
         }
 
     }
