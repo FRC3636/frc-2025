@@ -121,7 +121,7 @@ class DrivetrainIOSim : DrivetrainIO() {
                     Volts.of(0.1),
                     WHEEL_RADIUS,
                     KilogramSquareMeters.of(0.02),
-                    WHEELS.SLS_PRINTED_WHEELS.cof
+                    1.85
                 )
             )
             // Configures the track length and track width (spacing between swerve modules)
