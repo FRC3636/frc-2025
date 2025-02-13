@@ -37,12 +37,6 @@ interface ClimbIO{
 
 class ClimbIOReal: ClimbIO {
 
-    val config = TalonFXConfiguration().apply {
-        MotorOutput.apply {
-            NeutralMode = NeutralModeValue.Brake
-        }
-    }
-
     private val encoder = CANcoder(CTREDeviceId.ClimbEncoder).apply {
         val config = CANcoderConfiguration().apply {
             MagnetSensor.apply {
@@ -53,13 +47,11 @@ class ClimbIOReal: ClimbIO {
         configurator.apply(config)
     }
 
-    private val climbMotor = TalonFX(CTREDeviceId.ClimbMotor).apply {
-        configurator.apply(config)
-    }
+    private val climbMotor = TalonFX(CTREDeviceId.ClimbMotor)
 
     override fun updateInputs(inputs: ClimbInputs) {
-        inputs.position = Rotations.of(climbMotor.position.value)
-        inputs.velocity = RotationsPerSecond.of(climbMotor.position.value)
+        inputs.position = encoder.position.value
+        inputs.velocity = encoder.velocity.value
         inputs.current = climbMotor.torqueCurrent.value
     }
 
