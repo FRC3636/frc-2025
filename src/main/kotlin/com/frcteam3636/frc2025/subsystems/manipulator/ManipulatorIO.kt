@@ -19,6 +19,7 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class ManipulatorInputs {
+    var position = Rotations.zero()!!
     var velocity = RotationsPerSecond.zero()!!
     var current = Amps.zero()!!
 
@@ -61,6 +62,7 @@ class ManipulatorIOReal : ManipulatorIO {
     override fun updateInputs(inputs: ManipulatorInputs) {
         inputs.velocity = manipulatorMotor.velocity.value
         inputs.current = manipulatorMotor.supplyCurrent.value
+        inputs.position = manipulatorMotor.position.value
 
         inputs.backUltrasonicDistance = backUltrasonic.range
         inputs.frontUltrasonicDistance = frontUltrasonic.range

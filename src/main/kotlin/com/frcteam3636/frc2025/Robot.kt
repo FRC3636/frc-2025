@@ -168,7 +168,14 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "outtake",
-            Manipulator.outtake().withTimeout(Seconds.one())
+            Manipulator.outtake().withTimeout(Seconds.one()) // FIXME: TURN THIS DOWN
+        )
+        NamedCommands.registerCommand(
+            "intake",
+            Commands.race(
+                Manipulator.intake(),
+                Funnel.intake()
+            ).withTimeout(Seconds.of(5.0)) // Is this too high? It depends on how fast our HP is so idk
         )
         NamedCommands.registerCommand(
             "alignToTarget",
@@ -192,19 +199,20 @@ object Robot : LoggedRobot() {
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        JoystickButton(joystickRight, 1).whileTrue(Drivetrain.alignToClosestPOI())
+        JoystickButton(joystickLeft, 1).whileTrue(Drivetrain.alignToClosestPOI())
+        JoystickButton(joystickRight, 1).whileTrue(Manipulator.outtake())
 
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 
-        controller.b().onTrue(Commands.runOnce({
-            println("Setting desired target node to left branch.")
-            Drivetrain.currentTargetSelection = ReefBranchSide.Left
-        }))
-
-        controller.x().onTrue(Commands.runOnce({
-            println("Setting desired target node to right branch.")
-            Drivetrain.currentTargetSelection = ReefBranchSide.Right
-        }))
+//        controller.b().onTrue(Commands.runOnce({
+//            println("Setting desired target node to left branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+//        }))
+//
+//        controller.x().onTrue(Commands.runOnce({
+//            println("Setting desired target node to right branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+//        }))
 
         // (The button with the yellow tape on it)
         JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
@@ -219,7 +227,7 @@ object Robot : LoggedRobot() {
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
 //
-        controller.leftBumper().whileTrue(Manipulator.outtake())
+        controller.leftBumper().whileTrue(Funnel.outtake())
         controller.rightBumper().whileTrue(
             Commands.race(
                 Manipulator.intake(),
