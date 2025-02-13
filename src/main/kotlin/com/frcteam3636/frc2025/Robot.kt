@@ -197,15 +197,15 @@ object Robot : LoggedRobot() {
 
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 
-        controller.b().onTrue(Commands.runOnce({
-            println("Setting desired target node to left branch.")
-            Drivetrain.currentTargetSelection = ReefBranchSide.Left
-        }))
-
-        controller.x().onTrue(Commands.runOnce({
-            println("Setting desired target node to right branch.")
-            Drivetrain.currentTargetSelection = ReefBranchSide.Right
-        }))
+//        controller.b().onTrue(Commands.runOnce({
+//            println("Setting desired target node to left branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+//        }))
+//
+//        controller.x().onTrue(Commands.runOnce({
+//            println("Setting desired target node to right branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+//        }))
 
         // (The button with the yellow tape on it)
         JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
