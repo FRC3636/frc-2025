@@ -2,8 +2,8 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
-import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.measure.Current
+import edu.wpi.first.units.Units.Amps
+import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
@@ -26,20 +26,13 @@ object Manipulator : Subsystem {
     private var motorAngleVisualizer =
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
-    private var lastCurrent: Current = Amps.of(0.0)
-
-    private fun isStalled(waitTimes: Int): Command {
-        val listOfTimes = mutableListOf<Command>()
-        repeat(waitTimes) {
-            // holy cursed
-            listOfTimes.add(Commands.waitUntil {
-                val condition = inputs.current > Amps.of(0.85) && lastCurrent < Amps.of(0.85)
-                lastCurrent = inputs.current
-                condition
-            })
-        }
-        return Commands.sequence(*listOfTimes.toTypedArray())
-    }
+    private fun waitForIntake(): Command = Commands.sequence(
+        Commands.waitUntil { inputs.current > Amps.of(0.85) },
+        Commands.defer({
+            val targetRotations = inputs.position + Rotations.of(1.5)
+            Commands.waitUntil { inputs.position > targetRotations }
+        }, emptySet())
+    )
 
     init {
         mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
@@ -55,8 +48,6 @@ object Manipulator : Subsystem {
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
     }
 
-    private val coralInIntakeBack get() = inputs.backUltrasonicDistance < Meters.zero()
-    private val coralInIntakeFront get() = inputs.frontUltrasonicDistance < Meters.zero()
 
     fun idle(): Command = startEnd({
         io.setSpeed(-0.02)
@@ -67,19 +58,14 @@ object Manipulator : Subsystem {
     fun intake(): Command = startEnd(
         { io.setSpeed(0.065) },
         { io.setSpeed(0.0) }
-    ).raceWith(
-        Commands.sequence(
-            isStalled(1),
-            Commands.waitTime(Seconds.of(0.395)) // FIXME: Tune
-        )
     )
-    // FIXME: Uncomment when ultrasonic
-//        .until { coralInIntakeBack || isStalled }
+        .raceWith(waitForIntake())
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+
 
     fun outtake(): Command = startEnd(
         { io.setCurrent(Amps.of(37.0)) },
         { io.setSpeed(0.0) }
     )
-    // FIXME: Uncomment when ultrasonic
-//    .until { !(coralInIntakeBack || coralInIntakeFront) }
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
 }

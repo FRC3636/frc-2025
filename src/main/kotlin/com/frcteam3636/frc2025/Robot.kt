@@ -220,7 +220,7 @@ object Robot : LoggedRobot() {
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
 //
-        controller.leftBumper().whileTrue(Manipulator.outtake())
+        controller.leftBumper().whileTrue(Funnel.outtake())
         controller.rightBumper().whileTrue(
             Commands.race(
                 Manipulator.intake(),
