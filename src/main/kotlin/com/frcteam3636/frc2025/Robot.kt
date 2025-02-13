@@ -222,13 +222,13 @@ object Robot : LoggedRobot() {
 
         JoystickButton(joystickLeft, 14).onTrue(Elevator.runHoming())
 
-        controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
-        controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
-        controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
-        controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
+        JoystickButton(joystickRight,8).onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
+        JoystickButton(joystickRight,14).onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
+        JoystickButton(joystickRight,15).onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
+        JoystickButton(joystickRight,16).onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
 //
-        controller.leftBumper().whileTrue(Funnel.outtake())
-        controller.rightBumper().whileTrue(
+        JoystickButton(joystickLeft, 4).whileTrue(Funnel.outtake())
+        JoystickButton(joystickLeft, 3).whileTrue(
             Commands.race(
                 Manipulator.intake(),
                 Funnel.intake()
