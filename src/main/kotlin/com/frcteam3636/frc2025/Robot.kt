@@ -168,19 +168,24 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "outtake",
-            Manipulator.outtake().withTimeout(Seconds.one()) // FIXME: TURN THIS DOWN
+            Manipulator.outtake().withTimeout(Seconds.of(0.5)) // FIXME: TURN THIS DOWN
         )
         NamedCommands.registerCommand(
             "intake",
             Commands.race(
-                Manipulator.intake(),
+                Manipulator.intakeWithOutInterrupt(),
                 Funnel.intake()
-            ).withTimeout(Seconds.of(5.0)) // Is this too high? It depends on how fast our HP is so idk
+            )
         )
         NamedCommands.registerCommand(
             "alignToTarget",
             Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
-                .withTimeout(Seconds.of(3.0))
+                .withTimeout(Seconds.of(2.0))
+        )
+        NamedCommands.registerCommand(
+            "alignToTargetRight",
+            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Right)
+                .withTimeout(Seconds.of(2.0))
         )
     }
 
