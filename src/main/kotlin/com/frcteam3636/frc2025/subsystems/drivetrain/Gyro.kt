@@ -3,6 +3,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.math.radiansPerSecond
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.studica.frc.AHRS
@@ -90,7 +91,7 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
             sign(rotationalVelocities.frontLeft.y) * rotationalVelocities.frontLeft.norm /
                     Drivetrain.Constants.MODULE_POSITIONS.frontLeft.translation.norm
 
-        velocity = RadiansPerSecond.of(yawVelocity)
+        velocity = yawVelocity.radiansPerSecond
         rotation += Rotation2d(yawVelocity) * Robot.period
     }
 }

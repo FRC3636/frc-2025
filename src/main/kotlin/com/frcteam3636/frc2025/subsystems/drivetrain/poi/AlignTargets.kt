@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain.poi
 
 import com.frcteam3636.frc2025.subsystems.drivetrain.APRIL_TAGS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.utils.math.meters
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
@@ -141,4 +142,4 @@ fun Iterable<TargetGroup>.closestTargetToWithSelection(pose: Pose2d, reefBranchS
         it.pose.relativeTo(pose).translation.norm
     } ?: error("Can't find closest target")
 
-private val APRIL_TAG_HORIZONTAL_OFFSET = Meters.of(0.147525)
+private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters

@@ -19,6 +19,8 @@ import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.PIDController
 import com.frcteam3636.frc2025.utils.math.PIDGains
 import com.frcteam3636.frc2025.utils.math.TAU
+import com.frcteam3636.frc2025.utils.math.metersPerSecond
+import com.frcteam3636.frc2025.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2025.utils.math.toPPLib
 import com.frcteam3636.frc2025.utils.swerve.*
 import com.frcteam3636.frc2025.utils.translation2d
@@ -118,9 +120,9 @@ object Drivetrain : Subsystem, Sendable {
     val isMoving: Boolean
         get() {
             val speeds = measuredChassisSpeeds
-            val translationalSpeed = MetersPerSecond.of(speeds.translation2dPerSecond.norm)
-            return translationalSpeed < MetersPerSecond.of(0.5)
-                    && speeds.angularVelocity < RotationsPerSecond.of(0.5)
+            val translationalSpeed = speeds.translation2dPerSecond.norm.metersPerSecond
+            return translationalSpeed < 0.5.metersPerSecond
+                    && speeds.angularVelocity < 0.5.rotationsPerSecond
         }
 
 

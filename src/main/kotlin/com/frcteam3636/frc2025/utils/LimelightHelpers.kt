@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.frcteam3636.frc2025.utils.math.meters
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.networktables.DoubleArrayEntry
@@ -169,7 +170,7 @@ object LimelightHelpers {
                 val distToRobot = poseArray[baseIndex + 5]
                 val ambiguity = poseArray[baseIndex + 6]
                 rawFiducials[i] =
-                    RawFiducial(id, txnc, tync, ta, Meters.of(distToCamera), Meters.of(distToRobot), ambiguity)
+                    RawFiducial(id, txnc, tync, ta, distToCamera.meters, distToRobot.meters, ambiguity)
             }
         }
 
@@ -214,7 +215,7 @@ object LimelightHelpers {
             val ambiguity = extractArrayEntry(rawFiducialArray, baseIndex + 6)
 
             rawFiducials[i] =
-                RawFiducial(id, txnc, tync, ta, Meters.of(distToCamera), Meters.of(distToRobot), ambiguity)
+                RawFiducial(id, txnc, tync, ta, distToCamera.meters, distToRobot.meters, ambiguity)
         }
 
         return rawFiducials

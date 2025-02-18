@@ -8,6 +8,7 @@ import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.amps
+import com.frcteam3636.frc2025.utils.math.inAmps
 import com.frcteam3636.frc2025.utils.math.range
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
@@ -55,7 +56,7 @@ class ManipulatorIOReal : ManipulatorIO {
     private val currentControl = TorqueCurrentFOC(0.0)
 
     override fun setCurrent(current: Current) {
-        assert(current.amps in -60.0..60.0)
+        assert(current.inAmps in -60.0..60.0)
         manipulatorMotor.setControl(currentControl.withOutput(current))
     }
 
@@ -93,7 +94,7 @@ class ManipulatorIOSim : ManipulatorIO {
         simMotor.update(Robot.period)
         inputs.velocity = simMotor.angularVelocity
         simMotor.setAngularVelocity(simMotor.angularVelocityRadPerSec * 0.95)
-        inputs.current = Amps.of(simMotor.currentDrawAmps)
+        inputs.current = simMotor.currentDrawAmps.amps
     }
 
 }

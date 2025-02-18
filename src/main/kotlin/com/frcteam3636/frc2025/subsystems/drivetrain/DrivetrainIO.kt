@@ -9,6 +9,8 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.MODULE
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRACK_WIDTH
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_BASE
 import com.frcteam3636.frc2025.utils.math.TAU
+import com.frcteam3636.frc2025.utils.math.kilogramSquareMeters
+import com.frcteam3636.frc2025.utils.math.volts
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.studica.frc.AHRS
 import edu.wpi.first.apriltag.AprilTagFieldLayout
@@ -117,10 +119,10 @@ class DrivetrainIOSim : DrivetrainIO() {
                     DCMotor.getNeo550(1),  // Steer motor is a Neo 550
                     (45.0 * 22.0) / (14.0 * 15.0),
                     9424.0 / 203.0,
-                    Volts.of(0.1),
-                    Volts.of(0.1),
+                    0.1.volts,
+                    0.1.volts,
                     WHEEL_RADIUS,
-                    KilogramSquareMeters.of(0.02),
+                    0.02.kilogramSquareMeters,
                     1.85
                 )
             )

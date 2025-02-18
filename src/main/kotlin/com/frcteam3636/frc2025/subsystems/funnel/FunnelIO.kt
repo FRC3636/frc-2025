@@ -7,6 +7,7 @@ import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.amps
+import com.frcteam3636.frc2025.utils.math.inAmps
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
@@ -34,7 +35,7 @@ class FunnelIOReal : FunnelIO{
                 }
 
                 CurrentLimits.apply {
-                    SupplyCurrentLimit = MOTOR_CURRENT_LIMIT.amps
+                    SupplyCurrentLimit = MOTOR_CURRENT_LIMIT.inAmps
                     SupplyCurrentLimitEnable = true
                 }
             }
@@ -51,7 +52,7 @@ class FunnelIOReal : FunnelIO{
     }
 
     internal companion object Constants{
-        private val MOTOR_CURRENT_LIMIT = Amps.of(35.0)
+        private val MOTOR_CURRENT_LIMIT = 35.amps
     }
 }
 class FunnelIOSim : FunnelIO{
@@ -67,7 +68,7 @@ class FunnelIOSim : FunnelIO{
         simMotor.update(Robot.period)
         inputs.rollerVelocity = simMotor.angularVelocity
         simMotor.setAngularVelocity(simMotor.angularVelocityRadPerSec * 0.95)
-        inputs.rollerCurrent = Amp.of(simMotor.currentDrawAmps)
+        inputs.rollerCurrent = simMotor.currentDrawAmps.amps
     }
 
 }

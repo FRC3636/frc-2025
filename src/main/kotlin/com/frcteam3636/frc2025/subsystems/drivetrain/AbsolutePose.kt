@@ -5,6 +5,9 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.QuestNav
+import com.frcteam3636.frc2025.utils.math.deg
+import com.frcteam3636.frc2025.utils.math.inSeconds
+import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
@@ -134,7 +137,7 @@ class LimelightPoseProvider(
 
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
-                        Seconds.of(estimate.timestampSeconds),
+                        estimate.timestampSeconds.seconds,
                         // This value is pulled directly from the Limelight docs (linked at the top of this class)
                         VecBuilder.fill(.5, .5, 9999999.0)
                     )
@@ -157,7 +160,7 @@ class LimelightPoseProvider(
 
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
-                        Seconds.of(estimate.timestampSeconds),
+                        estimate.timestampSeconds.seconds,
                         // This value is also pulled directly from the Limelight docs
                         VecBuilder.fill(.7, .7, 9999999.0)
                     )
@@ -177,7 +180,7 @@ class LimelightPoseProvider(
 
             // We assume the camera has disconnected if there are no new updates for several ticks.
             inputs.connected = if (measurement != null) {
-                val timeSinceLastUpdate = Seconds.of(Timer.getTimestamp()) - measurement!!.timestamp
+                val timeSinceLastUpdate = Timer.getTimestamp().seconds - measurement!!.timestamp
                 timeSinceLastUpdate > CONNECTED_TIMEOUT
             } else false
         }
@@ -190,7 +193,7 @@ class LimelightPoseProvider(
          * This is a somewhat conservative limit, but it is only applied when using the old MegaTag v1 algorithm.
          * It's possible it could be increased if it's too restrictive.
          */
-        private val MAX_SINGLE_TAG_DISTANCE = Meters.of(3.0)!!
+        private val MAX_SINGLE_TAG_DISTANCE = 3.meters
 
         /**
          * The acceptable ambiguity for a single-tag reading on MegaTag v1.
@@ -200,7 +203,7 @@ class LimelightPoseProvider(
         /**
          * The amount of time without an update before considering the camera to be disconnected.
          */
-        private val CONNECTED_TIMEOUT = Seconds.of(Robot.period * 5)
+        private val CONNECTED_TIMEOUT = Robot.period.seconds * 5.0
     }
 }
 
@@ -231,7 +234,7 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
             estimator.update(latestResult).ifPresent {
                 inputs.measurement = AbsolutePoseMeasurement(
                     it.estimatedPose.toPose2d(),
-                    Seconds.of(it.timestampSeconds),
+                    it.timestampSeconds.seconds,
                     VecBuilder.fill(0.7, 0.7, 9999999.0)
                 )
             }
@@ -297,7 +300,7 @@ data class AbsolutePoseMeasurement(
 fun SwerveDrivePoseEstimator.addAbsolutePoseMeasurement(measurement: AbsolutePoseMeasurement) {
     addVisionMeasurement(
         measurement.pose,
-        measurement.timestamp.seconds,
+        measurement.timestamp.inSeconds,
         measurement.stdDeviation // FIXME: seems to fire the bot into orbit...?
     )
 }
@@ -314,13 +317,13 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
     override fun unpack(bb: ByteBuffer): AbsolutePoseMeasurement =
         AbsolutePoseMeasurement(
             pose = Pose2d.struct.unpack(bb),
-            timestamp = Seconds.of(bb.double),
+            timestamp = bb.double.seconds,
             stdDeviation = VecBuilder.fill(bb.double, bb.double, bb.double)
         )
 
     override fun pack(bb: ByteBuffer, value: AbsolutePoseMeasurement) {
         Pose2d.struct.pack(bb, value.pose)
-        bb.putDouble(value.timestamp.seconds)
+        bb.putDouble(value.timestamp.inSeconds)
         bb.putDouble(value.stdDeviation[0, 0])
         bb.putDouble(value.stdDeviation[1, 0])
         bb.putDouble(value.stdDeviation[2, 0])
@@ -338,4 +341,4 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 //    )
 //}
 
-val LIMELIGHT_FOV = Degrees.of(75.76079874010732)
+val LIMELIGHT_FOV = 75.76079874010732.deg

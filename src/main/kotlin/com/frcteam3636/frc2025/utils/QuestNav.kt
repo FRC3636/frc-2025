@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.utils
 
+import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.DoubleSubscriber
 import edu.wpi.first.networktables.FloatArraySubscriber
@@ -89,10 +90,10 @@ class QuestNav {
     val timestamp: Time
         get() {
             // Make sure our timestamp epochs are the same.
-            val rawTimestamp = Seconds.of(questTimestamp.get())
+            val rawTimestamp = questTimestamp.get().seconds
             if (rawTimestamp != Seconds.zero()) {
                 if (timestampEpoch == null) {
-                    timestampEpoch = Seconds.of(Timer.getTimestamp()) - rawTimestamp
+                    timestampEpoch = Timer.getTimestamp().seconds - rawTimestamp
                 }
                 return rawTimestamp + timestampEpoch
             }

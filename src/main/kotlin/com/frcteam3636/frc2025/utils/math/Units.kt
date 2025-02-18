@@ -1,45 +1,89 @@
 package com.frcteam3636.frc2025.utils.math
 
+import edu.wpi.first.units.TimeUnit
 import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.VoltageUnit
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.units.measure.MomentOfInertia
+import edu.wpi.first.units.measure.Per
 import edu.wpi.first.units.measure.Time
+import edu.wpi.first.units.measure.Velocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.Ultrasonic
 
-val Distance.meters get() = `in`(Meters)
-val Distance.centimeters get() = `in`(Centimeters)
-val Distance.inches get() = `in`(Inches)
-val Distance.feet get() = `in`(Feet)
-fun Distance.toAngular(radius: Distance) = Radians.of(this.meters / radius.meters)!!
+// Number -> Measure
 
-val Angle.radians get() = `in`(Radians)
-val Angle.rotations get() = `in`(Rotations)
-val Angle.degrees get() = `in`(Degrees)
-fun Angle.toLinear(radius: Distance) = Meters.of(this.radians * radius.meters)!!
+inline val Number.meters: Distance get() = Meters.of(this.toDouble())
+inline val Number.cm: Distance get() = Centimeters.of(this.toDouble())
+inline val Number.mm: Distance get() = Millimeters.of(this.toDouble())
+inline val Number.inches: Distance get() = Inches.of(this.toDouble())
+inline val Number.feet: Distance get() = Feet.of(this.toDouble())
 
-val AngularVelocity.rpm get() = `in`(RPM)
-val AngularVelocity.rotationsPerSecond get() = `in`(RotationsPerSecond)
-val AngularVelocity.radiansPerSecond get() = `in`(RadiansPerSecond)
-val AngularVelocity.degreesPerSecond get() = `in`(DegreesPerSecond)
-fun AngularVelocity.toLinear(radius: Distance) = MetersPerSecond.of(this.radiansPerSecond * radius.meters)!!
+inline val Number.rad: Angle get() = Radians.of(this.toDouble())
+inline val Number.rotations: Angle get() = Rotations.of(this.toDouble())
+inline val Number.deg: Angle get() = Degrees.of(this.toDouble())
 
-val LinearVelocity.metersPerSecond get() = `in`(MetersPerSecond)
-val LinearVelocity.feetPerSecond get() = `in`(FeetPerSecond)
-val LinearVelocity.inchesPerSecond get() = `in`(InchesPerSecond)
-fun LinearVelocity.toAngular(radius: Distance) = RadiansPerSecond.of(this.metersPerSecond / radius.meters)!!
+inline val Number.rpm: AngularVelocity get() = RPM.of(this.toDouble())
+inline val Number.rotationsPerSecond: AngularVelocity get() = RotationsPerSecond.of(this.toDouble())
+inline val Number.radiansPerSecond: AngularVelocity get() = RadiansPerSecond.of(this.toDouble())
+inline val Number.degreesPerSecond: AngularVelocity get() = DegreesPerSecond.of(this.toDouble())
 
-val Voltage.volts get() = `in`(Volts)
-val Voltage.millivolts get() = `in`(Millivolts)
+inline val Number.metersPerSecond: LinearVelocity get() = MetersPerSecond.of(this.toDouble())
+inline val Number.feetPerSecond: LinearVelocity get() = FeetPerSecond.of(this.toDouble())
+inline val Number.inchesPerSecond: LinearVelocity get() = InchesPerSecond.of(this.toDouble())
 
-val Current.amps get() = `in`(Amps)
-val Current.milliamps get() = `in`(Milliamps)
+inline val Number.volts: Voltage get() = Volts.of(this.toDouble())
+inline val Number.millivolts: Voltage get() = Millivolts.of(this.toDouble())
 
-val Time.seconds get() = `in`(Seconds)
-val Time.milliseconds get() = `in`(Milliseconds)
-val Time.minutes get() = `in`(Minutes)
+inline val Number.voltsPerSecond: Velocity<VoltageUnit> get() = Volts.per(Second).of(this.toDouble())
 
-val Ultrasonic.range: Distance get() = Meters.of(rangeMM * 1000)
+inline val Number.amps: Current get() = Amps.of(this.toDouble())
+inline val Number.milliamps: Current get() = Milliamps.of(this.toDouble())
+
+inline val Number.seconds: Time get() = Seconds.of(this.toDouble())
+inline val Number.milliseconds: Time get() = Milliseconds.of(this.toDouble())
+inline val Number.minutes: Time get() = Minutes.of(this.toDouble())
+
+inline val Number.kilogramSquareMeters: MomentOfInertia get() = KilogramSquareMeters.of(this.toDouble())
+
+
+// Measure -> Number
+
+inline val Distance.inMeters get() = `in`(Meters)
+inline val Distance.inCentimeters get() = `in`(Centimeters)
+inline val Distance.inMillimeters get() = `in`(Millimeter)
+inline val Distance.inInches get() = `in`(Inches)
+inline val Distance.inFeet get() = `in`(Feet)
+fun Distance.toAngular(radius: Distance) = Radians.of(this.inMeters / radius.inMeters)!!
+
+inline val Angle.inRadians get() = `in`(Radians)
+inline val Angle.inRotations get() = `in`(Rotations)
+inline val Angle.inDegrees get() = `in`(Degrees)
+fun Angle.toLinear(radius: Distance) = Meters.of(this.inRadians * radius.inMeters)!!
+
+inline val AngularVelocity.inRPM get() = `in`(RPM)
+inline val AngularVelocity.inRotationsPerSecond get() = `in`(RotationsPerSecond)
+inline val AngularVelocity.inRadiansPerSecond get() = `in`(RadiansPerSecond)
+inline val AngularVelocity.inDegreesPerSecond get() = `in`(DegreesPerSecond)
+fun AngularVelocity.toLinear(radius: Distance) = MetersPerSecond.of(this.inRadiansPerSecond * radius.inMeters)!!
+
+inline val LinearVelocity.inMetersPerSecond get() = `in`(MetersPerSecond)
+inline val LinearVelocity.inFeetPerSecond get() = `in`(FeetPerSecond)
+inline val LinearVelocity.inInchesPerSecond get() = `in`(InchesPerSecond)
+fun LinearVelocity.toAngular(radius: Distance) = RadiansPerSecond.of(this.inMetersPerSecond / radius.inMeters)!!
+
+inline val Voltage.inVolts get() = `in`(Volts)
+inline val Voltage.inMillivolts get() = `in`(Millivolts)
+
+inline val Current.inAmps get() = `in`(Amps)
+inline val Current.inMilliamps get() = `in`(Milliamps)
+
+inline val Time.inSeconds get() = `in`(Seconds)
+inline val Time.inMilliseconds get() = `in`(Milliseconds)
+inline val Time.inMinutes get() = `in`(Minutes)
+
+inline val Ultrasonic.range: Distance get() = Meters.of(rangeMM * 1000)
