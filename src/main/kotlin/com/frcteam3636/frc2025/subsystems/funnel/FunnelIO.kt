@@ -14,17 +14,17 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
 
 @Logged
-open class FunnelInputs{
+open class FunnelInputs {
     var rollerVelocity = RotationsPerSecond.zero()!!
     var rollerCurrent = Amps.zero()!!
 }
 
-interface FunnelIO{
+interface FunnelIO {
     fun setSpeed(percent: Double)
     fun updateInputs(inputs: FunnelInputs)
 }
 
-class FunnelIOReal : FunnelIO{
+class FunnelIOReal : FunnelIO {
     private var rampMotor = TalonFX(CTREDeviceId.FunnelMotor).apply {
         configurator.apply(
             TalonFXConfiguration().apply {
@@ -54,7 +54,7 @@ class FunnelIOReal : FunnelIO{
         private val MOTOR_CURRENT_LIMIT = Amps.of(35.0)
     }
 }
-class FunnelIOSim : FunnelIO{
+class FunnelIOSim : FunnelIO {
     private var motor = DCMotor.getKrakenX60(1)
     private var system = LinearSystemId.createFlywheelSystem(motor, 1.0, 5.0)
     private var simMotor = FlywheelSim(system, motor, 0.0)
