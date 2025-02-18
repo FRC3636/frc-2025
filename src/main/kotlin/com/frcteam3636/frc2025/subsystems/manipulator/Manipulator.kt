@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.wpilibj.util.Color
@@ -22,6 +23,13 @@ object Manipulator : Subsystem {
 
     var inputs = LoggedManipulatorInputs()
 
+    private var coralState: CoralState = CoralState.NONE
+        set(value) {
+            field = value
+            rgbPublisher.set(value.ordinal.toLong())
+        }
+    private var rgbPublisher = NetworkTableInstance.getDefault().getIntegerTopic("RGB/Coral State").publish()
+
     private var mechanism = LoggedMechanism2d(100.0, 100.0)
     private var motorAngleVisualizer =
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
@@ -31,7 +39,10 @@ object Manipulator : Subsystem {
         Commands.defer({
             val targetRotations = inputs.position + Rotations.of(1.55)
             Commands.waitUntil { inputs.position > targetRotations }
-        }, emptySet())
+        }, emptySet()),
+        Commands.runOnce({
+            coralState = CoralState.HELD
+        })
     )
 
     init {
@@ -71,7 +82,15 @@ object Manipulator : Subsystem {
 
     fun outtake(): Command = startEnd(
         { io.setCurrent(Amps.of(37.0)) },
-        { io.setSpeed(0.0) }
+        {
+            io.setSpeed(0.0)
+            coralState = CoralState.NONE
+        }
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+}
+
+enum class CoralState {
+    NONE,
+    HELD
 }
