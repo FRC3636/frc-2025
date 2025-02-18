@@ -1,10 +1,12 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Rotations
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
@@ -34,6 +36,8 @@ object Manipulator : Subsystem {
     private var motorAngleVisualizer =
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
+    private var limelightTimer = Timer()
+
     private fun waitForIntake(): Command = Commands.sequence(
         Commands.waitUntil { inputs.current > Amps.of(0.7) },
         Commands.defer({
@@ -42,8 +46,17 @@ object Manipulator : Subsystem {
         }, emptySet()),
         Commands.runOnce({
             coralState = CoralState.HELD
+            limelightTimer.restart()
+            LimelightHelpers.setLEDMode_ForceBlink("limelight-rear")
         })
     )
+
+    private fun checkLimelightLEDs(): Command = Commands.runOnce({
+        if (limelightTimer.isRunning && limelightTimer.hasElapsed(0.3)) {
+            LimelightHelpers.setLEDMode_PipelineControl("limelight-rear")
+            limelightTimer.stop()
+        }
+    })
 
     init {
         mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
@@ -57,6 +70,8 @@ object Manipulator : Subsystem {
 
         motorAngleVisualizer.angle += inputs.velocity.degreesPerSecond * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
+
+        checkLimelightLEDs().schedule()
     }
 
 
