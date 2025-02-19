@@ -43,10 +43,8 @@ object Manipulator : Subsystem {
         }, emptySet()),
         Commands.runOnce({
             coralState = CoralState.HELD
-            LimelightHelpers.setLEDMode_ForceBlink("limelight-rear")
-            Commands.waitSeconds(0.3)
-            LimelightHelpers.setLEDMode_PipelineControl("limelight-rear")
-        })
+            blinkLimelight().schedule()
+        }),
     )
 
     init {
@@ -62,6 +60,14 @@ object Manipulator : Subsystem {
         motorAngleVisualizer.angle += inputs.velocity.degreesPerSecond * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
     }
+
+    private fun blinkLimelight(): Command = Commands.runOnce({
+        LimelightHelpers.setLEDMode_ForceBlink("limelight-rear")
+    })
+        .andThen(Commands.waitSeconds(0.3))
+        .finallyDo { ->
+            LimelightHelpers.setLEDMode_PipelineControl("limelight-rear")
+        }
 
 
     fun idle(): Command = startEnd({
@@ -92,6 +98,8 @@ object Manipulator : Subsystem {
         }
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+
+
 }
 
 enum class CoralState {
