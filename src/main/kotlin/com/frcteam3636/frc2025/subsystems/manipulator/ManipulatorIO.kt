@@ -47,12 +47,12 @@ class ManipulatorIOReal : ManipulatorIO {
         )
     }
 
-    private var laserCan = LaserCan(REVMotorControllerId.ManipulatorLaserCANRangeFinder.num).apply {
+    private var laserCan = LaserCan(REVMotorControllerId.ManipulatorLaserCAN.num).apply {
         try {
             setRangingMode(LaserCanInterface.RangingMode.SHORT)
             setRegionOfInterest(LaserCanInterface.RegionOfInterest(8, 8, 6, 6))
             setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_33MS)
-        } catch (e: ConfigurationFailedException){
+        } catch (e: ConfigurationFailedException) {
             println(e)
         }
     }
