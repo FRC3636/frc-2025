@@ -1,7 +1,9 @@
 package com.frcteam3636.frc2025.subsystems.climb
 
 import com.frcteam3636.frc2025.Robot
+import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.Volts
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
@@ -38,6 +40,19 @@ object Climb : Subsystem {
             io.setVoltage(Volts.of(0.0))
         }
     )
+
+//    fun moveToPosition(position: Position) =
+//        startEnd({
+//            io.turnToAngle(position.angle)
+//        }, {
+//            io.turnToAngle(inputs.position)
+//        })!!
+//
+//    enum class Position(val angle: Angle) {
+//        Climb(Radians.of(1.57079632679)),
+//        Stowed(Radians.of(3.14159265359)),
+//        Deployed(Radians.of(0.0))
+//    }
 
 }
 
