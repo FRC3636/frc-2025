@@ -77,7 +77,7 @@ class ClimbIOSim: ClimbIO {
         climbSim.update(Robot.period)
         inputs.velocity = climbSim.angularVelocity
         inputs.current = Amps.of(climbSim.currentDrawAmps)
-        climbSim.setAngularVelocity(climbSim.angularVelocityRadPerSec * 0.95)
+        climbSim.setAngularVelocity(climbSim.angularVelocityRadPerSec * 0.93)
     }
 
     override fun setSpeed(percent: Double) {

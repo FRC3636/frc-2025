@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
+import com.frcteam3636.frc2025.subsystems.climb.Climb
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
@@ -139,6 +140,7 @@ object Robot : LoggedRobot() {
         Manipulator.register()
         Elevator.register()
         Funnel.register()
+        Climb.register()
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
@@ -154,6 +156,12 @@ object Robot : LoggedRobot() {
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
+
+//        controller.a()
+//            .onTrue(
+//                Climb.moveToPosition()
+//            )
+
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
 
         // (The button with the yellow tape on it)

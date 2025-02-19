@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.climb
 
 import com.frcteam3636.frc2025.Robot
+import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.util.Color
@@ -33,14 +34,16 @@ object Climb: Subsystem {
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Climb", inputs)
+
+        motorAngleVisualizer.angle += inputs.velocity.`in`(DegreesPerSecond) * Robot.period
         Logger.recordOutput("/Climber/Mechanism", mechanism)
     }
 
-    fun moveToPosition(position: Position) =
+    fun moveToPosition() =
         startEnd({
-            io.setSpeed(0.5)
+            io.setSpeed(1.0)
         }, {
-            io.setSpeed(-1.0)
+            io.setSpeed(0.0)
         })!!
 
     enum class Position(val angle: Angle) {
