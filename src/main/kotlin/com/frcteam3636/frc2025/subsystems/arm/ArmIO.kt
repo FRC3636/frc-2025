@@ -11,23 +11,24 @@ import com.revrobotics.spark.config.SmartMotionConfig
 import com.revrobotics.spark.config.SparkBaseConfig
 import com.revrobotics.spark.config.SparkFlexConfig
 import edu.wpi.first.units.Units
-import edu.wpi.first.units.Units.Amps
-import edu.wpi.first.units.Units.Meter
+import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.LinearVelocity
 
 open class ArmInputs{
-    var pivotLeftCurrent = Units.Amps.zero()!!
-    var pivotLeftPostion = Units.Meters.zero()!!
-    var pivotLeftVelocity = Units.MetersPerSecond.zero()!!
+    var pivotLeftCurrent = Amps.zero()!!
+    var pivotLeftPostion = Meters.zero()!!
+    var pivotLeftVelocity = MetersPerSecond.zero()!!
 
-    var pivotRightCurrent = Units.Amps.zero()!!
-    var pivotRightPostion = Units.Meters.zero()!!
-    var pivotRightVelocity = Units.MetersPerSecond.zero()!!
+    var pivotRightCurrent = Amps.zero()!!
+    var pivotRightPostion = Meters.zero()!!
+    var pivotRightVelocity = MetersPerSecond.zero()!!
 
 
-    var rollerCurrent = Units.Amps.zero()!!
-    var rollerVelocity = Units.MetersPerSecond.zero()!!
+    var RollerCurrent = Amps.zero()!!
+    var RollerVelocity = MetersPerSecond.zero()!!
+
+
 
 }
 
