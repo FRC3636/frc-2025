@@ -9,6 +9,7 @@ import com.ctre.phoenix6.signals.SensorDirectionValue
 import com.frcteam3636.frc2025.CANcoder
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.TalonFX
+import com.frcteam3636.frc2025.utils.math.rotations
 import com.frcteam3636.frc2025.utils.math.toAngular
 import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Units.*
@@ -60,7 +61,7 @@ class ClimbIOReal: ClimbIO {
 
         val control = MotionMagicTorqueCurrentFOC(0.0).apply {
             Slot = 0
-            Position = angle.`in`(Rotations)
+            Position = angle.rotations
         }
         climbMotor.setControl(control)
     }
