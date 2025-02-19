@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.frcteam3636.frc2025.utils.math
 
 import edu.wpi.first.units.Units.*
