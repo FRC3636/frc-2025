@@ -7,7 +7,6 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
-import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.DriverStation
 import kotlin.jvm.optionals.getOrNull
 
@@ -43,7 +42,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
     constructor(aprilTagId: Int, side: ReefBranchSide) : this(
         aprilTagId,
         Translation2d(
-            Meters.zero(),
+            0.meters,
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
                 ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET
@@ -70,7 +69,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
         val offsetFromPoseFacingAprilTagWithBumperSpacer = Translation2d(
             // We don't want to be *on top* of the april tag, so back up a bit from the tag.
             -Drivetrain.Constants.BUMPER_LENGTH / 2.0,
-            Meters.zero()
+            0.meters,
         )
             .plus(offset)
 

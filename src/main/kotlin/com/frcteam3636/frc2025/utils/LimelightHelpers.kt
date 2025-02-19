@@ -16,7 +16,6 @@ import edu.wpi.first.networktables.DoubleArrayEntry
 import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.measure.Distance
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -1435,8 +1434,8 @@ object LimelightHelpers {
         var txnc: Double = 0.0
         var tync: Double = 0.0
         var ta: Double = 0.0
-        var distToCamera: Distance = Meters.zero()
-        var distToRobot: Distance = Meters.zero()
+        var distToCamera: Distance = 0.meters
+        var distToRobot: Distance = 0.meters
         var ambiguity: Double = 0.0
 
 

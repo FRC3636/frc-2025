@@ -13,7 +13,6 @@ import edu.wpi.first.math.controller.ElevatorFeedforward
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
-import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.BatterySim
@@ -25,10 +24,10 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class ElevatorInputs {
-    var height = Meters.zero()!!
-    var rightCurrent = Amps.zero()!!
-    var leftCurrent = Amps.zero()!!
-    var velocity = MetersPerSecond.zero()!!
+    var height = 0.meters
+    var rightCurrent = 0.amps
+    var leftCurrent = 0.amps
+    var velocity = 0.metersPerSecond
 }
 
 interface ElevatorIO {

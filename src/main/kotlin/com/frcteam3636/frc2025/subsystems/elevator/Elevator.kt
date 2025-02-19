@@ -4,8 +4,6 @@ import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants.SPOOL_RADIUS
 import com.frcteam3636.frc2025.utils.math.*
-import edu.wpi.first.units.Units.Meters
-import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
@@ -56,9 +54,9 @@ object Elevator : Subsystem {
             io.setVoltage((-1.0).volts)
         }, {
             if (isPressed) {
-                io.setEncoderPosition(Meters.zero())
+                io.setEncoderPosition(0.meters)
             }
-            io.setVoltage(Volts.zero())
+            io.setVoltage(0.volts)
         }).until {
             isPressed
         }

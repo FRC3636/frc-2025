@@ -8,7 +8,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRACK_WIDTH
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_BASE
-import com.frcteam3636.frc2025.utils.math.TAU
+import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import com.frcteam3636.frc2025.utils.math.kilogramSquareMeters
 import com.frcteam3636.frc2025.utils.math.volts
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
@@ -20,11 +20,9 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Voltage
 import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.drivesims.COTS
-import org.ironmaple.simulation.drivesims.COTS.WHEELS
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
@@ -35,7 +33,7 @@ import org.team9432.annotation.Logged
 @Logged
 open class DrivetrainInputs {
     var gyroRotation = Rotation2d()
-    var gyroVelocity = DegreesPerSecond.zero()!!
+    var gyroVelocity = 0.degreesPerSecond
     var gyroConnected = true
     var measuredStates = PerCorner.generate { SwerveModuleState() }
     var measuredPositions = PerCorner.generate { SwerveModulePosition() }
@@ -64,8 +62,8 @@ abstract class DrivetrainIO {
             modules.zip(value).forEach { (module, state) -> module.desiredState = state }
         }
 
-    fun runCharacterization(voltage: Voltage){
-        for (module in modules){
+    fun runCharacterization(voltage: Voltage) {
+        for (module in modules) {
             module.characterize(voltage)
         }
     }

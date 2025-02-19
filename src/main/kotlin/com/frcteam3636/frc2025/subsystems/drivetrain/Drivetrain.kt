@@ -34,7 +34,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.util.Units
-import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.Alert
@@ -449,14 +448,14 @@ object Drivetrain : Subsystem, Sendable {
 
     fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
         run {
-            io.runCharacterization(Volts.zero())
+            io.runCharacterization(0.volts)
         }
             .withTimeout(1.0)
             .andThen(sysID.quasistatic(direction))!!
 
     fun sysIdDynamic(direction: SysIdRoutine.Direction) =
         run {
-            io.runCharacterization(Volts.zero())
+            io.runCharacterization(0.volts)
         }
             .withTimeout(1.0)
             .andThen(sysID.dynamic(direction))!!

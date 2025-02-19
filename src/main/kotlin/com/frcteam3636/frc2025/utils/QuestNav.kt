@@ -6,7 +6,6 @@ import edu.wpi.first.networktables.DoubleSubscriber
 import edu.wpi.first.networktables.FloatArraySubscriber
 import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.Timer
@@ -91,13 +90,13 @@ class QuestNav {
         get() {
             // Make sure our timestamp epochs are the same.
             val rawTimestamp = questTimestamp.get().seconds
-            if (rawTimestamp != Seconds.zero()) {
+            if (rawTimestamp != 0.seconds) {
                 if (timestampEpoch == null) {
                     timestampEpoch = Timer.getTimestamp().seconds - rawTimestamp
                 }
                 return rawTimestamp + timestampEpoch
             }
-            return Seconds.zero()
+            return 0.seconds
         }
 
     /**

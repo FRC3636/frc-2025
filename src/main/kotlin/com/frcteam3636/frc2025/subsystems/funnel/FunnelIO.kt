@@ -8,24 +8,24 @@ import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inAmps
+import com.frcteam3636.frc2025.utils.math.rotationsPerSecond
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
-import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
 
 @Logged
-open class FunnelInputs{
-    var rollerVelocity = RotationsPerSecond.zero()!!
-    var rollerCurrent = Amps.zero()!!
+open class FunnelInputs {
+    var rollerVelocity = 0.rotationsPerSecond
+    var rollerCurrent = 0.amps
 }
 
-interface FunnelIO{
+interface FunnelIO {
     fun setSpeed(percent: Double)
     fun updateInputs(inputs: FunnelInputs)
 }
 
-class FunnelIOReal : FunnelIO{
+class FunnelIOReal : FunnelIO {
     private var rampMotor = TalonFX(CTREDeviceId.FunnelMotor).apply {
         configurator.apply(
             TalonFXConfiguration().apply {
@@ -46,16 +46,18 @@ class FunnelIOReal : FunnelIO{
         assert(percent in -1.0..1.0)
         rampMotor.set(percent)
     }
+
     override fun updateInputs(inputs: FunnelInputs) {
         inputs.rollerVelocity = rampMotor.velocity.value
         inputs.rollerCurrent = rampMotor.supplyCurrent.value
     }
 
-    internal companion object Constants{
+    internal companion object Constants {
         private val MOTOR_CURRENT_LIMIT = 35.amps
     }
 }
-class FunnelIOSim : FunnelIO{
+
+class FunnelIOSim : FunnelIO {
     private var motor = DCMotor.getKrakenX60(1)
     private var system = LinearSystemId.createFlywheelSystem(motor, 1.0, 5.0)
     private var simMotor = FlywheelSim(system, motor, 0.0)
@@ -72,4 +74,3 @@ class FunnelIOSim : FunnelIO{
     }
 
 }
-
