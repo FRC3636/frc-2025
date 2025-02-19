@@ -3,7 +3,8 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.Units.Amps
+import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
@@ -34,7 +35,11 @@ object Manipulator : Subsystem {
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     private fun waitForIntake(): Command = Commands.sequence(
-        Commands.waitUntil { inputs.laserCanDistance < Inches.of(3.0) },
+        Commands.waitUntil { inputs.current > Amps.of(0.7) },
+        Commands.defer({
+            val targetRotations = inputs.position + Rotations.of(1.55)
+            Commands.waitUntil { inputs.position > targetRotations }
+        }, emptySet()),
         Commands.runOnce({
             coralState = CoralState.HELD
         })
