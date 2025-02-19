@@ -4,18 +4,27 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
+import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.SensorDirectionValue
+import com.ctre.phoenix6.sim.TalonFXSimState
 import com.frcteam3636.frc2025.CANcoder
 import com.frcteam3636.frc2025.CTREDeviceId
+import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.rotations
 import com.frcteam3636.frc2025.utils.math.toAngular
+import com.revrobotics.spark.SparkRelativeEncoder
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.simulation.FlywheelSim
+import edu.wpi.first.wpilibj.simulation.LinearSystemSim
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 
@@ -29,54 +38,50 @@ open class ClimbInputs {
 interface ClimbIO{
     fun updateInputs(inputs: ClimbInputs)
 
-    fun turnToAngle(angle: Angle)
-
-    fun setVoltage(volts: Voltage)
-
-    fun setPosition(position: Distance)
+    fun setSpeed(percent: Double)
 }
 
 class ClimbIOReal: ClimbIO {
 
-    private val encoder = CANcoder(CTREDeviceId.ClimbEncoder).apply {
-        val config = CANcoderConfiguration().apply {
-            MagnetSensor.apply {
-                withAbsoluteSensorDiscontinuityPoint(Rotations.one())
-                SensorDirection = SensorDirectionValue.Clockwise_Positive
-            }
-        }
-        configurator.apply(config)
-    }
-
     private val climbMotor = TalonFX(CTREDeviceId.ClimbMotor)
 
+    init {
+        val config = TalonFXConfiguration().apply {
+            MotorOutput.apply { NeutralMode = NeutralModeValue.Brake }
+        }
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+        climbMotor.configurator.apply(
+            config
+        )
+    }
+
     override fun updateInputs(inputs: ClimbInputs) {
-        inputs.position = encoder.position.value
-        inputs.velocity = encoder.velocity.value
+        inputs.position = climbMotor.position.value
+        inputs.velocity = climbMotor.velocity.value
         inputs.current = climbMotor.torqueCurrent.value
     }
 
-    override fun turnToAngle(angle: Angle) {
-        Logger.recordOutput("Shooter/Pivot/Position Setpoint", angle)
+    override fun setSpeed(percent:Double) {
+        assert(percent in -1.0..1.0)
+        climbMotor.set(percent)
+    }
+}
 
-        val control = MotionMagicTorqueCurrentFOC(0.0).apply {
-            Slot = 0
-            Position = angle.rotations
-        }
-        climbMotor.setControl(control)
+class ClimbIOSim: ClimbIO {
+    private val climbSim = FlywheelSim(
+        LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60Foc(1), 50.0, 10.0 ),
+        DCMotor.getKrakenX60Foc(1)
+        )
+
+    override fun updateInputs(inputs: ClimbInputs) {
+        climbSim.update(Robot.period)
+        inputs.velocity = climbSim.angularVelocity
+        inputs.current = Amps.of(climbSim.currentDrawAmps)
+        climbSim.setAngularVelocity(climbSim.angularVelocityRadPerSec * 0.95)
     }
 
-    override fun setVoltage(volts: Voltage) {
-        assert(volts in Volts.of(-12.0)..Volts.of(12.0))
-        val control = VoltageOut(volts.`in`(Volts))
-        climbMotor.setControl(control)
-    }
-
-    override fun setPosition(position: Distance) {
-        climbMotor.setPosition(position.toAngular(CLIMBER_RADIUS))
-    }
-
-    internal companion object Constants {
-        private val CLIMBER_RADIUS = Inches.of(5.0) //placeholder
+    override fun setSpeed(percent: Double) {
+        assert (percent in -1.0..1.0)
+        climbSim.setInputVoltage(percent)
     }
 }

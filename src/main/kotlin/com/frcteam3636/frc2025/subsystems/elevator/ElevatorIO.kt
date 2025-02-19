@@ -13,6 +13,7 @@ import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.*
+import com.revrobotics.spark.SparkRelativeEncoder
 import edu.wpi.first.math.controller.ElevatorFeedforward
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.system.plant.DCMotor
@@ -46,16 +47,6 @@ interface ElevatorIO{
 }
 
 class ElevatorIOReal: ElevatorIO {
-
-    private val encoder = CANcoder(CTREDeviceId.ElevatorEncoder).apply {
-        val config = CANcoderConfiguration().apply {
-            MagnetSensor.apply {
-                withAbsoluteSensorDiscontinuityPoint(Rotations.one())
-                SensorDirection = SensorDirectionValue.Clockwise_Positive
-            }
-        }
-        configurator.apply(config)
-    }
 
     val config = TalonFXConfiguration().apply {
         MotorOutput.apply {
@@ -99,8 +90,8 @@ class ElevatorIOReal: ElevatorIO {
     }
 
     override fun updateInputs(inputs: ElevatorInputs) {
-        inputs.height = encoder.position.value.toLinear(SPOOL_RADIUS)
-        inputs.velocity = encoder.velocity.value.toLinear(SPOOL_RADIUS)
+        inputs.height = leftElevatorMotor.position.value.toLinear(SPOOL_RADIUS)
+        inputs.velocity = leftElevatorMotor.velocity.value.toLinear(SPOOL_RADIUS)
         inputs.rightCurrent = rightElevatorMotor.torqueCurrent.value
         inputs.leftCurrent = leftElevatorMotor.torqueCurrent.value
     }
