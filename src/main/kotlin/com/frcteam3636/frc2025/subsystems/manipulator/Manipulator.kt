@@ -4,6 +4,8 @@ import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
 import com.frcteam3636.frc2025.utils.math.rotations
+import com.frcteam3636.frc2025.utils.LimelightHelpers
+import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Rotations
@@ -44,7 +46,8 @@ object Manipulator : Subsystem {
         }, emptySet()),
         Commands.runOnce({
             coralState = CoralState.HELD
-        })
+            blinkLimelight().schedule()
+        }),
     )
 
     init {
@@ -60,6 +63,14 @@ object Manipulator : Subsystem {
         motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
     }
+
+    private fun blinkLimelight(): Command = Commands.runOnce({
+        LimelightHelpers.setLEDMode_ForceBlink("limelight-rear")
+    })
+        .andThen(Commands.waitSeconds(0.3))
+        .finallyDo { ->
+            LimelightHelpers.setLEDMode_PipelineControl("limelight-rear")
+        }
 
 
     fun idle(): Command = startEnd({
