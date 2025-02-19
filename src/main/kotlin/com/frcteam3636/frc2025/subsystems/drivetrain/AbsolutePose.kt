@@ -15,7 +15,7 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
-import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.util.struct.Struct
@@ -78,7 +78,8 @@ sealed class LimelightAlgorithm {
     /**
      * A newer and much more accurate algorithm that requires accurate gyro readings and a right-side-up Limelight.
      */
-    class MegaTag2(private val gyroGetter: () -> Rotation2d, private val velocityGetter: () -> AngularVelocity) : LimelightAlgorithm() {
+    class MegaTag2(private val gyroGetter: () -> Rotation2d, private val velocityGetter: () -> AngularVelocity) :
+        LimelightAlgorithm() {
         val gyroPosition: Rotation2d
             get() = gyroGetter()
         val gyroVelocity: AngularVelocity
@@ -87,8 +88,8 @@ sealed class LimelightAlgorithm {
 }
 
 data class LimelightMeasurement(
-        var poseMeasurement: AbsolutePoseMeasurement? = null,
-        var observedTags: IntArray = intArrayOf(),
+    var poseMeasurement: AbsolutePoseMeasurement? = null,
+    var observedTags: IntArray = intArrayOf(),
 )
 
 class LimelightPoseProvider(
@@ -300,7 +301,7 @@ data class AbsolutePoseMeasurement(
 fun SwerveDrivePoseEstimator.addAbsolutePoseMeasurement(measurement: AbsolutePoseMeasurement) {
     addVisionMeasurement(
         measurement.pose,
-        measurement.timestamp.inSeconds,
+        measurement.timestamp.inSeconds(),
         measurement.stdDeviation // FIXME: seems to fire the bot into orbit...?
     )
 }
@@ -323,7 +324,7 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 
     override fun pack(bb: ByteBuffer, value: AbsolutePoseMeasurement) {
         Pose2d.struct.pack(bb, value.pose)
-        bb.putDouble(value.timestamp.inSeconds)
+        bb.putDouble(value.timestamp.inSeconds())
         bb.putDouble(value.stdDeviation[0, 0])
         bb.putDouble(value.stdDeviation[1, 0])
         bb.putDouble(value.stdDeviation[2, 0])

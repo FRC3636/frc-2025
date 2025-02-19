@@ -16,7 +16,7 @@ import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Voltage
@@ -54,7 +54,7 @@ class MAXSwerveModule(
     private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless).apply {
         configure(SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
-            smartCurrentLimit(TURNING_CURRENT_LIMIT.inAmps.roundToInt())
+            smartCurrentLimit(TURNING_CURRENT_LIMIT.inAmps().roundToInt())
 
             absoluteEncoder.apply {
                 inverted(true)
@@ -81,7 +81,7 @@ class MAXSwerveModule(
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            drivingMotor.velocity.inMetersPerSecond, Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.velocity.inMetersPerSecond(), Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
         )
 
     override val position: SwerveModulePosition
@@ -129,7 +129,7 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
                 motorFFGains = DRIVING_FF_GAINS_TALON
             }
             CurrentLimits.apply {
-                SupplyCurrentLimit = DRIVING_CURRENT_LIMIT.inAmps
+                SupplyCurrentLimit = DRIVING_CURRENT_LIMIT.inAmps()
                 SupplyCurrentLimitEnable = true
             }
         })
@@ -158,7 +158,7 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     override fun setVoltage(voltage: Voltage) {
-        inner.setControl(voltageControl.withOutput(voltage.inVolts))
+        inner.setControl(voltageControl.withOutput(voltage.inVolts()))
     }
 }
 
@@ -166,12 +166,12 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
     private val inner = SparkMax(id, SparkLowLevel.MotorType.kBrushless).apply {
         val innerConfig = SparkMaxConfig().apply {
             idleMode(IdleMode.kBrake)
-            smartCurrentLimit(DRIVING_CURRENT_LIMIT.inAmps.toInt())
+            smartCurrentLimit(DRIVING_CURRENT_LIMIT.inAmps().toInt())
             inverted(false)
 
             encoder.apply {
-                positionConversionFactor(WHEEL_CIRCUMFERENCE.inMeters / DRIVING_GEAR_RATIO)
-                velocityConversionFactor(WHEEL_CIRCUMFERENCE.inMeters / DRIVING_GEAR_RATIO / 60)
+                positionConversionFactor(WHEEL_CIRCUMFERENCE.inMeters() / DRIVING_GEAR_RATIO)
+                velocityConversionFactor(WHEEL_CIRCUMFERENCE.inMeters() / DRIVING_GEAR_RATIO / 60)
             }
 
             closedLoop.apply {
@@ -190,11 +190,11 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
         get() = inner.encoder.velocity.metersPerSecond
         set(value) {
             Logger.recordOutput("/Drivetrain/$id/OutputVel", value)
-            inner.closedLoopController.setReference(value.inMetersPerSecond, SparkBase.ControlType.kVelocity)
+            inner.closedLoopController.setReference(value.inMetersPerSecond(), SparkBase.ControlType.kVelocity)
         }
 
     override fun setVoltage(voltage: Voltage) {
-        inner.setVoltage(voltage.inVolts)
+        inner.setVoltage(voltage.inVolts())
     }
 }
 
@@ -216,7 +216,7 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            sim.driveWheelFinalSpeed.inRadiansPerSecond * WHEEL_RADIUS.inMeters,
+            sim.driveWheelFinalSpeed.inRadiansPerSecond() * WHEEL_RADIUS.inMeters(),
             sim.steerAbsoluteFacing
         )
 
@@ -229,7 +229,7 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
 
     override val position: SwerveModulePosition
         get() = SwerveModulePosition(
-            sim.driveWheelFinalPosition.inRadians * WHEEL_RADIUS.inMeters, sim.steerAbsoluteFacing
+            sim.driveWheelFinalPosition.toLinear(WHEEL_RADIUS), sim.steerAbsoluteFacing
         )
 
     override fun periodic() {
@@ -269,7 +269,7 @@ internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(.19426, 0.0)
 internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
 internal val DRIVING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(0.22852, 0.1256, 0.022584)
 internal val DRIVING_FF_GAINS_NEO: MotorFFGains =
-    MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED.inMetersPerSecond, 0.0) // TODO: ensure this is right
+    MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED.inMetersPerSecond(), 0.0) // TODO: ensure this is right
 
 internal val TURNING_PID_GAINS: PIDGains = PIDGains(1.7, 0.0, 0.125)
 internal val DRIVING_CURRENT_LIMIT = 37.amps

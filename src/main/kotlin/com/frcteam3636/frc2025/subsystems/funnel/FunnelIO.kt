@@ -35,7 +35,7 @@ class FunnelIOReal : FunnelIO {
                 }
 
                 CurrentLimits.apply {
-                    SupplyCurrentLimit = MOTOR_CURRENT_LIMIT.inAmps
+                    SupplyCurrentLimit = MOTOR_CURRENT_LIMIT.inAmps()
                     SupplyCurrentLimitEnable = true
                 }
             }

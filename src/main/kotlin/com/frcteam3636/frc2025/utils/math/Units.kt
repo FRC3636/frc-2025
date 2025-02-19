@@ -47,37 +47,37 @@ inline val Number.percent: Dimensionless get() = Percent.of(this.toDouble())
 
 // Measure -> Number
 
-inline val Distance.inMeters get() = `in`(Meters)
-inline val Distance.inCentimeters get() = `in`(Centimeters)
-inline val Distance.inMillimeters get() = `in`(Millimeter)
-inline val Distance.inInches get() = `in`(Inches)
-inline val Distance.inFeet get() = `in`(Feet)
-fun Distance.toAngular(radius: Distance) = Radians.of(this.inMeters / radius.inMeters)!!
+inline fun Distance.inMeters() = `in`(Meters)
+inline fun Distance.inCentimeters() = `in`(Centimeters)
+inline fun Distance.inMillimeters() = `in`(Millimeter)
+inline fun Distance.inInches() = `in`(Inches)
+inline fun Distance.inFeet() = `in`(Feet)
+fun Distance.toAngular(radius: Distance) = Radians.of(this.inMeters() / radius.inMeters())!!
 
-inline val Angle.inRadians get() = `in`(Radians)
-inline val Angle.inRotations get() = `in`(Rotations)
-inline val Angle.inDegrees get() = `in`(Degrees)
-fun Angle.toLinear(radius: Distance) = Meters.of(this.inRadians * radius.inMeters)!!
+inline fun Angle.inRadians() = `in`(Radians)
+inline fun Angle.inRotations() = `in`(Rotations)
+inline fun Angle.inDegrees() = `in`(Degrees)
+fun Angle.toLinear(radius: Distance) = Meters.of(this.inRadians() * radius.inMeters())!!
 
-inline val AngularVelocity.inRPM get() = `in`(RPM)
-inline val AngularVelocity.inRotationsPerSecond get() = `in`(RotationsPerSecond)
-inline val AngularVelocity.inRadiansPerSecond get() = `in`(RadiansPerSecond)
-inline val AngularVelocity.inDegreesPerSecond get() = `in`(DegreesPerSecond)
-fun AngularVelocity.toLinear(radius: Distance) = MetersPerSecond.of(this.inRadiansPerSecond * radius.inMeters)!!
+inline fun AngularVelocity.inRPM() = `in`(RPM)
+inline fun AngularVelocity.inRotationsPerSecond() = `in`(RotationsPerSecond)
+inline fun AngularVelocity.inRadiansPerSecond() = `in`(RadiansPerSecond)
+inline fun AngularVelocity.inDegreesPerSecond() = `in`(DegreesPerSecond)
+fun AngularVelocity.toLinear(radius: Distance) = MetersPerSecond.of(this.inRadiansPerSecond() * radius.inMeters())!!
 
-inline val LinearVelocity.inMetersPerSecond get() = `in`(MetersPerSecond)
-inline val LinearVelocity.inFeetPerSecond get() = `in`(FeetPerSecond)
-inline val LinearVelocity.inInchesPerSecond get() = `in`(InchesPerSecond)
-fun LinearVelocity.toAngular(radius: Distance) = RadiansPerSecond.of(this.inMetersPerSecond / radius.inMeters)!!
+inline fun LinearVelocity.inMetersPerSecond() = `in`(MetersPerSecond)
+inline fun LinearVelocity.inFeetPerSecond() = `in`(FeetPerSecond)
+inline fun LinearVelocity.inInchesPerSecond() = `in`(InchesPerSecond)
+fun LinearVelocity.toAngular(radius: Distance) = RadiansPerSecond.of(this.inMetersPerSecond() / radius.inMeters())!!
 
-inline val Voltage.inVolts get() = `in`(Volts)
-inline val Voltage.inMillivolts get() = `in`(Millivolts)
+inline fun Voltage.inVolts() = `in`(Volts)
+inline fun Voltage.inMillivolts() = `in`(Millivolts)
 
-inline val Current.inAmps get() = `in`(Amps)
-inline val Current.inMilliamps get() = `in`(Milliamps)
+inline fun Current.inAmps() = `in`(Amps)
+inline fun Current.inMilliamps() = `in`(Milliamps)
 
-inline val Time.inSeconds get() = `in`(Seconds)
-inline val Time.inMilliseconds get() = `in`(Milliseconds)
-inline val Time.inMinutes get() = `in`(Minutes)
+inline fun Time.inSeconds() = `in`(Seconds)
+inline fun Time.inMilliseconds() = `in`(Milliseconds)
+inline fun Time.inMinutes() = `in`(Minutes)
 
 inline val Ultrasonic.range: Distance get() = Meters.of(rangeMM * 1000)

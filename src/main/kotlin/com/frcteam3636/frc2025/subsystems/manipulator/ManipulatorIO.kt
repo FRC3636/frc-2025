@@ -53,7 +53,7 @@ class ManipulatorIOReal : ManipulatorIO {
     private val currentControl = TorqueCurrentFOC(0.0)
 
     override fun setCurrent(current: Current) {
-        assert(current.inAmps in -60.0..60.0)
+        assert(current.inAmps() in -60.0..60.0)
         manipulatorMotor.setControl(currentControl.withOutput(current))
     }
 

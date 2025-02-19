@@ -1,14 +1,11 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
 import com.frcteam3636.frc2025.utils.math.rotations
-import com.frcteam3636.frc2025.utils.LimelightHelpers
-import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.Amps
-import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
@@ -60,7 +57,7 @@ object Manipulator : Subsystem {
         io.updateInputs(inputs)
         Logger.processInputs("Manipulator", inputs)
 
-        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond * Robot.period
+        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
     }
 

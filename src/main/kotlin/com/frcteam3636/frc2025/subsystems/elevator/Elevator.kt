@@ -47,7 +47,7 @@ object Elevator : Subsystem {
         startEnd({
             io.runToHeight(position.height)
         }, {})
-            .until { abs(inputs.height.inMeters - position.height.inMeters) < 0.75.inches.inMeters }
+            .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
     fun runHoming(): Command =
         runEnd({

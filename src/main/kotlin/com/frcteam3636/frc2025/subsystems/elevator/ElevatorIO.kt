@@ -68,7 +68,7 @@ class ElevatorIOReal : ElevatorIO {
         }
 
         MotionMagic.apply {
-            MotionMagicCruiseVelocity = PROFILE_VELOCITY.inRotationsPerSecond
+            MotionMagicCruiseVelocity = PROFILE_VELOCITY.inRotationsPerSecond()
             MotionMagicAcceleration = PROFILE_ACCELERATION
             MotionMagicJerk = PROFILE_JERK
         }
@@ -110,7 +110,7 @@ class ElevatorIOReal : ElevatorIO {
 
     override fun setVoltage(volts: Voltage) {
         assert(volts in (-12).volts..12.volts)
-        val controlRequest = VoltageOut(volts.inVolts)
+        val controlRequest = VoltageOut(volts.inVolts())
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
@@ -181,7 +181,7 @@ class ElevatorIOSim : ElevatorIO {
     }
 
     override fun setVoltage(volts: Voltage) {
-        elevatorSim.setInputVoltage(volts.inVolts)
+        elevatorSim.setInputVoltage(volts.inVolts())
         Logger.recordOutput("/Elevator/OutVolt", volts)
     }
 

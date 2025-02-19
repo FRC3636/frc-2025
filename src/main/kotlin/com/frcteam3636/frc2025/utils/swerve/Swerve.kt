@@ -7,8 +7,6 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.units.Units.MetersPerSecond
-import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 
@@ -83,7 +81,7 @@ fun SwerveDriveKinematics(translations: PerCorner<Translation2d>) =
 var SwerveModuleState.speed: LinearVelocity
     get() = speedMetersPerSecond.metersPerSecond
     set(value) {
-        speedMetersPerSecond = value.inMetersPerSecond
+        speedMetersPerSecond = value.inMetersPerSecond()
     }
 
 /** This swerve module state as a `Translation2d`. */

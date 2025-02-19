@@ -32,7 +32,7 @@ object Funnel : Subsystem {
         io.updateInputs(inputs)
         Logger.processInputs("Funnel", inputs)
 
-        motorAngleVisualiser.angle += inputs.rollerVelocity.inDegreesPerSecond * Robot.period
+        motorAngleVisualiser.angle += inputs.rollerVelocity.inDegreesPerSecond() * Robot.period
         Logger.recordOutput("/Funnel/mechanism", mechanism)
     }
 
