@@ -36,9 +36,9 @@ object Manipulator : Subsystem {
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     private fun waitForIntake(): Command = Commands.sequence(
-        Commands.waitUntil { inputs.current > 0.7.amps },
+        Commands.waitUntil { inputs.current > 0.85.amps },
         Commands.defer({
-            val targetRotations = inputs.position + 1.55.rotations
+            val targetRotations = inputs.position + 1.175.rotations
             Commands.waitUntil { inputs.position > targetRotations }
         }, emptySet()),
         Commands.runOnce({
