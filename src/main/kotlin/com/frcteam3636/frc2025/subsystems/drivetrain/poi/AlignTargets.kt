@@ -2,11 +2,11 @@ package com.frcteam3636.frc2025.subsystems.drivetrain.poi
 
 import com.frcteam3636.frc2025.subsystems.drivetrain.APRIL_TAGS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.utils.math.meters
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
-import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.DriverStation
 import kotlin.jvm.optionals.getOrNull
 
@@ -42,7 +42,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
     constructor(aprilTagId: Int, side: ReefBranchSide) : this(
         aprilTagId,
         Translation2d(
-            Meters.zero(),
+            0.meters,
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
                 ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET
@@ -69,7 +69,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
         val offsetFromPoseFacingAprilTagWithBumperSpacer = Translation2d(
             // We don't want to be *on top* of the april tag, so back up a bit from the tag.
             -Drivetrain.Constants.BUMPER_LENGTH / 2.0,
-            Meters.zero()
+            0.meters,
         )
             .plus(offset)
 
@@ -141,4 +141,4 @@ fun Iterable<TargetGroup>.closestTargetToWithSelection(pose: Pose2d, reefBranchS
         it.pose.relativeTo(pose).translation.norm
     } ?: error("Can't find closest target")
 
-private val APRIL_TAG_HORIZONTAL_OFFSET = Meters.of(0.147525)
+private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters

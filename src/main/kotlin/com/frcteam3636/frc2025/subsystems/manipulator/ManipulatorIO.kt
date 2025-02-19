@@ -7,11 +7,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
-import com.frcteam3636.frc2025.utils.math.amps
-import com.frcteam3636.frc2025.utils.math.range
+import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
-import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.wpilibj.Ultrasonic
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
@@ -19,12 +17,12 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class ManipulatorInputs {
-    var position = Rotations.zero()!!
-    var velocity = RotationsPerSecond.zero()!!
-    var current = Amps.zero()!!
+    var position = 0.rotations
+    var velocity = 0.rotationsPerSecond
+    var current = 0.amps
 
-    var backUltrasonicDistance = Meters.zero()!!
-    var frontUltrasonicDistance = Meters.zero()!!
+    var backUltrasonicDistance = 0.meters
+    var frontUltrasonicDistance = 0.meters
 }
 
 interface ManipulatorIO {
@@ -55,7 +53,7 @@ class ManipulatorIOReal : ManipulatorIO {
     private val currentControl = TorqueCurrentFOC(0.0)
 
     override fun setCurrent(current: Current) {
-        assert(current.amps in -60.0..60.0)
+        assert(current.inAmps() in -60.0..60.0)
         manipulatorMotor.setControl(currentControl.withOutput(current))
     }
 
@@ -93,7 +91,7 @@ class ManipulatorIOSim : ManipulatorIO {
         simMotor.update(Robot.period)
         inputs.velocity = simMotor.angularVelocity
         simMotor.setAngularVelocity(simMotor.angularVelocityRadPerSec * 0.95)
-        inputs.current = Amps.of(simMotor.currentDrawAmps)
+        inputs.current = simMotor.currentDrawAmps.amps
     }
 
 }
