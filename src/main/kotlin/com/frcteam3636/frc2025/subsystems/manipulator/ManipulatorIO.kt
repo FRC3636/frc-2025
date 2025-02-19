@@ -1,19 +1,22 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
+
+import au.grapplerobotics.ConfigurationFailedException
+import au.grapplerobotics.LaserCan
+import au.grapplerobotics.interfaces.LaserCanInterface
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.TorqueCurrentFOC
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2025.CTREDeviceId
+import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.amps
-import com.frcteam3636.frc2025.utils.math.range
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Current
-import edu.wpi.first.wpilibj.Ultrasonic
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
 
@@ -23,8 +26,7 @@ open class ManipulatorInputs {
     var velocity = RotationsPerSecond.zero()!!
     var current = Amps.zero()!!
 
-    var backUltrasonicDistance = Meters.zero()!!
-    var frontUltrasonicDistance = Meters.zero()!!
+    var laserCanDistance = Meters.of(Double.POSITIVE_INFINITY)!!
 }
 
 interface ManipulatorIO {
@@ -44,8 +46,16 @@ class ManipulatorIOReal : ManipulatorIO {
             }
         )
     }
-    private var backUltrasonic = Ultrasonic(BACK_ULTRASONIC_PING_CHANNEL, BACK_ULTRASONIC_ECHO_CHANNEL)
-    private var frontUltrasonic = Ultrasonic(FRONT_ULTRASONIC_PING_CHANNEL, FRONT_ULTRASONIC_ECHO_CHANNEL)
+
+    private var laserCan = LaserCan(REVMotorControllerId.ManipulatorLaserCAN.num).apply {
+        try {
+            setRangingMode(LaserCanInterface.RangingMode.SHORT)
+            setRegionOfInterest(LaserCanInterface.RegionOfInterest(8, 8, 6, 6))
+            setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_33MS)
+        } catch (e: ConfigurationFailedException) {
+            println(e)
+        }
+    }
 
     override fun setSpeed(percent: Double) {
         assert(percent in -1.0..1.0)
@@ -64,16 +74,14 @@ class ManipulatorIOReal : ManipulatorIO {
         inputs.current = manipulatorMotor.supplyCurrent.value
         inputs.position = manipulatorMotor.position.value
 
-        inputs.backUltrasonicDistance = backUltrasonic.range
-        inputs.frontUltrasonicDistance = frontUltrasonic.range
+        val measurement = laserCan.measurement
+        if (measurement != null && measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
+            inputs.laserCanDistance = Millimeters.of(measurement.distance_mm.toDouble())
+        } else {
+            inputs.laserCanDistance = Meters.of(Double.POSITIVE_INFINITY)
+        }
     }
 
-    internal companion object Constants {
-        private const val BACK_ULTRASONIC_PING_CHANNEL = 1
-        private const val BACK_ULTRASONIC_ECHO_CHANNEL = 2
-        private const val FRONT_ULTRASONIC_PING_CHANNEL = 3
-        private const val FRONT_ULTRASONIC_ECHO_CHANNEL = 4
-    }
 }
 
 class ManipulatorIOSim : ManipulatorIO {
