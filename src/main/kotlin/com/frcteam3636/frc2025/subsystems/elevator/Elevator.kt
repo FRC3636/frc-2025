@@ -3,15 +3,9 @@ package com.frcteam3636.frc2025.subsystems.elevator
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants.SPOOL_RADIUS
-import com.frcteam3636.frc2025.utils.math.amps
-import com.frcteam3636.frc2025.utils.math.inMeters
-import com.frcteam3636.frc2025.utils.math.inRadians
-import com.frcteam3636.frc2025.utils.math.inches
-import com.frcteam3636.frc2025.utils.math.meters
-import com.frcteam3636.frc2025.utils.math.rotations
-import com.frcteam3636.frc2025.utils.math.volts
-import com.frcteam3636.frc2025.utils.math.voltsPerSecond
-import edu.wpi.first.units.Units.*
+import com.frcteam3636.frc2025.utils.math.*
+import edu.wpi.first.units.Units.Meters
+import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
@@ -78,11 +72,11 @@ object Elevator : Subsystem {
 
     enum class Position(val height: Distance) {
         Stowed(0.meters),
-        LowBar(Meters.of(0.79.rotations.inRadians * SPOOL_RADIUS.inMeters)),
-        MidBar(Meters.of(2.18.rotations.inRadians * SPOOL_RADIUS.inMeters)),
+        LowBar(0.79.rotations.toLinear(SPOOL_RADIUS)),
+        MidBar(2.18.rotations.toLinear(SPOOL_RADIUS)),
 
         // FIXME: this may be too high after we tune elevator
-        HighBar(Meters.of(4.54.rotations.inRadians * SPOOL_RADIUS.inMeters)),
+        HighBar(4.54.rotations.toLinear(SPOOL_RADIUS)),
 //        LowAlgae(Meters.of(0.0)),
 //        HighAlgae(Meters.of(0.0)),
     }

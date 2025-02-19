@@ -16,12 +16,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.closestTargetToWithSelection
 import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
-import com.frcteam3636.frc2025.utils.math.PIDController
-import com.frcteam3636.frc2025.utils.math.PIDGains
-import com.frcteam3636.frc2025.utils.math.TAU
-import com.frcteam3636.frc2025.utils.math.metersPerSecond
-import com.frcteam3636.frc2025.utils.math.rotationsPerSecond
-import com.frcteam3636.frc2025.utils.math.toPPLib
+import com.frcteam3636.frc2025.utils.math.*
 import com.frcteam3636.frc2025.utils.swerve.*
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
@@ -39,7 +34,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.util.Units
-import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.Alert
@@ -438,8 +433,8 @@ object Drivetrain : Subsystem, Sendable {
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
-            Volts.per(Second).of(0.5),
-            Volts.of(2.0),
+            0.5.voltsPerSecond,
+            2.volts,
             null,
             {
                 SignalLogger.writeString("state", it.toString())
@@ -474,11 +469,11 @@ object Drivetrain : Subsystem, Sendable {
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.8
 
-        val WHEEL_BASE = Inches.of(30.0)
-        val TRACK_WIDTH = Inches.of(28.0)
+        val WHEEL_BASE = 30.inches
+        val TRACK_WIDTH = 28.inches
 
-        val BUMPER_WIDTH = Inches.of(33.5)
-        val BUMPER_LENGTH = Inches.of(35.5)
+        val BUMPER_WIDTH = 33.5.inches
+        val BUMPER_LENGTH = 35.5.inches
 
         const val JOYSTICK_DEADBAND = 0.15
 
@@ -507,8 +502,8 @@ object Drivetrain : Subsystem, Sendable {
             )
 
         // Chassis Control
-        val FREE_SPEED = MetersPerSecond.of(5.5)!!
-        private val ROTATION_SPEED = RadiansPerSecond.of(14.604)!!
+        val FREE_SPEED = 5.5.metersPerSecond
+        private val ROTATION_SPEED = 14.604.radiansPerSecond
 
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
 
@@ -518,8 +513,8 @@ object Drivetrain : Subsystem, Sendable {
 
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(
-            Pounds.of(120.0), // FIXME: Placeholder
-            KilogramSquareMeters.of(0.0), // FIXME: Placeholder
+            120.0.pounds, // FIXME: Placeholder
+            0.kilogramSquareMeters, // FIXME: Placeholder
             ModuleConfig(
                 WHEEL_RADIUS,
                 FREE_SPEED,
@@ -534,8 +529,8 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         val PP_ROBOT_CONFIG_PROTOTYPE = RobotConfig(
-            Pounds.of(120.0), // FIXME: Placeholder
-            KilogramSquareMeters.of(0.0), // FIXME: Placeholder
+            120.pounds, // FIXME: Placeholder
+            0.kilogramSquareMeters, // FIXME: Placeholder
             ModuleConfig(
                 WHEEL_RADIUS,
                 NEO_DRIVING_FREE_SPEED,
@@ -610,9 +605,9 @@ object Drivetrain : Subsystem, Sendable {
 
         val QUESTNAV_DEVICE_OFFSET = Transform2d(
             // TODO: find these constants
-            Inches.of(0.0),
-            Inches.of(0.0),
-            Rotation2d(Degrees.of(0.0))
+            0.inches,
+            0.inches,
+            Rotation2d(0.deg)
         )
 
         val ALIGN_PID_GAINS = PIDGains(10.0, 0.0, 0.5)

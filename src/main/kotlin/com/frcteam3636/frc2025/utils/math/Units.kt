@@ -1,18 +1,8 @@
 package com.frcteam3636.frc2025.utils.math
 
-import edu.wpi.first.units.TimeUnit
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.VoltageUnit
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.AngularVelocity
-import edu.wpi.first.units.measure.Current
-import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.units.measure.MomentOfInertia
-import edu.wpi.first.units.measure.Per
-import edu.wpi.first.units.measure.Time
-import edu.wpi.first.units.measure.Velocity
-import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.units.measure.*
 import edu.wpi.first.wpilibj.Ultrasonic
 
 // Number -> Measure
@@ -48,8 +38,12 @@ inline val Number.seconds: Time get() = Seconds.of(this.toDouble())
 inline val Number.milliseconds: Time get() = Milliseconds.of(this.toDouble())
 inline val Number.minutes: Time get() = Minutes.of(this.toDouble())
 
+inline val Number.pounds: Mass get() = Pounds.of(this.toDouble())
+inline val Number.kilograms: Mass get() = Kilograms.of(this.toDouble())
+
 inline val Number.kilogramSquareMeters: MomentOfInertia get() = KilogramSquareMeters.of(this.toDouble())
 
+inline val Number.percent: Dimensionless get() = Percent.of(this.toDouble())
 
 // Measure -> Number
 
