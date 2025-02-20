@@ -5,6 +5,9 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.QuestNav
+import com.frcteam3636.frc2025.utils.math.deg
+import com.frcteam3636.frc2025.utils.math.inSeconds
+import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
@@ -12,7 +15,7 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
-import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.util.struct.Struct
@@ -21,6 +24,7 @@ import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.Timer
 import org.littletonrobotics.junction.LogTable
+import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.inputs.LoggableInputs
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
@@ -28,7 +32,7 @@ import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
 import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
-import kotlin.math.absoluteValue
+import kotlin.concurrent.thread
 
 class AbsolutePoseProviderInputs : LoggableInputs {
     /**
@@ -74,13 +78,19 @@ sealed class LimelightAlgorithm {
     /**
      * A newer and much more accurate algorithm that requires accurate gyro readings and a right-side-up Limelight.
      */
-    class MegaTag2(private val gyroGetter: () -> Rotation2d, private val velocityGetter: () -> AngularVelocity) : LimelightAlgorithm() {
+    class MegaTag2(private val gyroGetter: () -> Rotation2d, private val velocityGetter: () -> AngularVelocity) :
+        LimelightAlgorithm() {
         val gyroPosition: Rotation2d
             get() = gyroGetter()
         val gyroVelocity: AngularVelocity
             get() = velocityGetter()
     }
 }
+
+data class LimelightMeasurement(
+    var poseMeasurement: AbsolutePoseMeasurement? = null,
+    var observedTags: IntArray = intArrayOf(),
+)
 
 class LimelightPoseProvider(
     private val name: String,
@@ -90,23 +100,45 @@ class LimelightPoseProvider(
     // https://docs.limelightvision.io/docs/docs-limelight/tutorials/tutorial-swerve-pose-estimation
     // https://docs.limelightvision.io/docs/docs-limelight/apis/limelight-lib#4-field-localization-with-megatag
 
-    private fun updateCurrentMeasurement(): AbsolutePoseMeasurement? {
-        return when (algorithm) {
+    private var observedTags = intArrayOf()
+
+    private var measurement: AbsolutePoseMeasurement? = null
+    private var mutex = Any()
+
+    init {
+        thread(isDaemon = true) {
+            while (true) {
+                val temp = updateCurrentMeasurement()
+                synchronized(mutex) {
+                    measurement = temp.poseMeasurement
+                    observedTags = temp.observedTags
+                }
+                Thread.sleep(Robot.period.toLong())
+            }
+        }
+    }
+
+    private fun updateCurrentMeasurement(): LimelightMeasurement {
+        val measurement = LimelightMeasurement()
+
+        when (algorithm) {
             is LimelightAlgorithm.MegaTag ->
                 LimelightHelpers.getBotPoseEstimate_wpiBlue(name)?.let { estimate ->
+                    measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
+
                     // Reject zero tag or low-quality one tag readings
-                    if (estimate.tagCount == 0) return null
+                    if (estimate.tagCount == 0) return measurement
                     if (estimate.tagCount == 1) {
                         val fiducial = estimate.rawFiducials[0]
                         if (fiducial == null
                             || fiducial.ambiguity > AMBIGUITY_THRESHOLD
                             || fiducial.distToCamera > MAX_SINGLE_TAG_DISTANCE
-                        ) return null
+                        ) return measurement
                     }
 
-                    return AbsolutePoseMeasurement(
+                    measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
-                        Seconds.of(estimate.timestampSeconds),
+                        estimate.timestampSeconds.seconds,
                         // This value is pulled directly from the Limelight docs (linked at the top of this class)
                         VecBuilder.fill(.5, .5, 9999999.0)
                     )
@@ -121,12 +153,15 @@ class LimelightPoseProvider(
                 )
 
                 LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name)?.let { estimate ->
-                    if (algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0) return null
-                    if (estimate.tagCount == 0) return null
+                    measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
+                    val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
+                    Logger.recordOutput("Drivetrain/Absolute Pose/$name/High Speed Rejection", highSpeed)
+                    if (estimate.tagCount == 0 || highSpeed) return measurement
 
-                    return AbsolutePoseMeasurement(
+
+                    measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
-                        Seconds.of(estimate.timestampSeconds),
+                        estimate.timestampSeconds.seconds,
                         // This value is also pulled directly from the Limelight docs
                         VecBuilder.fill(.7, .7, 9999999.0)
                     )
@@ -134,17 +169,22 @@ class LimelightPoseProvider(
             }
 
         }
+
+        return measurement
     }
 
     override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
-        val measurement = this.updateCurrentMeasurement()
-        inputs.measurement = measurement
+//        val measurement = this.updateCurrentMeasurement()
+        synchronized(mutex) {
+            inputs.measurement = measurement
+            inputs.observedTags = observedTags
 
-        // We assume the camera has disconnected if there are no new updates for several ticks.
-        inputs.connected = if (measurement != null) {
-            val timeSinceLastUpdate = Seconds.of(Timer.getTimestamp()) - measurement.timestamp
-            timeSinceLastUpdate > CONNECTED_TIMEOUT
-        } else false
+            // We assume the camera has disconnected if there are no new updates for several ticks.
+            inputs.connected = if (measurement != null) {
+                val timeSinceLastUpdate = Timer.getTimestamp().seconds - measurement!!.timestamp
+                timeSinceLastUpdate > CONNECTED_TIMEOUT
+            } else false
+        }
     }
 
     companion object {
@@ -154,7 +194,7 @@ class LimelightPoseProvider(
          * This is a somewhat conservative limit, but it is only applied when using the old MegaTag v1 algorithm.
          * It's possible it could be increased if it's too restrictive.
          */
-        private val MAX_SINGLE_TAG_DISTANCE = Meters.of(3.0)!!
+        private val MAX_SINGLE_TAG_DISTANCE = 3.meters
 
         /**
          * The acceptable ambiguity for a single-tag reading on MegaTag v1.
@@ -164,7 +204,7 @@ class LimelightPoseProvider(
         /**
          * The amount of time without an update before considering the camera to be disconnected.
          */
-        private val CONNECTED_TIMEOUT = Seconds.of(Robot.period * 5)
+        private val CONNECTED_TIMEOUT = Robot.period.seconds * 5.0
     }
 }
 
@@ -195,7 +235,7 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
             estimator.update(latestResult).ifPresent {
                 inputs.measurement = AbsolutePoseMeasurement(
                     it.estimatedPose.toPose2d(),
-                    Seconds.of(it.timestampSeconds),
+                    it.timestampSeconds.seconds,
                     VecBuilder.fill(0.7, 0.7, 9999999.0)
                 )
             }
@@ -261,7 +301,7 @@ data class AbsolutePoseMeasurement(
 fun SwerveDrivePoseEstimator.addAbsolutePoseMeasurement(measurement: AbsolutePoseMeasurement) {
     addVisionMeasurement(
         measurement.pose,
-        measurement.timestamp.seconds,
+        measurement.timestamp.inSeconds(),
         measurement.stdDeviation // FIXME: seems to fire the bot into orbit...?
     )
 }
@@ -278,13 +318,13 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
     override fun unpack(bb: ByteBuffer): AbsolutePoseMeasurement =
         AbsolutePoseMeasurement(
             pose = Pose2d.struct.unpack(bb),
-            timestamp = Seconds.of(bb.double),
+            timestamp = bb.double.seconds,
             stdDeviation = VecBuilder.fill(bb.double, bb.double, bb.double)
         )
 
     override fun pack(bb: ByteBuffer, value: AbsolutePoseMeasurement) {
         Pose2d.struct.pack(bb, value.pose)
-        bb.putDouble(value.timestamp.seconds)
+        bb.putDouble(value.timestamp.inSeconds())
         bb.putDouble(value.stdDeviation[0, 0])
         bb.putDouble(value.stdDeviation[1, 0])
         bb.putDouble(value.stdDeviation[2, 0])
@@ -302,4 +342,4 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 //    )
 //}
 
-val LIMELIGHT_FOV = Degrees.of(75.76079874010732)
+val LIMELIGHT_FOV = 75.76079874010732.deg

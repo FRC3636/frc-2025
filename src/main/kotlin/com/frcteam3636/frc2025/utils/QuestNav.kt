@@ -1,14 +1,11 @@
 package com.frcteam3636.frc2025.utils
 
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Quaternion
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Translation2d
+import com.frcteam3636.frc2025.utils.math.seconds
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.DoubleSubscriber
 import edu.wpi.first.networktables.FloatArraySubscriber
 import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.Timer
@@ -64,8 +61,7 @@ class QuestNav {
     /**
      * The Quest's measured position.
      */
-    val pose: Pose2d
-        get() = Pose2d(questNavPose.translation, Rotation2d.fromDegrees(oculusYaw.toDouble()))
+    val pose get() = questNavPose
 
     /**
      * The battery percent of the Quest.
@@ -93,14 +89,14 @@ class QuestNav {
     val timestamp: Time
         get() {
             // Make sure our timestamp epochs are the same.
-            val rawTimestamp = Seconds.of(questTimestamp.get())
-            if (rawTimestamp != Seconds.zero()) {
+            val rawTimestamp = questTimestamp.get().seconds
+            if (rawTimestamp != 0.seconds) {
                 if (timestampEpoch == null) {
-                    timestampEpoch = Seconds.of(Timer.getTimestamp()) - rawTimestamp
+                    timestampEpoch = Timer.getTimestamp().seconds - rawTimestamp
                 }
                 return rawTimestamp + timestampEpoch
             }
-            return Seconds.zero()
+            return 0.seconds
         }
 
     /**
@@ -148,9 +144,13 @@ class QuestNav {
             return Translation2d(questNavPosition[2].toDouble(), -questNavPosition[0].toDouble())
         }
 
+
+    val poseOffset = Pose2d()
+
     private val questNavPose: Pose2d
         get() {
             val oculusPositionCompensated = questNavTranslation.minus(Translation2d(0.0, 0.1651)) // 6.5
-            return Pose2d(oculusPositionCompensated, Rotation2d.fromDegrees(oculusYaw.toDouble()))
+            val transform = Transform2d(oculusPositionCompensated, Rotation2d.fromDegrees(oculusYaw.toDouble()))
+            return poseOffset.transformBy(transform)
         }
 }

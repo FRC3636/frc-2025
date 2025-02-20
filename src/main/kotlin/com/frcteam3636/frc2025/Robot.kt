@@ -1,26 +1,28 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
-import com.frcteam3636.frc2025.subsystems.climb.Climb
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
-import com.frcteam3636.frc2025.subsystems.elevator.Elevator.runHoming
-import com.frcteam3636.frc2025.subsystems.elevator.Elevator.setTargetHeight
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
-import com.frcteam3636.frc2025.subsystems.funnel.Funnel.intake
-import com.frcteam3636.frc2025.subsystems.funnel.Funnel.outtake
+import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
+import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
+import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.wpilibj.*
+import edu.wpi.first.units.Units.Seconds
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.Joystick
+import edu.wpi.first.wpilibj.PowerDistribution
+import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
@@ -35,8 +37,6 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
-import javax.swing.KeyStroke
-import javax.swing.text.JTextComponent.KeyBinding
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -72,7 +72,7 @@ object Robot : LoggedRobot() {
         )
 
         // Joysticks are likely to be missing in simulation, which usually isn't a problem.
-        DriverStation.silenceJoystickConnectionWarning(!isReal())
+        DriverStation.silenceJoystickConnectionWarning(model != Model.COMPETITION)
 
         configureAdvantageKit()
         configureSubsystems()
@@ -140,7 +140,6 @@ object Robot : LoggedRobot() {
         Manipulator.register()
         Elevator.register()
         Funnel.register()
-        Climb.register()
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
@@ -152,17 +151,74 @@ object Robot : LoggedRobot() {
 //                Shooter.Flywheels.rev(580.0, 0.0)
 //            )
 //        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL4",
+            Elevator.setTargetHeight(Elevator.Position.HighBar)
+        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL3",
+            Elevator.setTargetHeight(Elevator.Position.MidBar)
+        )
+        NamedCommands.registerCommand(
+            "raiseElevatorL2",
+            Elevator.setTargetHeight(Elevator.Position.LowBar)
+        )
+        NamedCommands.registerCommand(
+            "stowElevator",
+            Elevator.setTargetHeight(Elevator.Position.Stowed)
+        )
+        NamedCommands.registerCommand(
+            "outtake",
+            Manipulator.outtake().withTimeout(0.5.seconds) // FIXME: TURN THIS DOWN
+        )
+        NamedCommands.registerCommand(
+            "intake",
+            Commands.race(
+                Manipulator.intakeWithOutInterrupt(),
+                Funnel.intake()
+            )
+        )
+        NamedCommands.registerCommand(
+            "alignToTarget",
+            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
+                .withTimeout(2.seconds)
+        )
+        NamedCommands.registerCommand(
+            "alignToTargetRight",
+            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Right)
+                .withTimeout(2.seconds)
+        )
     }
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
-
-//        controller.a()
-//            .onTrue(
-//                Climb.moveToPosition()
-//            )
-
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
+        Manipulator.defaultCommand = Manipulator.idle()
+
+        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
+            println("Setting desired target node to left branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+        }))
+
+        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
+            println("Setting desired target node to right branch.")
+            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+        }))
+
+        JoystickButton(joystickLeft, 1).whileTrue(Drivetrain.alignToClosestPOI())
+        JoystickButton(joystickRight, 1).whileTrue(Manipulator.outtake())
+
+//        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
+
+//        controller.b().onTrue(Commands.runOnce({
+//            println("Setting desired target node to left branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
+//        }))
+//
+//        controller.x().onTrue(Commands.runOnce({
+//            println("Setting desired target node to right branch.")
+//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
+//        }))
 
         // (The button with the yellow tape on it)
         JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
@@ -170,34 +226,28 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
-        JoystickButton(joystickLeft, 14).onTrue(Commands.runOnce({
-            println("Homing elevator.")
-            Elevator.runHoming()
-        }))
+        JoystickButton(joystickLeft, 14).onTrue(Elevator.runHoming())
 
-        controller.a()
-            .debounce(.150)
-            .onTrue(
-                setTargetHeight(Elevator.Position.LowBar)
-            )
-
-        controller.b()
-            .debounce(.150)
-            .whileTrue(
-                Manipulator.intake()
-            )
-
-        controller.x()
-            .debounce(.150)
-            .whileTrue(
+        controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
+        controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
+        controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
+        controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
+//
+        controller.leftBumper().whileTrue(Funnel.outtake())
+        controller.rightBumper().whileTrue(
+            Commands.race(
+                Manipulator.intake(),
                 Funnel.intake()
             )
-
-        controller.y()
-            .debounce(.150)
-            .whileTrue(
-                Funnel.outtake()
-            )
+//            Manipulator.intake()
+        )
+//        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
+//        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
+////
+//        controller.y().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+//        controller.a().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+//        controller.b().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kForward));
+//        controller.x().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     }
 
     /** Add data to the driver station dashboard. */
@@ -214,10 +264,14 @@ object Robot : LoggedRobot() {
     override fun simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic()
 
-        Logger.recordOutput("FieldSimulation/Algae",
-            *SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"))
-        Logger.recordOutput("FieldSimulation/Coral",
-            *SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"))
+        Logger.recordOutput(
+            "FieldSimulation/Algae",
+            *SimulatedArena.getInstance().getGamePiecesArrayByType("Algae")
+        )
+        Logger.recordOutput(
+            "FieldSimulation/Coral",
+            *SimulatedArena.getInstance().getGamePiecesArrayByType("Coral")
+        )
 
     }
 
@@ -229,6 +283,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
+        Drivetrain.zeroGyro(true)
         autoCommand = Dashboard.autoChooser.selected
         autoCommand?.schedule()
     }
@@ -249,10 +304,10 @@ object Robot : LoggedRobot() {
     }
 
     /** The model of this robot. */
-    val model: Model = if (RobotBase.isSimulation()) {
+    val model: Model = if (isSimulation()) {
         Model.SIMULATION
     } else {
-        when (val key = Preferences.getString("Model", "prototype")) {
+        when (val key = Preferences.getString("Model", "competition")) {
             "competition" -> Model.COMPETITION
             "prototype" -> Model.PROTOTYPE
             else -> throw AssertionError("Invalid model found in preferences: $key")

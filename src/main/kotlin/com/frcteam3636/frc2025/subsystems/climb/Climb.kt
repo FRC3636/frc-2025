@@ -39,9 +39,16 @@ object Climb: Subsystem {
         Logger.recordOutput("/Climber/Mechanism", mechanism)
     }
 
-    fun moveToPosition() =
+    fun up() =
         startEnd({
             io.setSpeed(1.0)
+        }, {
+            io.setSpeed(0.0)
+        })!!
+
+    fun down() =
+        startEnd({
+            io.setSpeed(-1.0)
         }, {
             io.setSpeed(0.0)
         })!!

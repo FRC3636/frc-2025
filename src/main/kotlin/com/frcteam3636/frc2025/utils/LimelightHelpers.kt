@@ -9,13 +9,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.frcteam3636.frc2025.utils.math.meters
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.networktables.DoubleArrayEntry
 import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.measure.Distance
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -169,7 +169,7 @@ object LimelightHelpers {
                 val distToRobot = poseArray[baseIndex + 5]
                 val ambiguity = poseArray[baseIndex + 6]
                 rawFiducials[i] =
-                    RawFiducial(id, txnc, tync, ta, Meters.of(distToCamera), Meters.of(distToRobot), ambiguity)
+                    RawFiducial(id, txnc, tync, ta, distToCamera.meters, distToRobot.meters, ambiguity)
             }
         }
 
@@ -214,7 +214,7 @@ object LimelightHelpers {
             val ambiguity = extractArrayEntry(rawFiducialArray, baseIndex + 6)
 
             rawFiducials[i] =
-                RawFiducial(id, txnc, tync, ta, Meters.of(distToCamera), Meters.of(distToRobot), ambiguity)
+                RawFiducial(id, txnc, tync, ta, distToCamera.meters, distToRobot.meters, ambiguity)
         }
 
         return rawFiducials
@@ -1434,8 +1434,8 @@ object LimelightHelpers {
         var txnc: Double = 0.0
         var tync: Double = 0.0
         var ta: Double = 0.0
-        var distToCamera: Distance = Meters.zero()
-        var distToRobot: Distance = Meters.zero()
+        var distToCamera: Distance = 0.meters
+        var distToRobot: Distance = 0.meters
         var ambiguity: Double = 0.0
 
 

@@ -69,7 +69,7 @@ class ClimbIOReal: ClimbIO {
 
 class ClimbIOSim: ClimbIO {
     private val climbSim = FlywheelSim(
-        LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60Foc(1), 50.0, 10.0 ),
+        LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60Foc(1), 50.0, 60.0 ),
         DCMotor.getKrakenX60Foc(1)
         )
 

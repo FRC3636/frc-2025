@@ -3,13 +3,13 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.math.degreesPerSecond
+import com.frcteam3636.frc2025.utils.math.radiansPerSecond
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.studica.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
-import edu.wpi.first.units.Units.DegreesPerSecond
-import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
 import org.ironmaple.simulation.drivesims.GyroSimulation
 import org.littletonrobotics.junction.Logger
@@ -49,7 +49,7 @@ class GyroNavX(private val ahrs: AHRS) : Gyro {
         }
 
     override val velocity: AngularVelocity
-        get() = DegreesPerSecond.of(ahrs.rate)
+        get() = 0.degreesPerSecond // NavX get rate broken... use the Pigeon lol
 
     override val connected
         get() = ahrs.isConnected
@@ -75,7 +75,7 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
 
 class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
     override var rotation = Rotation2d()
-    override var velocity: AngularVelocity = RadiansPerSecond.zero()
+    override var velocity: AngularVelocity = 0.radiansPerSecond
         private set
     override val connected = true
 
@@ -90,7 +90,7 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
             sign(rotationalVelocities.frontLeft.y) * rotationalVelocities.frontLeft.norm /
                     Drivetrain.Constants.MODULE_POSITIONS.frontLeft.translation.norm
 
-        velocity = RadiansPerSecond.of(yawVelocity)
+        velocity = yawVelocity.radiansPerSecond
         rotation += Rotation2d(yawVelocity) * Robot.period
     }
 }

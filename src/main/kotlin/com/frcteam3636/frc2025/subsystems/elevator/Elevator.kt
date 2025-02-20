@@ -1,13 +1,17 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
+import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.Robot
-import edu.wpi.first.units.Units.*
+import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants.SPOOL_RADIUS
+import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
+import kotlin.math.abs
 
-object Elevator: Subsystem {
+object Elevator : Subsystem {
     private val io: ElevatorIO = when (Robot.model) {
         Robot.Model.SIMULATION -> ElevatorIOSim()
         Robot.Model.COMPETITION -> ElevatorIOReal()
@@ -16,8 +20,23 @@ object Elevator: Subsystem {
 
     var inputs = LoggedElevatorInputs()
 
-    val isPressed get() = inputs.leftCurrent > Amps.of(30.0) || inputs.rightCurrent > Amps.of(30.0)
+    val isPressed get() = inputs.leftCurrent > 1.9.amps || inputs.rightCurrent > 1.9.amps
 
+    var sysID = SysIdRoutine(
+        SysIdRoutine.Config(
+            0.5.voltsPerSecond,
+            2.volts,
+            null,
+            {
+                SignalLogger.writeString("state", it.toString())
+            }
+        ),
+        SysIdRoutine.Mechanism(
+            io::setVoltage,
+            null,
+            this,
+        )
+    )
 
     override fun periodic() {
         io.updateInputs(inputs)
@@ -26,36 +45,36 @@ object Elevator: Subsystem {
 
         fun setTargetHeight(position: Position): Command =
         startEnd({
-        io.runToHeight(position.height)
-    }, {
-        io.runToHeight(inputs.height)
-    })!!
+            io.runToHeight(position.height)
+        }, {})
+            .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
     fun runHoming(): Command =
         runEnd({
-            io.setVoltage(Volts.of(-0.05))
+            io.setVoltage((-1.0).volts)
         }, {
             if (isPressed) {
-                io.setEncoderPosition(Meters.of(0.0))
+                io.setEncoderPosition(0.meters)
             }
-            io.setVoltage(Volts.of(0.0))
+            io.setVoltage(0.volts)
         }).until {
             isPressed
         }
 
 
-//    fun sysIdQuasistatic(direction: Direction) =
-//        sysID.quasistatic(direction)!!
-//
-//    fun sysIdDynamic(direction: Direction) =
-//        sysID.dynamic(direction)!!
+    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
+        sysID.quasistatic(direction)!!
+
+    fun sysIdDynamic(direction: SysIdRoutine.Direction) =
+        sysID.dynamic(direction)!!
 
     enum class Position(val height: Distance) {
-        Stowed(Meters.of(0.254000)),
-        Trough(Meters.of(0.254000)),
-        LowBar(Meters.of(0.050800)),
-        MidBar(Meters.of(0.254000)),
-        HighBar(Meters.of(1.219200)),
+        Stowed(0.meters),
+        LowBar(0.79.rotations.toLinear(SPOOL_RADIUS)),
+        MidBar(2.18.rotations.toLinear(SPOOL_RADIUS)),
+
+        // FIXME: this may be too high after we tune elevator
+        HighBar(4.54.rotations.toLinear(SPOOL_RADIUS)),
 //        LowAlgae(Meters.of(0.0)),
 //        HighAlgae(Meters.of(0.0)),
     }
