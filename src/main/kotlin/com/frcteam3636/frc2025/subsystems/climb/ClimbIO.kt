@@ -24,7 +24,6 @@ open class ClimbInputs {
 
 interface ClimbIO{
     fun updateInputs(inputs: ClimbInputs)
-    fun setSpeed(percent: Double)
     fun setVoltage(voltage: Voltage)
 }
 
@@ -48,11 +47,6 @@ class ClimbIOReal: ClimbIO {
         inputs.current = climbMotor.torqueCurrent.value
     }
 
-    override fun setSpeed(percent: Double) {
-        assert(percent in -1.0..1.0)
-        climbMotor.set(percent)
-    }
-
     override fun setVoltage(voltage: Voltage) {
         assert(voltage.inVolts() in -12.0..12.0)
         climbMotor.setVoltage(voltage.inVolts())
@@ -71,8 +65,6 @@ class ClimbIOSim: ClimbIO {
         inputs.current = Amps.of(climbSim.currentDrawAmps)
         climbSim.setAngularVelocity(climbSim.angularVelocityRadPerSec * 0.93)
     }
-
-    override fun setSpeed(percent: Double) {}
 
     override fun setVoltage(voltage: Voltage) {
         climbSim.setInputVoltage(voltage.inVolts())
