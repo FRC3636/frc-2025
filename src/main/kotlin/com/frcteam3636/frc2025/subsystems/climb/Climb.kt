@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.climb
 
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.measure.Angle
@@ -41,21 +42,15 @@ object Climb: Subsystem {
 
     fun up() =
         startEnd({
-            io.setSpeed(1.0)
+            io.setVoltage(12.0.volts)
         }, {
-            io.setSpeed(0.0)
+            io.setVoltage(0.0.volts)
         })!!
 
     fun down() =
         startEnd({
-            io.setSpeed(-1.0)
+            io.setVoltage((-12.0).volts)
         }, {
-            io.setSpeed(0.0)
+            io.setVoltage(0.0.volts)
         })!!
-
-    enum class Position(val angle: Angle) {
-        Climb(Radians.of(1.57079632679)),
-        Stowed(Radians.of(3.14159265359)),
-        Deployed(Radians.of(0.0))
-    }
 }

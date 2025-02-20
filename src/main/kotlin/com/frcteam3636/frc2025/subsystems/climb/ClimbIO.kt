@@ -12,6 +12,7 @@ import com.frcteam3636.frc2025.CANcoder
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
+import com.frcteam3636.frc2025.utils.math.inVolts
 import com.frcteam3636.frc2025.utils.math.rotations
 import com.frcteam3636.frc2025.utils.math.toAngular
 import com.revrobotics.spark.SparkRelativeEncoder
@@ -39,6 +40,7 @@ interface ClimbIO{
     fun updateInputs(inputs: ClimbInputs)
 
     fun setSpeed(percent: Double)
+    fun setVoltage(voltage: Voltage)
 }
 
 class ClimbIOReal: ClimbIO {
@@ -65,6 +67,11 @@ class ClimbIOReal: ClimbIO {
         assert(percent in -1.0..1.0)
         climbMotor.set(percent)
     }
+
+    override fun setVoltage(voltage: Voltage) {
+        assert(voltage.inVolts() in -12.0..12.0)
+        climbMotor.setVoltage(voltage.inVolts())
+    }
 }
 
 class ClimbIOSim: ClimbIO {
@@ -80,8 +87,9 @@ class ClimbIOSim: ClimbIO {
         climbSim.setAngularVelocity(climbSim.angularVelocityRadPerSec * 0.93)
     }
 
-    override fun setSpeed(percent: Double) {
-        assert (percent in -1.0..1.0)
-        climbSim.setInputVoltage(percent)
+    override fun setSpeed(percent: Double) {}
+
+    override fun setVoltage(voltage: Voltage) {
+        climbSim.setInputVoltage(voltage.inVolts())
     }
 }
