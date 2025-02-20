@@ -210,6 +210,11 @@ object Robot : LoggedRobot() {
         JoystickButton(joystickLeft, 1).whileTrue(Drivetrain.alignToClosestPOI())
         JoystickButton(joystickRight, 1).whileTrue(Manipulator.outtake())
 
+        //climber commands
+//        controller.a().whileTrue(Climb.up())
+//
+//        controller.b().whileTrue(Climb.down())
+
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 
 //        controller.b().onTrue(Commands.runOnce({
