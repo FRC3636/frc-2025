@@ -9,6 +9,8 @@ import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inAmps
 import com.frcteam3636.frc2025.utils.math.rotationsPerSecond
+import com.frcteam3636.frc2025.utils.math.inAmps
+import com.frcteam3636.frc2025.utils.math.rotationsPerSecond
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
@@ -56,7 +58,6 @@ class FunnelIOReal : FunnelIO {
         private val MOTOR_CURRENT_LIMIT = 35.amps
     }
 }
-
 class FunnelIOSim : FunnelIO {
     private var motor = DCMotor.getKrakenX60(1)
     private var system = LinearSystemId.createFlywheelSystem(motor, 1.0, 5.0)
@@ -74,3 +75,4 @@ class FunnelIOSim : FunnelIO {
     }
 
 }
+

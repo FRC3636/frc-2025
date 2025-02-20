@@ -19,6 +19,7 @@ import com.revrobotics.spark.SparkRelativeEncoder
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Measure
+import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
@@ -31,6 +32,9 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class ClimbInputs {
+    var climberCurrent = Amps.zero()!!
+//    var velocity = RadiansPerSecond.zero()!!
+//    var position = Radians.zero()!!
     var current = Amps.zero()!!
     var velocity = RadiansPerSecond.zero()!!
     var position = Radians.zero()!!
@@ -38,7 +42,6 @@ open class ClimbInputs {
 
 interface ClimbIO{
     fun updateInputs(inputs: ClimbInputs)
-
     fun setSpeed(percent: Double)
     fun setVoltage(voltage: Voltage)
 }
@@ -63,7 +66,7 @@ class ClimbIOReal: ClimbIO {
         inputs.current = climbMotor.torqueCurrent.value
     }
 
-    override fun setSpeed(percent:Double) {
+    override fun setSpeed(percent: Double) {
         assert(percent in -1.0..1.0)
         climbMotor.set(percent)
     }
@@ -74,6 +77,23 @@ class ClimbIOReal: ClimbIO {
     }
 }
 
+//    override fun turnToAngle(angle: Angle) {
+//        Logger.recordOutput("Shooter/Pivot/Position Setpoint", angle)
+//
+//        val control = MotionMagicTorqueCurrentFOC(0.0).apply {
+//            Slot = 0
+//            Position = angle.rotations
+//        }
+//        climbMotor.setControl(control)
+//    }
+
+//    override fun setPosition(position: Distance) {
+//        climbMotor.setPosition(position.toAngular(CLIMBER_RADIUS))
+//    }
+
+//    internal companion object Constants {
+//        private val CLIMBER_RADIUS = Inches.of(5.0) //placeholder
+//    }
 class ClimbIOSim: ClimbIO {
     private val climbSim = FlywheelSim(
         LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60Foc(1), 50.0, 60.0 ),
