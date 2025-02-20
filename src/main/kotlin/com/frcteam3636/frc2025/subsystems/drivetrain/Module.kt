@@ -141,16 +141,16 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     override val position: Distance
-        get() = inner.position.value.toLinear(WHEEL_CIRCUMFERENCE) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.position.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
 
     private var velocityControl = VelocityVoltage(0.0).apply {
         EnableFOC = true
     }
 
     override var velocity: LinearVelocity
-        get() = (inner.velocity.value.inRotationsPerSecond() * DRIVING_GEAR_RATIO_TALON * WHEEL_CIRCUMFERENCE.inMeters()).metersPerSecond
+        get() = inner.velocity.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
         set(value) {
-            inner.setControl(velocityControl.withVelocity(value.inMetersPerSecond() / DRIVING_GEAR_RATIO_TALON / WHEEL_CIRCUMFERENCE.inMeters()))
+            inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
         }
 
     private val voltageControl = VoltageOut(0.0).apply {
