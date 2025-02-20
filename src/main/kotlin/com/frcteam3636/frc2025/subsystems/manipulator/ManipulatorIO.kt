@@ -25,7 +25,7 @@ open class ManipulatorInputs {
     var velocity = 0.rotationsPerSecond
     var current = 0.amps
 
-    var laserCanDistance = Meters.of(Double.POSITIVE_INFINITY)!!
+    var laserCanDistance = Double.POSITIVE_INFINITY.meters
 }
 
 interface ManipulatorIO {
@@ -75,9 +75,9 @@ class ManipulatorIOReal : ManipulatorIO {
 
         val measurement = laserCan.measurement
         if (measurement != null && measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
-            inputs.laserCanDistance = Millimeters.of(measurement.distance_mm.toDouble())
+            inputs.laserCanDistance = measurement.distance_mm.mm
         } else {
-            inputs.laserCanDistance = Meters.of(Double.POSITIVE_INFINITY)
+            inputs.laserCanDistance = Double.POSITIVE_INFINITY.meters
         }
     }
 

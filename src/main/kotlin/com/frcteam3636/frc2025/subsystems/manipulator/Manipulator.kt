@@ -4,9 +4,8 @@ import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
-import com.frcteam3636.frc2025.utils.math.rotations
+import com.frcteam3636.frc2025.utils.math.inches
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
@@ -37,7 +36,8 @@ object Manipulator : Subsystem {
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     private fun waitForIntake(): Command = Commands.sequence(
-        Commands.waitUntil { inputs.laserCanDistance < Inches.of(3.0) },
+        Commands.waitUntil { inputs.laserCanDistance < 3.inches },
+        Commands.waitUntil { inputs.laserCanDistance > 3.inches },
         Commands.runOnce({
             coralState = CoralState.HELD
             blinkLimelight().schedule()
