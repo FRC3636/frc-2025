@@ -18,6 +18,8 @@ object Elevator : Subsystem {
         Robot.Model.PROTOTYPE -> TODO()
     }
 
+    var desiredHeight: Position = Position.Stowed
+
     var inputs = LoggedElevatorInputs()
 
     val isPressed get() = inputs.leftCurrent > 1.9.amps || inputs.rightCurrent > 1.9.amps
@@ -45,6 +47,7 @@ object Elevator : Subsystem {
 
     fun setTargetHeight(position: Position): Command =
         startEnd({
+            desiredHeight = position
             io.runToHeight(position.height)
         }, {})
             .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }

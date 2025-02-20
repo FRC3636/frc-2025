@@ -24,7 +24,7 @@ object Manipulator : Subsystem {
 
     var inputs = LoggedManipulatorInputs()
 
-    private var coralState: CoralState = CoralState.NONE
+    var coralState: CoralState = CoralState.NONE
         set(value) {
             field = value
             rgbPublisher.set(value.ordinal.toLong())
@@ -91,11 +91,11 @@ object Manipulator : Subsystem {
 
 
     fun outtake(): Command = startEnd(
-        { io.setCurrent(37.amps) },
         {
-            io.setSpeed(0.0)
             coralState = CoralState.NONE
-        }
+            io.setCurrent(37.amps)
+        },
+        { io.setSpeed(0.0) }
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
 }

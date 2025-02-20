@@ -5,6 +5,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
+import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
@@ -18,7 +19,6 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -228,7 +228,9 @@ object Robot : LoggedRobot() {
 
         JoystickButton(joystickLeft, 14).onTrue(Elevator.runHoming())
 
-        controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
+        controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf {
+            !(Elevator.desiredHeight == Elevator.Position.HighBar && Manipulator.coralState == CoralState.HELD)
+        })
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
