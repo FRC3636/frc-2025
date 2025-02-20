@@ -35,6 +35,7 @@ object Manipulator : Subsystem {
 
     private fun waitForIntake(): Command = Commands.sequence(
         Commands.waitUntil { inputs.laserCanDistance < Inches.of(3.0) },
+        Commands.waitUntil { inputs.laserCanDistance > Inches.of(3.0) },
         Commands.runOnce({
             coralState = CoralState.HELD
         })
