@@ -9,6 +9,7 @@ import com.frcteam3636.frc2025.utils.swerve.PerCorner
 import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.studica.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.AngularVelocity
 import org.ironmaple.simulation.drivesims.GyroSimulation
@@ -20,7 +21,7 @@ interface Gyro {
      * The current rotation of the robot.
      * This can be set to a different value to change the gyro's offset.
      */
-    var rotation: Rotation2d
+    var rotation: Rotation3d
 
     /**
      * The rotational velocity of the robot on its yaw axis.
@@ -41,10 +42,10 @@ class GyroNavX(private val ahrs: AHRS) : Gyro {
         Logger.recordOutput("NavXGyro/Offset", offset)
     }
 
-    override var rotation: Rotation2d
-        get() = offset + ahrs.rotation2d
+    override var rotation: Rotation3d
+        get() = ahrs.rotation3d + Rotation3d(offset)
         set(goal) {
-            offset = goal - ahrs.rotation2d
+            offset = goal.toRotation2d() - ahrs.rotation2d
             Logger.recordOutput("NavXGyro/Offset", offset)
         }
 
@@ -60,10 +61,10 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
         BaseStatusSignal.setUpdateFrequencyForAll(100.0, pigeon.yaw, pigeon.pitch, pigeon.roll)
     }
 
-    override var rotation: Rotation2d
-        get() = pigeon.rotation2d
+    override var rotation: Rotation3d
+        get() = pigeon.rotation3d
         set(goal) {
-            pigeon.setYaw(goal.measure)
+            pigeon.setYaw(goal.toRotation2d().measure)
         }
 
     override val velocity: AngularVelocity
@@ -73,33 +74,11 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
         get() = pigeon.yaw.status.isOK
 }
 
-class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
-    override var rotation = Rotation2d()
-    override var velocity: AngularVelocity = 0.radiansPerSecond
-        private set
-    override val connected = true
-
-    override fun periodic() {
-        // Calculate the average translation velocity of each module
-        val moduleVelocities = modules.map { it.state.translation2dPerSecond }
-        val translationVelocity = moduleVelocities.reduce(Translation2d::plus) / moduleVelocities.size.toDouble()
-
-        // Use the front left module's rotational velocity to calculate the yaw velocity
-        val rotationalVelocities = moduleVelocities.map { it - translationVelocity }
-        val yawVelocity =
-            sign(rotationalVelocities.frontLeft.y) * rotationalVelocities.frontLeft.norm /
-                    Drivetrain.Constants.MODULE_POSITIONS.frontLeft.translation.norm
-
-        velocity = yawVelocity.radiansPerSecond
-        rotation += Rotation2d(yawVelocity) * Robot.period
-    }
-}
-
 class GyroMapleSim(val gyroSimulation: GyroSimulation) : Gyro {
-    override var rotation: Rotation2d
-        get() = gyroSimulation.gyroReading
+    override var rotation: Rotation3d
+        get() = Rotation3d(gyroSimulation.gyroReading)
         set(value) {
-            gyroSimulation.setRotation(value)
+            gyroSimulation.setRotation(value.toRotation2d())
         }
     override val velocity: AngularVelocity
         get() = gyroSimulation.measuredAngularVelocity

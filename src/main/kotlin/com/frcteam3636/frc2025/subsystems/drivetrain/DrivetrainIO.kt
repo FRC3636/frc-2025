@@ -17,6 +17,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
@@ -32,7 +33,7 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class DrivetrainInputs {
-    var gyroRotation = Rotation2d()
+    var gyroRotation = Rotation3d()
     var gyroVelocity = 0.degreesPerSecond
     var gyroConnected = true
     var measuredStates = PerCorner.generate { SwerveModuleState() }
@@ -72,9 +73,8 @@ abstract class DrivetrainIO {
 /** Drivetrain I/O layer that uses real swerve modules along with a NavX gyro. */
 class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : DrivetrainIO() {
     override val gyro = when (Robot.model) {
-        Robot.Model.SIMULATION -> GyroSim(modules)
         Robot.Model.COMPETITION -> GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
-        Robot.Model.PROTOTYPE -> GyroNavX(AHRS(AHRS.NavXComType.kMXP_SPI))
+        else -> GyroNavX(AHRS(AHRS.NavXComType.kMXP_SPI))
     }
 
     companion object {

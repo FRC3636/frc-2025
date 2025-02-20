@@ -100,7 +100,7 @@ object Drivetrain : Subsystem, Sendable {
     private val poseEstimator =
         SwerveDrivePoseEstimator(
             kinematics, // swerve drive kinematics
-            inputs.gyroRotation, // initial gyro rotation
+            inputs.gyroRotation.toRotation2d(), // initial gyro rotation
             inputs.measuredPositions.toTypedArray(), // initial module positions
             Pose2d(), // initial pose
             VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5.0)),
@@ -118,6 +118,11 @@ object Drivetrain : Subsystem, Sendable {
             return translationalSpeed < 0.5.metersPerSecond
                     && speeds.angularVelocity < 0.5.rotationsPerSecond
         }
+
+    val isTipping: Boolean get() {
+        val rotation = inputs.gyroRotation
+        TODO()
+    }
 
 
     init {
@@ -176,7 +181,7 @@ object Drivetrain : Subsystem, Sendable {
 
         // Use the new measurements to update the pose estimator
         poseEstimator.update(
-            inputs.gyroRotation,
+            inputs.gyroRotation.toRotation2d(),
             inputs.measuredPositions.toTypedArray()
         )
 
@@ -251,7 +256,7 @@ object Drivetrain : Subsystem, Sendable {
         }
         private set(value) {
             poseEstimator.resetPosition(
-                inputs.gyroRotation,
+                inputs.gyroRotation.toRotation2d(),
                 inputs.measuredPositions.toTypedArray(),
                 value
             )
