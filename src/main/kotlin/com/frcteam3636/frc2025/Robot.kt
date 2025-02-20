@@ -226,12 +226,18 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
+        // Left close middle
+        JoystickButton(joystickLeft, 9)
+            .and { Robot.isDisabled }
+            .toggleOnTrue(Elevator.coast().ignoringDisable(true))
+
         JoystickButton(joystickLeft, 14).onTrue(Elevator.runHoming())
 
         controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
+        controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
 //
         controller.leftBumper().whileTrue(Funnel.outtake())
         controller.rightBumper().whileTrue(

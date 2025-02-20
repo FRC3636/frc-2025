@@ -91,7 +91,7 @@ object Manipulator : Subsystem {
 
 
     fun outtake(): Command = startEnd(
-        { io.setCurrent(37.amps) },
+        { io.setCurrent(60.amps) },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE
