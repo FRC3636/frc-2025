@@ -3,9 +3,7 @@ package com.frcteam3636.frc2025.subsystems.elevator
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants.SPOOL_RADIUS
-import com.frcteam3636.frc2025.utils.math.meters
-import com.frcteam3636.frc2025.utils.math.radians
-import edu.wpi.first.units.Units.*
+import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
@@ -22,12 +20,12 @@ object Elevator : Subsystem {
 
     var inputs = LoggedElevatorInputs()
 
-    val isPressed get() = inputs.leftCurrent > Amps.of(1.9) || inputs.rightCurrent > Amps.of(1.9)
+    val isPressed get() = inputs.leftCurrent > 1.9.amps || inputs.rightCurrent > 1.9.amps
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
-            Volts.per(Second).of(0.5),
-            Volts.of(2.0),
+            0.5.voltsPerSecond,
+            2.volts,
             null,
             {
                 SignalLogger.writeString("state", it.toString())
@@ -49,16 +47,16 @@ object Elevator : Subsystem {
         startEnd({
             io.runToHeight(position.height)
         }, {})
-            .until { abs(inputs.height.meters - position.height.meters) < Inches.of(0.75).meters }
+            .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
     fun runHoming(): Command =
         runEnd({
-            io.setVoltage(Volts.of(-1.0))
+            io.setVoltage((-1.0).volts)
         }, {
             if (isPressed) {
-                io.setEncoderPosition(Meters.of(0.0))
+                io.setEncoderPosition(0.meters)
             }
-            io.setVoltage(Volts.of(0.0))
+            io.setVoltage(0.volts)
         }).until {
             isPressed
         }
@@ -71,12 +69,12 @@ object Elevator : Subsystem {
         sysID.dynamic(direction)!!
 
     enum class Position(val height: Distance) {
-        Stowed(Meters.of(0.0)),
-        LowBar(Meters.of(Rotations.of(0.79).radians * SPOOL_RADIUS.meters)),
-        MidBar(Meters.of(Rotations.of(2.18).radians * SPOOL_RADIUS.meters)),
+        Stowed(0.meters),
+        LowBar(0.79.rotations.toLinear(SPOOL_RADIUS)),
+        MidBar(2.18.rotations.toLinear(SPOOL_RADIUS)),
 
         // FIXME: this may be too high after we tune elevator
-        HighBar(Meters.of(Rotations.of(4.54).radians * SPOOL_RADIUS.meters)),
+        HighBar(4.54.rotations.toLinear(SPOOL_RADIUS)),
 //        LowAlgae(Meters.of(0.0)),
 //        HighAlgae(Meters.of(0.0)),
     }

@@ -1,11 +1,11 @@
 package com.frcteam3636.frc2025.utils
 
+import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.networktables.DoubleSubscriber
 import edu.wpi.first.networktables.FloatArraySubscriber
 import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.Timer
@@ -89,14 +89,14 @@ class QuestNav {
     val timestamp: Time
         get() {
             // Make sure our timestamp epochs are the same.
-            val rawTimestamp = Seconds.of(questTimestamp.get())
-            if (rawTimestamp != Seconds.zero()) {
+            val rawTimestamp = questTimestamp.get().seconds
+            if (rawTimestamp != 0.seconds) {
                 if (timestampEpoch == null) {
-                    timestampEpoch = Seconds.of(Timer.getTimestamp()) - rawTimestamp
+                    timestampEpoch = Timer.getTimestamp().seconds - rawTimestamp
                 }
                 return rawTimestamp + timestampEpoch
             }
-            return Seconds.zero()
+            return 0.seconds
         }
 
     /**

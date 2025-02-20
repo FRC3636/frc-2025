@@ -1,10 +1,11 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
-import com.frcteam3636.frc2025.utils.math.degreesPerSecond
+import com.frcteam3636.frc2025.utils.LimelightHelpers
+import com.frcteam3636.frc2025.utils.math.amps
+import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
+import com.frcteam3636.frc2025.utils.math.rotations
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.Units.Amps
-import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
@@ -35,14 +36,15 @@ object Manipulator : Subsystem {
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     private fun waitForIntake(): Command = Commands.sequence(
-        Commands.waitUntil { inputs.current > Amps.of(0.7) },
+        Commands.waitUntil { inputs.current > 0.8.amps },
         Commands.defer({
-            val targetRotations = inputs.position + Rotations.of(1.55)
+            val targetRotations = inputs.position + 1.175.rotations
             Commands.waitUntil { inputs.position > targetRotations }
         }, emptySet()),
         Commands.runOnce({
             coralState = CoralState.HELD
-        })
+            blinkLimelight().schedule()
+        }),
     )
 
     init {
@@ -55,9 +57,17 @@ object Manipulator : Subsystem {
         io.updateInputs(inputs)
         Logger.processInputs("Manipulator", inputs)
 
-        motorAngleVisualizer.angle += inputs.velocity.degreesPerSecond * Robot.period
+        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
     }
+
+    private fun blinkLimelight(): Command = Commands.runOnce({
+        LimelightHelpers.setLEDMode_ForceBlink("limelight-rear")
+    })
+        .andThen(Commands.waitSeconds(0.3))
+        .finallyDo { ->
+            LimelightHelpers.setLEDMode_PipelineControl("limelight-rear")
+        }
 
 
     fun idle(): Command = startEnd({
@@ -81,7 +91,7 @@ object Manipulator : Subsystem {
 
 
     fun outtake(): Command = startEnd(
-        { io.setCurrent(Amps.of(37.0)) },
+        { io.setCurrent(37.amps) },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE
