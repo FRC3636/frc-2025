@@ -1,7 +1,10 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
-import com.frcteam3636.frc2025.utils.math.degreesPerSecond
+import com.frcteam3636.frc2025.utils.LimelightHelpers
+import com.frcteam3636.frc2025.utils.math.amps
+import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
+import com.frcteam3636.frc2025.utils.math.rotations
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.util.Color
@@ -37,7 +40,8 @@ object Manipulator : Subsystem {
         Commands.waitUntil { inputs.laserCanDistance < Inches.of(3.0) },
         Commands.runOnce({
             coralState = CoralState.HELD
-        })
+            blinkLimelight().schedule()
+        }),
     )
 
     init {
@@ -50,9 +54,17 @@ object Manipulator : Subsystem {
         io.updateInputs(inputs)
         Logger.processInputs("Manipulator", inputs)
 
-        motorAngleVisualizer.angle += inputs.velocity.degreesPerSecond * Robot.period
+        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
     }
+
+    private fun blinkLimelight(): Command = Commands.runOnce({
+        LimelightHelpers.setLEDMode_ForceBlink("limelight-rear")
+    })
+        .andThen(Commands.waitSeconds(0.3))
+        .finallyDo { ->
+            LimelightHelpers.setLEDMode_PipelineControl("limelight-rear")
+        }
 
 
     fun idle(): Command = startEnd({
@@ -76,7 +88,7 @@ object Manipulator : Subsystem {
 
 
     fun outtake(): Command = startEnd(
-        { io.setCurrent(Amps.of(37.0)) },
+        { io.setCurrent(37.amps) },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE

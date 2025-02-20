@@ -9,6 +9,7 @@ import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
+import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -168,7 +169,7 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "outtake",
-            Manipulator.outtake().withTimeout(Seconds.of(0.5)) // FIXME: TURN THIS DOWN
+            Manipulator.outtake().withTimeout(0.5.seconds) // FIXME: TURN THIS DOWN
         )
         NamedCommands.registerCommand(
             "intake",
@@ -180,12 +181,12 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "alignToTarget",
             Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
-                .withTimeout(Seconds.of(2.0))
+                .withTimeout(2.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
             Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Right)
-                .withTimeout(Seconds.of(2.0))
+                .withTimeout(2.seconds)
         )
     }
 
