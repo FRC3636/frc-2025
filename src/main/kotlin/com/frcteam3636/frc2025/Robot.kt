@@ -18,7 +18,6 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -240,13 +239,30 @@ object Robot : LoggedRobot() {
         controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
 //
         controller.leftBumper().whileTrue(Funnel.outtake())
-        controller.rightBumper().whileTrue(
-            Commands.race(
-                Manipulator.intake(),
-                Funnel.intake()
-            )
-//            Manipulator.intake()
+        controller.rightBumper().onTrue(
+            Commands.sequence(
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = true
+                }),
+                Commands.race(
+                    Manipulator.intake(),
+                    Funnel.intake()
+                )
+            ).andThen({
+                Manipulator.isIntakeRunning = false
+            })
         )
+
+        controller.rightTrigger().onTrue(
+            Commands.runOnce({
+                Manipulator.isIntakeRunning = false
+            })
+        )
+
+
+//            Manipulator.intake()
+
+
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
 ////

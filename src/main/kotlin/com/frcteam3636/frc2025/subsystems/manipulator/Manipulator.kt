@@ -36,6 +36,7 @@ object Manipulator : Subsystem {
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     private fun waitForIntake(): Command = Commands.sequence(
+        Commands.waitSeconds(0.1),
         Commands.waitUntil { inputs.current > 0.8.amps },
         Commands.defer({
             val targetRotations = inputs.position + 1.175.rotations
@@ -46,6 +47,8 @@ object Manipulator : Subsystem {
             blinkLimelight().schedule()
         }),
     )
+
+    var isIntakeRunning = false
 
     init {
         mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
@@ -81,6 +84,9 @@ object Manipulator : Subsystem {
         { io.setSpeed(0.0) }
     )
         .raceWith(waitForIntake())
+        .onlyWhile {
+            isIntakeRunning
+        }
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
     fun intakeWithOutInterrupt(): Command = startEnd(
