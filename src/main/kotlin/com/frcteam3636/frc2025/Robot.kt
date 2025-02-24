@@ -265,13 +265,6 @@ object Robot : LoggedRobot() {
             })
         )
 
-        JoystickButton(joystickRight, 2).whileTrue(
-            Commands.parallel(
-                Manipulator.intakeNoRaceWithOutInterrupt(),
-                Funnel.intakeNoRace()
-            )
-        )
-
 
 //            Manipulator.intake()
 
