@@ -172,20 +172,23 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "intake",
-            Commands.race(
-                Manipulator.intakeWithOutInterrupt(),
-                Funnel.intake()
-            )
+            Commands.sequence(
+                Commands.race(
+                    Manipulator.intakeNoRaceWithOutInterrupt(),
+                    Funnel.intake()
+                ),
+                Manipulator.intakeWithOutInterruptAuto()
+            ).withTimeout(1.5)
         )
         NamedCommands.registerCommand(
             "alignToTarget",
             Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
-                .withTimeout(2.seconds)
+                .withTimeout(1.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
             Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Right)
-                .withTimeout(2.seconds)
+                .withTimeout(1.seconds)
         )
     }
 
@@ -244,9 +247,12 @@ object Robot : LoggedRobot() {
                 Commands.runOnce({
                     Manipulator.isIntakeRunning = true
                 }),
-                Commands.race(
-                    Manipulator.intake(),
-                    Funnel.intake()
+                Commands.sequence(
+                    Commands.race(
+                        Manipulator.intakeNoRace(),
+                        Funnel.intake()
+                    ),
+                    Manipulator.intake()
                 )
             ).andThen({
                 Manipulator.isIntakeRunning = false
@@ -257,6 +263,13 @@ object Robot : LoggedRobot() {
             Commands.runOnce({
                 Manipulator.isIntakeRunning = false
             })
+        )
+
+        JoystickButton(joystickRight, 2).whileTrue(
+            Commands.parallel(
+                Manipulator.intakeNoRaceWithOutInterrupt(),
+                Funnel.intakeNoRace()
+            )
         )
 
 

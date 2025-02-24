@@ -5,6 +5,7 @@ import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
 import com.frcteam3636.frc2025.utils.math.rotations
+import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
@@ -36,10 +37,23 @@ object Manipulator : Subsystem {
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     private fun waitForIntake(): Command = Commands.sequence(
-        Commands.waitSeconds(0.1),
-        Commands.waitUntil { inputs.current > 0.8.amps },
+//        Commands.waitSeconds(0.1),
+//        Commands.waitUntil { inputs.current > 0.7.amps },
         Commands.defer({
-            val targetRotations = inputs.position + 1.175.rotations
+            val targetRotations = inputs.position + 1.4.rotations
+            Commands.waitUntil { inputs.position > targetRotations }
+        }, emptySet()),
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
+    )
+
+    private fun waitForIntakeAuto(): Command = Commands.sequence(
+//        Commands.waitSeconds(0.1),
+//        Commands.waitUntil { inputs.current > 0.7.amps },
+        Commands.defer({
+            val targetRotations = inputs.position + 1.4.rotations
             Commands.waitUntil { inputs.position > targetRotations }
         }, emptySet()),
         Commands.runOnce({
@@ -80,7 +94,7 @@ object Manipulator : Subsystem {
     })
 
     fun intake(): Command = startEnd(
-        { io.setSpeed(0.065) },
+        { io.setVoltage(0.78.volts) },
         { io.setSpeed(0.0) }
     )
         .raceWith(waitForIntake())
@@ -89,15 +103,27 @@ object Manipulator : Subsystem {
         }
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
-    fun intakeWithOutInterrupt(): Command = startEnd(
-        { io.setSpeed(0.065) },
+    fun intakeNoRace(): Command = run(
+        { io.setVoltage(0.78.volts) },
+    )
+        .onlyWhile {
+            isIntakeRunning
+        }
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+
+    fun intakeNoRaceWithOutInterrupt(): Command = run(
+        { io.setVoltage(0.78.volts) },
+    )
+
+    fun intakeWithOutInterruptAuto(): Command = startEnd(
+        { io.setVoltage(0.78.volts) },
         { io.setSpeed(0.0) }
     )
-        .raceWith(waitForIntake())
+        .raceWith(waitForIntakeAuto())
 
 
     fun outtake(): Command = startEnd(
-        { io.setCurrent(60.amps) },
+        { io.setCurrent(37.amps) },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE

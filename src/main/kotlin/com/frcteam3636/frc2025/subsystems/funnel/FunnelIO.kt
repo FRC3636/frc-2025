@@ -8,9 +8,11 @@ import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inAmps
+import com.frcteam3636.frc2025.utils.math.inVolts
 import com.frcteam3636.frc2025.utils.math.rotationsPerSecond
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
+import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
 
@@ -22,6 +24,7 @@ open class FunnelInputs {
 
 interface FunnelIO {
     fun setSpeed(percent: Double)
+    fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: FunnelInputs)
 }
 
@@ -47,6 +50,11 @@ class FunnelIOReal : FunnelIO {
         rampMotor.set(percent)
     }
 
+    override fun setVoltage(voltage: Voltage) {
+        assert(voltage.inVolts() in -12.0..12.0)
+        rampMotor.setVoltage(voltage.inVolts())
+    }
+
     override fun updateInputs(inputs: FunnelInputs) {
         inputs.rollerVelocity = rampMotor.velocity.value
         inputs.rollerCurrent = rampMotor.supplyCurrent.value
@@ -64,6 +72,10 @@ class FunnelIOSim : FunnelIO {
 
     override fun setSpeed(percent: Double) {
         simMotor.inputVoltage = percent * 12
+    }
+
+    override fun setVoltage(voltage: Voltage) {
+        TODO("Not yet implemented")
     }
 
     override fun updateInputs(inputs: FunnelInputs) {

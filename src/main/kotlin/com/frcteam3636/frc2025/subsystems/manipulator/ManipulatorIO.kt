@@ -11,6 +11,7 @@ import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Current
+import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.Ultrasonic
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
@@ -28,6 +29,7 @@ open class ManipulatorInputs {
 interface ManipulatorIO {
     fun setSpeed(percent: Double)
     fun setCurrent(current: Current)
+    fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: ManipulatorInputs)
 }
 
@@ -57,6 +59,11 @@ class ManipulatorIOReal : ManipulatorIO {
         manipulatorMotor.setControl(currentControl.withOutput(current))
     }
 
+    override fun setVoltage(voltage: Voltage) {
+        assert(voltage.inVolts() in -12.0..12.0)
+        manipulatorMotor.setVoltage(voltage.inVolts())
+    }
+
     override fun updateInputs(inputs: ManipulatorInputs) {
         inputs.velocity = manipulatorMotor.velocity.value
         inputs.current = manipulatorMotor.supplyCurrent.value
@@ -84,6 +91,10 @@ class ManipulatorIOSim : ManipulatorIO {
     }
 
     override fun setCurrent(current: Current) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setVoltage(voltage: Voltage) {
         TODO("Not yet implemented")
     }
 
