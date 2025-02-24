@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
+import com.frcteam3636.frc2025.subsystems.climb.Climb
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
@@ -139,6 +140,7 @@ object Robot : LoggedRobot() {
         Manipulator.register()
         Elevator.register()
         Funnel.register()
+        Climb.register()
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
@@ -209,6 +211,11 @@ object Robot : LoggedRobot() {
 
         JoystickButton(joystickLeft, 1).whileTrue(Drivetrain.alignToClosestPOI())
         JoystickButton(joystickRight, 1).whileTrue(Manipulator.outtake())
+
+        //climber commands
+//        controller.a().whileTrue(Climb.up())
+//
+//        controller.b().whileTrue(Climb.down())
 
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 
