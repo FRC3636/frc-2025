@@ -31,14 +31,6 @@ object Funnel : Subsystem {
         mechanism.getRoot("Funnel", 50.0, 50.0).apply { append(motorAngleVisualiser) }
     }
 
-    private fun waitForIntake(): Command = Commands.sequence(
-        Commands.waitSeconds(0.2),
-        Commands.waitUntil { inputs.rollerCurrent > 10.amps },
-        Commands.waitSeconds(0.05),
-        Commands.waitUntil { inputs.rollerCurrent < 10.amps },
-        Commands.waitSeconds(0.1)
-    )
-
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Funnel", inputs)
@@ -48,16 +40,6 @@ object Funnel : Subsystem {
     }
 
     fun intake(): Command = startEnd(
-        {
-            io.setVoltage(6.0.volts)
-        },
-        {
-            io.setSpeed(0.0)
-        }
-    ).raceWith(waitForIntake())
-//    )
-
-    fun intakeNoRace(): Command = startEnd(
         {
             io.setVoltage(6.0.volts)
         },
