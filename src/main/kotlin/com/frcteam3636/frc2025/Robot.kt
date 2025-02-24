@@ -18,7 +18,6 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -173,20 +172,23 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "intake",
-            Commands.race(
-                Manipulator.intakeWithOutInterrupt(),
-                Funnel.intake()
-            )
+            Commands.sequence(
+                Commands.race(
+                    Manipulator.intakeNoRaceWithOutInterrupt(),
+                    Funnel.intake()
+                ),
+                Manipulator.intakeWithOutInterruptAuto()
+            ).withTimeout(1.5)
         )
         NamedCommands.registerCommand(
             "alignToTarget",
             Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
-                .withTimeout(2.seconds)
+                .withTimeout(1.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
             Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Right)
-                .withTimeout(2.seconds)
+                .withTimeout(1.seconds)
         )
     }
 
@@ -226,21 +228,54 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
+        // Left close middle
+        JoystickButton(joystickLeft, 9)
+            .and { Robot.isDisabled }
+            .toggleOnTrue(Elevator.coast().ignoringDisable(true))
+
         JoystickButton(joystickLeft, 14).onTrue(Elevator.runHoming())
 
         controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
+        controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
 //
         controller.leftBumper().whileTrue(Funnel.outtake())
-        controller.rightBumper().whileTrue(
-            Commands.race(
-                Manipulator.intake(),
-                Funnel.intake()
-            )
-//            Manipulator.intake()
+        controller.rightBumper().onTrue(
+            Commands.sequence(
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = true
+                }),
+                Commands.sequence(
+                    Commands.race(
+                        Manipulator.intakeNoRace(),
+                        Funnel.intake()
+                    ),
+                    Manipulator.intake()
+                )
+            ).andThen({
+                Manipulator.isIntakeRunning = false
+            })
         )
+
+        controller.rightTrigger().onTrue(
+            Commands.runOnce({
+                Manipulator.isIntakeRunning = false
+            })
+        )
+
+        JoystickButton(joystickRight, 2).whileTrue(
+            Commands.parallel(
+                Manipulator.intakeNoRaceWithOutInterrupt(),
+                Funnel.intakeNoRace()
+            )
+        )
+
+
+//            Manipulator.intake()
+
+
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
 ////

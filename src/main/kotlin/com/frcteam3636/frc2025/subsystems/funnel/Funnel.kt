@@ -1,10 +1,13 @@
 package com.frcteam3636.frc2025.subsystems.funnel
 
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
+import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d
@@ -28,6 +31,14 @@ object Funnel : Subsystem {
         mechanism.getRoot("Funnel", 50.0, 50.0).apply { append(motorAngleVisualiser) }
     }
 
+    private fun waitForIntake(): Command = Commands.sequence(
+        Commands.waitSeconds(0.2),
+        Commands.waitUntil { inputs.rollerCurrent > 10.amps },
+        Commands.waitSeconds(0.05),
+        Commands.waitUntil { inputs.rollerCurrent < 10.amps },
+        Commands.waitSeconds(0.1)
+    )
+
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Funnel", inputs)
@@ -38,7 +49,17 @@ object Funnel : Subsystem {
 
     fun intake(): Command = startEnd(
         {
-            io.setSpeed(0.50)
+            io.setVoltage(6.0.volts)
+        },
+        {
+            io.setSpeed(0.0)
+        }
+    ).raceWith(waitForIntake())
+//    )
+
+    fun intakeNoRace(): Command = startEnd(
+        {
+            io.setVoltage(6.0.volts)
         },
         {
             io.setSpeed(0.0)

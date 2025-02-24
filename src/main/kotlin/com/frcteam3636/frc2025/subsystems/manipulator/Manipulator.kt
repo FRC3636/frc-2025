@@ -5,6 +5,8 @@ import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
 import com.frcteam3636.frc2025.utils.math.inches
+import com.frcteam3636.frc2025.utils.math.rotations
+import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
@@ -44,6 +46,21 @@ object Manipulator : Subsystem {
         }),
     )
 
+    private fun waitForIntakeAuto(): Command = Commands.sequence(
+//        Commands.waitSeconds(0.1),
+//        Commands.waitUntil { inputs.current > 0.7.amps },
+        Commands.defer({
+            val targetRotations = inputs.position + 1.4.rotations
+            Commands.waitUntil { inputs.position > targetRotations }
+        }, emptySet()),
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
+    )
+
+    var isIntakeRunning = false
+
     init {
         mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
             append(motorAngleVisualizer)
@@ -74,17 +91,32 @@ object Manipulator : Subsystem {
     })
 
     fun intake(): Command = startEnd(
-        { io.setSpeed(0.065) },
+        { io.setVoltage(0.78.volts) },
         { io.setSpeed(0.0) }
     )
         .raceWith(waitForIntake())
+        .onlyWhile {
+            isIntakeRunning
+        }
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
-    fun intakeWithOutInterrupt(): Command = startEnd(
-        { io.setSpeed(0.065) },
+    fun intakeNoRace(): Command = run(
+        { io.setVoltage(0.78.volts) },
+    )
+        .onlyWhile {
+            isIntakeRunning
+        }
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+
+    fun intakeNoRaceWithOutInterrupt(): Command = run(
+        { io.setVoltage(0.78.volts) },
+    )
+
+    fun intakeWithOutInterruptAuto(): Command = startEnd(
+        { io.setVoltage(0.78.volts) },
         { io.setSpeed(0.0) }
     )
-        .raceWith(waitForIntake())
+        .raceWith(waitForIntakeAuto())
 
 
     fun outtake(): Command = startEnd(

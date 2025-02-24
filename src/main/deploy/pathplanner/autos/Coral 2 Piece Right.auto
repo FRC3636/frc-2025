@@ -13,33 +13,27 @@
                 "data": {
                   "pathName": "Coral 1 Piece Red"
                 }
-              },
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "wait",
-                      "data": {
-                        "waitTime": 1.0
-                      }
-                    },
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "raiseElevatorL4"
-                      }
-                    }
-                  ]
-                }
               }
             ]
           }
         },
         {
-          "type": "named",
+          "type": "parallel",
           "data": {
-            "name": "alignToTarget"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "alignToTarget"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "raiseElevatorL4"
+                }
+              }
+            ]
           }
         },
         {
@@ -49,15 +43,22 @@
           }
         },
         {
-          "type": "named",
+          "type": "parallel",
           "data": {
-            "name": "stowElevator"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Coral 2 Piece Red HP 1"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Coral 2 Piece Red HP 1"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "stowElevator"
+                }
+              }
+            ]
           }
         },
         {
@@ -75,25 +76,6 @@
                 "data": {
                   "pathName": "Coral 2 Piece Red Score 1"
                 }
-              },
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "wait",
-                      "data": {
-                        "waitTime": 1.5
-                      }
-                    },
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "raiseElevatorL4"
-                      }
-                    }
-                  ]
-                }
               }
             ]
           }
@@ -106,6 +88,12 @@
                 "type": "named",
                 "data": {
                   "name": "alignToTarget"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "raiseElevatorL4"
                 }
               }
             ]

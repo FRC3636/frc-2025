@@ -508,7 +508,12 @@ object Drivetrain : Subsystem, Sendable {
 
         //        // Pathing
         val DEFAULT_PATHING_CONSTRAINTS =
-            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879 * 1.5, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
+            PathConstraints(
+                FREE_SPEED.baseUnitMagnitude() * 2,
+                (3.879 * 1.5) * 2.0,
+                ROTATION_SPEED.baseUnitMagnitude(),
+                24.961
+            )
 
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(

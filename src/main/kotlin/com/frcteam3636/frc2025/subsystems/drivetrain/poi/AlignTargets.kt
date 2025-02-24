@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain.poi
 
 import com.frcteam3636.frc2025.subsystems.drivetrain.APRIL_TAGS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.utils.math.inches
 import com.frcteam3636.frc2025.utils.math.meters
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
@@ -45,8 +46,8 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             0.meters,
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
-                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET
-                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET
+                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET + 0.5.inches
+                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET - 0.5.inches
             }
         ),
     )
@@ -94,20 +95,20 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             // Reef branches
             *branchTargetsFromIds(6..11),
             // Processor
-            TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
             // Human Player Stations
-            TargetGroup(arrayOf(AprilTagTarget(1, Translation2d()))),
-            TargetGroup(arrayOf(AprilTagTarget(2, Translation2d())))
+//            TargetGroup(arrayOf(AprilTagTarget(1, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(2, Translation2d())))
         )
 
         val blueAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
             *branchTargetsFromIds(17..22),
             // Processor
-            TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
             // Human Player Stations
-            TargetGroup(arrayOf(AprilTagTarget(13, Translation2d()))),
-            TargetGroup(arrayOf(AprilTagTarget(12, Translation2d())))
+//            TargetGroup(arrayOf(AprilTagTarget(13, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(12, Translation2d())))
         )
 
         val currentAllianceTargets: Array<TargetGroup>

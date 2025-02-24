@@ -38,6 +38,8 @@ interface ElevatorIO {
     fun setVoltage(volts: Voltage)
 
     fun setEncoderPosition(position: Distance)
+
+    fun setBrakeMode(enabled: Boolean) {}
 }
 
 class ElevatorIOReal : ElevatorIO {
@@ -52,45 +54,54 @@ class ElevatorIOReal : ElevatorIO {
 //        configurator.apply(config)
 //    }
 
-    val config = TalonFXConfiguration().apply {
-        MotorOutput.apply {
-            NeutralMode = NeutralModeValue.Brake
-        }
-
-        Slot0.apply {
-            pidGains = PID_GAINS
-            motorFFGains = FF_GAINS
-            kG = GRAVITY_GAIN
-        }
-
-        Feedback.apply {
-            SensorToMechanismRatio = ROTOR_TO_MECHANISM_GEAR_RATIO
-        }
-
-        MotionMagic.apply {
-            MotionMagicCruiseVelocity = PROFILE_VELOCITY.inRotationsPerSecond()
-            MotionMagicAcceleration = PROFILE_ACCELERATION
-            MotionMagicJerk = PROFILE_JERK
-        }
-
-        CurrentLimits.apply {
-            StatorCurrentLimitEnable = true
-            StatorCurrentLimit = 37.0
-
-            SupplyCurrentLimitEnable = true
-            SupplyCurrentLimit = 20.0
-        }
-
+    private val leftConfig = TalonFXConfiguration().apply {
+        MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+    }
+    private val rightConfig = TalonFXConfiguration().apply {
+        MotorOutput.Inverted = InvertedValue.Clockwise_Positive
     }
 
-    private val rightElevatorMotor = TalonFX(CTREDeviceId.RightElevatorMotor).apply {
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive
-        configurator.apply(config)
+    private val rightElevatorMotor = TalonFX(CTREDeviceId.RightElevatorMotor)
+    private val leftElevatorMotor = TalonFX(CTREDeviceId.LeftElevatorMotor)
+
+    init {
+        configure {
+            MotorOutput.apply {
+                NeutralMode = NeutralModeValue.Brake
+            }
+
+            Slot0.apply {
+                pidGains = PID_GAINS
+                motorFFGains = FF_GAINS
+                kG = GRAVITY_GAIN
+            }
+
+            Feedback.apply {
+                SensorToMechanismRatio = ROTOR_TO_MECHANISM_GEAR_RATIO
+            }
+
+            MotionMagic.apply {
+                MotionMagicCruiseVelocity = PROFILE_VELOCITY.inRotationsPerSecond()
+                MotionMagicAcceleration = PROFILE_ACCELERATION
+                MotionMagicJerk = PROFILE_JERK
+            }
+
+            CurrentLimits.apply {
+                StatorCurrentLimitEnable = true
+                StatorCurrentLimit = 37.0
+
+                SupplyCurrentLimitEnable = true
+                SupplyCurrentLimit = 20.0
+            }
+        }
     }
 
-    private val leftElevatorMotor = TalonFX(CTREDeviceId.LeftElevatorMotor).apply {
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
-        configurator.apply(config)
+    private inline fun configure(config: TalonFXConfiguration.() -> Unit) {
+        leftConfig.apply(config)
+        rightConfig.apply(config)
+
+        leftElevatorMotor.configurator.apply(leftConfig)
+        rightElevatorMotor.configurator.apply(rightConfig)
     }
 
     override fun updateInputs(inputs: ElevatorInputs) {
@@ -119,6 +130,13 @@ class ElevatorIOReal : ElevatorIO {
         assert(position in 0.meters..1.5.meters)
         rightElevatorMotor.setPosition(position.toAngular(SPOOL_RADIUS))
         leftElevatorMotor.setPosition(position.toAngular(SPOOL_RADIUS))
+    }
+
+    override fun setBrakeMode(enabled: Boolean) {
+        val neutralMode = if (enabled) NeutralModeValue.Brake else NeutralModeValue.Coast
+        configure {
+            MotorOutput.NeutralMode = neutralMode
+        }
     }
 
     internal companion object Constants {

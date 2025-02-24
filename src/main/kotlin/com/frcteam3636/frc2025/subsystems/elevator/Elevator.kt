@@ -6,6 +6,7 @@ import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants.SPOO
 import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
@@ -61,6 +62,12 @@ object Elevator : Subsystem {
             isPressed
         }
 
+    /** Doesn't require this subsystem */
+    fun coast(): Command = Commands.startEnd({
+        io.setBrakeMode(false)
+    }, {
+        io.setBrakeMode(true)
+    })
 
     fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
         sysID.quasistatic(direction)!!
@@ -71,6 +78,7 @@ object Elevator : Subsystem {
     enum class Position(val height: Distance) {
         Stowed(0.meters),
         LowBar(0.79.rotations.toLinear(SPOOL_RADIUS)),
+        AlgaeMidBar(1.43.rotations.toLinear(SPOOL_RADIUS)),
         MidBar(2.18.rotations.toLinear(SPOOL_RADIUS)),
 
         // FIXME: this may be too high after we tune elevator

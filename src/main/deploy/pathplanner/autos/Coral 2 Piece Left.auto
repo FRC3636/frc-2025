@@ -5,9 +5,16 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Coral 1 Piece Blue"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Coral 1 Piece Blue"
+                }
+              }
+            ]
           }
         },
         {
@@ -36,15 +43,22 @@
           }
         },
         {
-          "type": "named",
+          "type": "parallel",
           "data": {
-            "name": "stowElevator"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Coral 2 Piece Blue HP 1"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Coral 2 Piece Blue HP 1"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "stowElevator"
+                }
+              }
+            ]
           }
         },
         {
@@ -54,9 +68,16 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Coral 2 Piece Blue Score 1"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Coral 2 Piece Blue Score 1"
+                }
+              }
+            ]
           }
         },
         {
@@ -66,7 +87,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "alignToTargetRight"
+                  "name": "alignToTarget"
                 }
               },
               {
