@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 
+import au.grapplerobotics.CanBridge
 import au.grapplerobotics.ConfigurationFailedException
 import au.grapplerobotics.LaserCan
 import au.grapplerobotics.interfaces.LaserCanInterface
@@ -50,6 +51,7 @@ class ManipulatorIOReal : ManipulatorIO {
 
     private var laserCan = LaserCan(REVMotorControllerId.ManipulatorLaserCAN.num).apply {
         try {
+            CanBridge.runTCP()
             setRangingMode(LaserCanInterface.RangingMode.SHORT)
             setRegionOfInterest(LaserCanInterface.RegionOfInterest(8, 8, 6, 6))
             setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_33MS)
