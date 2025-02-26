@@ -172,13 +172,10 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "intake",
-            Commands.sequence(
-                Commands.race(
-                    Manipulator.intakeNoRaceWithOutInterrupt(),
-                    Funnel.intake()
-                ),
-                Manipulator.intakeWithOutInterruptAuto()
-            ).withTimeout(1.5)
+            Commands.race(
+                Manipulator.intake(),
+                Funnel.intake()
+            ).withTimeout(3.0)
         )
         NamedCommands.registerCommand(
             "alignToTarget",

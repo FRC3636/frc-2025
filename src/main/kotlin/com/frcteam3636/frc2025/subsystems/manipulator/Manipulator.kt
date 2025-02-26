@@ -42,19 +42,6 @@ object Manipulator : Subsystem {
         }),
     )
 
-    private fun waitForIntakeAuto(): Command = Commands.sequence(
-//        Commands.waitSeconds(0.1),
-//        Commands.waitUntil { inputs.current > 0.7.amps },
-        Commands.defer({
-            val targetRotations = inputs.position + 1.4.rotations
-            Commands.waitUntil { inputs.position > targetRotations }
-        }, emptySet()),
-        Commands.runOnce({
-            coralState = CoralState.HELD
-            blinkLimelight().schedule()
-        }),
-    )
-
     var isIntakeRunning = false
 
     init {
@@ -96,24 +83,9 @@ object Manipulator : Subsystem {
         }
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
-    fun intakeNoRace(): Command = run(
-        { io.setVoltage(0.78.volts) },
-    )
-        .onlyWhile {
-            isIntakeRunning
-        }
-        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
-
     fun intakeNoRaceWithOutInterrupt(): Command = run(
         { io.setVoltage(0.78.volts) },
     )
-
-    fun intakeWithOutInterruptAuto(): Command = startEnd(
-        { io.setVoltage(0.78.volts) },
-        { io.setSpeed(0.0) }
-    )
-        .raceWith(waitForIntakeAuto())
-
 
     fun outtake(): Command = startEnd(
         { io.setCurrent(60.amps) },
