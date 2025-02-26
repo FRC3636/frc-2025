@@ -240,6 +240,15 @@ object Robot : LoggedRobot() {
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
         controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
+        controller.pov(180).onTrue(
+            Commands.parallel(
+                Elevator.setTargetHeight(Elevator.Position.HighBar),
+                Commands.sequence(
+                    Commands.waitSeconds(0.45),
+                    Manipulator.outtakeAlgae().withTimeout(0.75)
+                )
+            )
+        )
 //
         controller.leftBumper().whileTrue(Funnel.outtake())
         controller.rightBumper().onTrue(
@@ -247,12 +256,9 @@ object Robot : LoggedRobot() {
                 Commands.runOnce({
                     Manipulator.isIntakeRunning = true
                 }),
-                Commands.sequence(
-                    Commands.race(
-                        Manipulator.intakeNoRace(),
-                        Funnel.intake()
-                    ),
-                    Manipulator.intake()
+                Commands.race(
+                    Manipulator.intake(),
+                    Funnel.intake()
                 )
             ).andThen({
                 Manipulator.isIntakeRunning = false
@@ -265,6 +271,12 @@ object Robot : LoggedRobot() {
             })
         )
 
+        JoystickButton(joystickRight, 2).whileTrue(
+            Commands.parallel(
+                Manipulator.intakeNoRaceWithOutInterrupt(),
+                Funnel.intake()
+            )
+        )
 
 //            Manipulator.intake()
 

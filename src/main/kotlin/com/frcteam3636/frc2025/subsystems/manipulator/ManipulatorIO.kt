@@ -54,7 +54,7 @@ class ManipulatorIOReal : ManipulatorIO {
             CanBridge.runTCP()
             setRangingMode(LaserCanInterface.RangingMode.SHORT)
             setRegionOfInterest(LaserCanInterface.RegionOfInterest(8, 8, 6, 6))
-            setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_33MS)
+            setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_20MS)
         } catch (e: ConfigurationFailedException) {
             println(e)
         }

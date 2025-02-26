@@ -360,7 +360,7 @@ object Drivetrain : Subsystem, Sendable {
             .closestTargetToWithSelection(estimatedPose, sideOverride ?: currentTargetSelection)
 
         Logger.recordOutput("Drivetrain/Auto-align Target", target.pose)
-        AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS, 0.2.metersPerSecond)
+        AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS, 3.metersPerSecond)
             .andThen(runOnce {
                 alignController.reset()
                 Logger.recordOutput("/Drivetrain/Align-Running", true)

@@ -2,11 +2,7 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
-import com.frcteam3636.frc2025.utils.math.amps
-import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
-import com.frcteam3636.frc2025.utils.math.inches
-import com.frcteam3636.frc2025.utils.math.rotations
-import com.frcteam3636.frc2025.utils.math.volts
+import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
@@ -38,8 +34,8 @@ object Manipulator : Subsystem {
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     private fun waitForIntake(): Command = Commands.sequence(
-        Commands.waitUntil { inputs.laserCanDistance < 3.inches },
-        Commands.waitUntil { inputs.laserCanDistance > 3.inches },
+        Commands.waitUntil { inputs.laserCanDistance < 0.2.meters },
+        Commands.waitUntil { inputs.laserCanDistance > 0.2.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
             blinkLimelight().schedule()
@@ -91,7 +87,7 @@ object Manipulator : Subsystem {
     })
 
     fun intake(): Command = startEnd(
-        { io.setVoltage(0.78.volts) },
+        { io.setVoltage(0.5.volts) },
         { io.setSpeed(0.0) }
     )
         .raceWith(waitForIntake())
@@ -120,7 +116,16 @@ object Manipulator : Subsystem {
 
 
     fun outtake(): Command = startEnd(
-        { io.setCurrent(37.amps) },
+        { io.setCurrent(60.amps) },
+        {
+            io.setSpeed(0.0)
+            coralState = CoralState.NONE
+        }
+    )
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+
+    fun outtakeAlgae(): Command = startEnd(
+        { io.setCurrent(-60.amps) },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE
