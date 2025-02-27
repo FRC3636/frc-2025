@@ -1,15 +1,20 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain.poi
 
-import com.frcteam3636.frc2025.subsystems.drivetrain.APRIL_TAGS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.FIELD_LAYOUT
+import com.frcteam3636.frc2025.utils.math.dot
 import com.frcteam3636.frc2025.utils.math.inches
 import com.frcteam3636.frc2025.utils.math.meters
+import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj.DriverStation
+import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
+import kotlin.math.max
+import kotlin.math.min
 
 enum class ReefBranchSide {
     Left,
@@ -53,7 +58,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
     )
 
     init {
-        val aprilTagPose = APRIL_TAGS
+        val aprilTagPose = FIELD_LAYOUT
             .getTagPose(aprilTagId)
             .orElseThrow {
                 IllegalArgumentException(
@@ -121,6 +126,75 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
     }
 }
 
+val AprilTagFieldLayout.center: Translation2d
+    get() {
+        return Translation2d(
+            (fieldLength / 2.0).meters,
+            (fieldWidth / 2.0).meters,
+        )
+    }
+
+data class BargeTargetZone(val start: Translation2d, val end: Translation2d) {
+    val line: Translation2d get() = end - start
+    val length get() = line.norm
+
+    fun rotateAround(center: Translation2d, rotation: Rotation2d): BargeTargetZone {
+        return BargeTargetZone(
+            start.rotateAround(center, rotation),
+            end.rotateAround(center, rotation),
+        )
+    }
+
+    fun pointClosestTo(other: Translation2d): Translation2d {
+        // mostly based on https://stackoverflow.com/a/28931906
+
+        val line = line
+        val length = length
+
+        val lineScaledToUnitLength = line / length
+        val otherToStart = other - start
+
+        val projection = otherToStart.dot(lineScaledToUnitLength)
+        return start + lineScaledToUnitLength * min(length, max(0.0, projection))
+    }
+
+    fun log(name: String) {
+        Logger.recordOutput("$name/Start", Pose2d(start, Rotation2d()))
+        Logger.recordOutput("$name/End", Pose2d(end, Rotation2d()))
+    }
+
+    companion object {
+        val RED = BargeTargetZone(
+            Translation2d(9.95.meters, 0.7.meters),
+            Translation2d(9.95.meters, 3.18.meters),
+        )
+        val BLUE = RED.rotateAround(FIELD_LAYOUT.center, Rotation2d.k180deg)
+
+        fun forAlliance(alliance: DriverStation.Alliance): BargeTargetZone {
+            return when (alliance) {
+                DriverStation.Alliance.Red -> RED
+                DriverStation.Alliance.Blue -> BLUE
+            }
+        }
+    }
+}
+
+class BargeTarget private constructor(override val pose: Pose2d) : AlignableTarget {
+
+    companion object {
+        fun closestTo(robot: Translation2d, alliance: DriverStation.Alliance): BargeTarget {
+            val zone = BargeTargetZone.forAlliance(alliance)
+            val closestPoint = zone.pointClosestTo(robot)
+            val rotation = when (alliance) {
+                DriverStation.Alliance.Red -> Rotation2d.k180deg
+                DriverStation.Alliance.Blue -> Rotation2d.kZero
+            }
+
+            return BargeTarget(Pose2d(closestPoint, rotation))
+        }
+    }
+}
+
 @Suppress("unused")
 fun Iterable<TargetGroup>.closestTargetTo(pose: Pose2d): TargetSelection =
     flatMap { group ->
@@ -131,7 +205,10 @@ fun Iterable<TargetGroup>.closestTargetTo(pose: Pose2d): TargetSelection =
         it.pose.relativeTo(pose).translation.norm
     } ?: error("Can't find closest target")
 
-fun Iterable<TargetGroup>.closestTargetToWithSelection(pose: Pose2d, reefBranchSide: ReefBranchSide): TargetSelection =
+fun Iterable<TargetGroup>.closestTargetToPoseWithSelection(
+    pose: Pose2d,
+    reefBranchSide: ReefBranchSide
+): TargetSelection =
     map { group ->
         if (group.targets.size >= reefBranchSide.ordinal + 1) {
             TargetSelection(group, idx = reefBranchSide.ordinal)

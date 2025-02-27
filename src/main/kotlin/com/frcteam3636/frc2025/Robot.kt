@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.BargeTargetZone
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
@@ -27,8 +28,8 @@ import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.button.JoystickButton
 import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
@@ -53,8 +54,8 @@ import kotlin.io.path.exists
  */
 object Robot : LoggedRobot() {
     private val controller = CommandXboxController(2)
-    private val joystickLeft = Joystick(0)
-    private val joystickRight = Joystick(1)
+    private val joystickLeft = CommandJoystick(0)
+    private val joystickRight = CommandJoystick(1)
 
     @Suppress("unused")
     private val joystickDev = Joystick(3)
@@ -78,12 +79,16 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
+
+        BargeTargetZone.RED.log("BargeTargetZone/Red")
+        BargeTargetZone.BLUE.log("BargeTargetZone/Blue")
     }
 
     /** Start logging or pull replay logs from a file */
     private fun configureAdvantageKit() {
         Logger.recordMetadata("Git SHA", GIT_SHA)
         Logger.recordMetadata("Build Date", BUILD_DATE)
+        @Suppress("KotlinConstantConditions")
         Logger.recordMetadata("Git Tree Dirty", (DIRTY == 1).toString())
         Logger.recordMetadata("Git Branch", GIT_BRANCH)
         Logger.recordMetadata("Model", model.name)
@@ -179,33 +184,33 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "alignToTarget",
-            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
+            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = false)
                 .withTimeout(1.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
-            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Right)
+            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
                 .withTimeout(1.seconds)
         )
     }
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
-        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
+        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
         Manipulator.defaultCommand = Manipulator.idle()
 
-        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
+        joystickRight.button(3).onTrue(Commands.runOnce({
             println("Setting desired target node to left branch.")
             Drivetrain.currentTargetSelection = ReefBranchSide.Left
         }))
 
-        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
+        joystickRight.button(4).onTrue(Commands.runOnce({
             println("Setting desired target node to right branch.")
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        JoystickButton(joystickLeft, 1).whileTrue(Drivetrain.alignToClosestPOI())
-        JoystickButton(joystickRight, 1).whileTrue(Manipulator.outtake())
+        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI())
+        joystickRight.button(1).whileTrue(Manipulator.outtake())
 
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 
@@ -220,17 +225,17 @@ object Robot : LoggedRobot() {
 //        }))
 
         // (The button with the yellow tape on it)
-        JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
+        joystickLeft.button(8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
         // Left close middle
-        JoystickButton(joystickLeft, 9)
+        joystickLeft.button(9)
             .and { Robot.isDisabled }
             .toggleOnTrue(Elevator.coast().ignoringDisable(true))
 
-        JoystickButton(joystickLeft, 14).onTrue(Elevator.runHoming())
+        joystickLeft.button(14).onTrue(Elevator.runHoming())
 
         controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
@@ -268,12 +273,13 @@ object Robot : LoggedRobot() {
             })
         )
 
-        JoystickButton(joystickRight, 2).whileTrue(
+        joystickRight.button(2).whileTrue(
             Commands.parallel(
                 Manipulator.intakeNoRaceWithOutInterrupt(),
                 Funnel.intake()
             )
         )
+        joystickLeft.button(2).whileTrue(Drivetrain.alignToBarge())
 
 //            Manipulator.intake()
 

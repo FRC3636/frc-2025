@@ -221,7 +221,7 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
 
     private val estimator =
         PhotonPoseEstimator(
-            APRIL_TAGS,
+            FIELD_LAYOUT,
             PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
             chassisToCamera
         )
