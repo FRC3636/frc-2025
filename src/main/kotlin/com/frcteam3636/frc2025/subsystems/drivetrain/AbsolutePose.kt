@@ -5,7 +5,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.QuestNav
-import com.frcteam3636.frc2025.utils.math.deg
+import com.frcteam3636.frc2025.utils.math.degrees
 import com.frcteam3636.frc2025.utils.math.inSeconds
 import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
@@ -342,4 +342,4 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 //    )
 //}
 
-val LIMELIGHT_FOV = 75.76079874010732.deg
+val LIMELIGHT_FOV = 75.76079874010732.degrees

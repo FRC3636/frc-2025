@@ -2,7 +2,10 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
-import com.frcteam3636.frc2025.utils.math.*
+import com.frcteam3636.frc2025.utils.math.amps
+import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
+import com.frcteam3636.frc2025.utils.math.meters
+import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
@@ -35,6 +38,7 @@ object Manipulator : Subsystem {
 
     private fun waitForIntake(): Command = Commands.sequence(
         Commands.waitUntil { inputs.laserCanDistance < 0.2.meters },
+        Commands.waitSeconds(0.2),
         Commands.waitUntil { inputs.laserCanDistance > 0.2.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
@@ -56,6 +60,7 @@ object Manipulator : Subsystem {
 
         motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
+        Logger.recordOutput("/Manipulator/Is Intake Running", isIntakeRunning)
     }
 
     private fun blinkLimelight(): Command = Commands.runOnce({
@@ -73,11 +78,16 @@ object Manipulator : Subsystem {
         io.setSpeed(0.0)
     })
 
-    fun intake(): Command = startEnd(
-        { io.setVoltage(0.5.volts) },
-        { io.setSpeed(0.0) }
+    fun intake(): Command = Commands.sequence(
+        runOnce { io.setVoltage(2.0.volts) },
+        Commands.waitUntil { inputs.laserCanDistance < 0.2.meters },
+        runOnce { io.setVoltage(0.5.volts) },
+        Commands.waitUntil { inputs.laserCanDistance > 0.2.meters },
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
     )
-        .raceWith(waitForIntake())
         .onlyWhile {
             isIntakeRunning
         }
@@ -104,6 +114,15 @@ object Manipulator : Subsystem {
         }
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+
+    fun intakeAlgae(): Command = startEnd(
+        { io.setVoltage(2.0.volts) },
+        {
+            io.setSpeed(0.0)
+        }
+    ).onlyWhile {
+        isIntakeRunning
+    }.withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 }
 
 enum class CoralState {

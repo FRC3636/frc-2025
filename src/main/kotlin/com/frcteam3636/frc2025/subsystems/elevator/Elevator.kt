@@ -50,6 +50,12 @@ object Elevator : Subsystem {
         }, {})
             .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
+    fun setTargetHeightAlgae(position: Position): Command =
+        startEnd({
+            io.runToHeightWithOverride(position.height, 200.0.rotationsPerSecond, 20.0.rotationsPerSecondPerSecond)
+        }, {})
+            .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
+
     fun runHoming(): Command =
         runEnd({
             io.setVoltage((-1.0).volts)

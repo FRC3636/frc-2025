@@ -79,9 +79,6 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
-
-        BargeTargetZone.RED.log("BargeTargetZone/Red")
-        BargeTargetZone.BLUE.log("BargeTargetZone/Blue")
     }
 
     /** Start logging or pull replay logs from a file */
@@ -242,13 +239,25 @@ object Robot : LoggedRobot() {
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
         controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
-        controller.pov(180).onTrue(
-            Commands.parallel(
-                Elevator.setTargetHeight(Elevator.Position.HighBar),
-                Commands.sequence(
-                    Commands.waitSeconds(0.45),
-                    Manipulator.outtakeAlgae().withTimeout(0.75)
-                )
+        joystickLeft.button(2).onTrue(
+            Commands.sequence(
+                Commands.parallel(
+                    Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
+                    Commands.sequence(
+                        Commands.runOnce({
+                            Manipulator.isIntakeRunning = true
+                        }),
+                        Commands.race(
+                            Manipulator.intakeAlgae(),
+                            Commands.waitSeconds(0.5),
+                        ),
+                        Commands.runOnce({
+                            Manipulator.isIntakeRunning = false
+                        }),
+                        Manipulator.outtakeAlgae().withTimeout(0.75),
+                    )
+                ),
+                Elevator.setTargetHeight(Elevator.Position.Stowed)
             )
         )
 //
@@ -273,13 +282,23 @@ object Robot : LoggedRobot() {
             })
         )
 
-        joystickRight.button(2).whileTrue(
-            Commands.parallel(
-                Manipulator.intakeNoRaceWithOutInterrupt(),
-                Funnel.intake()
+        controller.leftTrigger().onTrue(
+            Commands.sequence(
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = true
+                }),
+                Manipulator.intakeAlgae(),
             )
         )
-        joystickLeft.button(2).whileTrue(Drivetrain.alignToBarge())
+
+        // TODO: find a good button for this if needed
+//        joystickRight.button(2).whileTrue(
+//            Commands.parallel(
+//                Manipulator.intakeNoRaceWithOutInterrupt(),
+//                Funnel.intake()
+//            )
+//        )
+        joystickRight.button(2).whileTrue(Drivetrain.alignToBarge())
 
 //            Manipulator.intake()
 
