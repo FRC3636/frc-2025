@@ -53,7 +53,7 @@ class ManipulatorIOReal : ManipulatorIO {
         try {
             CanBridge.runTCP()
             setRangingMode(LaserCanInterface.RangingMode.SHORT)
-            setRegionOfInterest(LaserCanInterface.RegionOfInterest(8, 8, 6, 6))
+            setRegionOfInterest(LaserCanInterface.RegionOfInterest(2, 8, 4, 8))
             setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_20MS)
         } catch (e: ConfigurationFailedException) {
             println(e)
@@ -84,7 +84,7 @@ class ManipulatorIOReal : ManipulatorIO {
 
         val measurement = laserCan.measurement
         if (measurement != null && measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
-            inputs.laserCanDistance = measurement.distance_mm.mm
+            inputs.laserCanDistance = measurement.distance_mm.millimeters
         } else {
             inputs.laserCanDistance = Double.POSITIVE_INFINITY.meters
         }

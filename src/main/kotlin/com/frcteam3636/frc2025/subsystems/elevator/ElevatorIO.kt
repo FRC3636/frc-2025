@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.DynamicMotionMagicTorqueCurrentFOC
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.signals.InvertedValue
@@ -13,6 +14,8 @@ import edu.wpi.first.math.controller.ElevatorFeedforward
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
+import edu.wpi.first.units.measure.AngularAcceleration
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.BatterySim
@@ -34,6 +37,7 @@ interface ElevatorIO {
     fun updateInputs(inputs: ElevatorInputs)
 
     fun runToHeight(height: Distance)
+    fun runToHeightWithOverride(height: Distance, velocity: AngularVelocity, acceleration: AngularAcceleration)
 
     fun setVoltage(volts: Voltage)
 
@@ -119,6 +123,23 @@ class ElevatorIOReal : ElevatorIO {
         leftElevatorMotor.setControl(controlRequest)
     }
 
+    override fun runToHeightWithOverride(
+        height: Distance,
+        velocity: AngularVelocity,
+        acceleration: AngularAcceleration
+    ) {
+        Logger.recordOutput("Elevator/Height Setpoint", height)
+        val desiredMotorAngle = height.toAngular(SPOOL_RADIUS)
+        val controlRequest = DynamicMotionMagicTorqueCurrentFOC(
+            desiredMotorAngle.inRotations(),
+            velocity.inRotationsPerSecond(),
+            acceleration.baseUnitMagnitude(),
+            0.0
+        )
+        rightElevatorMotor.setControl(controlRequest)
+        leftElevatorMotor.setControl(controlRequest)
+    }
+
     override fun setVoltage(volts: Voltage) {
         assert(volts in (-12).volts..12.volts)
         val controlRequest = VoltageOut(volts.inVolts())
@@ -196,6 +217,14 @@ class ElevatorIOSim : ElevatorIO {
         val pidOutput = controller.calculate(elevatorSim.positionMeters)
         val feedforwardOutput = feedforward.calculate(controller.setpoint.velocity)
         elevatorSim.setInputVoltage(pidOutput + feedforwardOutput)
+    }
+
+    override fun runToHeightWithOverride(
+        height: Distance,
+        velocity: AngularVelocity,
+        acceleration: AngularAcceleration
+    ) {
+        TODO("Not yet implemented")
     }
 
     override fun setVoltage(volts: Voltage) {

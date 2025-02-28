@@ -360,7 +360,7 @@ object Drivetrain : Subsystem, Sendable {
             .closestTargetToWithSelection(estimatedPose, sideOverride ?: currentTargetSelection)
 
         Logger.recordOutput("Drivetrain/Auto-align Target", target.pose)
-        AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS, 3.metersPerSecond)
+        AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS, 1.5.metersPerSecond)
             .andThen(runOnce {
                 alignController.reset()
                 Logger.recordOutput("/Drivetrain/Align-Running", true)
@@ -611,7 +611,7 @@ object Drivetrain : Subsystem, Sendable {
             // TODO: find these constants
             0.inches,
             0.inches,
-            Rotation2d(0.deg)
+            Rotation2d(0.degrees)
         )
 
         val ALIGN_PID_GAINS = PIDGains(10.0, 0.0, 0.5)

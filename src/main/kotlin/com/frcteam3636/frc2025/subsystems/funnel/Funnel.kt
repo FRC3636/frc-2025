@@ -1,13 +1,11 @@
 package com.frcteam3636.frc2025.subsystems.funnel
 
 import com.frcteam3636.frc2025.Robot
-import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
 import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d
@@ -41,7 +39,7 @@ object Funnel : Subsystem {
 
     fun intake(): Command = startEnd(
         {
-            io.setVoltage(6.0.volts)
+            io.setVoltage(10.0.volts)
         },
         {
             io.setSpeed(0.0)
