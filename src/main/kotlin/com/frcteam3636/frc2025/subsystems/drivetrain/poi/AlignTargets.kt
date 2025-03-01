@@ -165,8 +165,8 @@ data class BargeTargetZone(val start: Translation2d, val end: Translation2d) {
 
     companion object {
         val RED = BargeTargetZone(
-            Translation2d(9.95.meters, 0.7.meters),
-            Translation2d(9.95.meters, 3.18.meters),
+            Translation2d(10.2.meters, 0.7.meters),
+            Translation2d(10.2.meters, 3.18.meters),
         )
         val BLUE = RED.rotateAround(FIELD_LAYOUT.center, Rotation2d.k180deg)
 

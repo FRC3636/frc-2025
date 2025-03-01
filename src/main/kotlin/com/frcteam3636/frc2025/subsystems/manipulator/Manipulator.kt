@@ -2,10 +2,7 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
-import com.frcteam3636.frc2025.utils.math.amps
-import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
-import com.frcteam3636.frc2025.utils.math.meters
-import com.frcteam3636.frc2025.utils.math.volts
+import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
@@ -46,6 +43,8 @@ object Manipulator : Subsystem {
         }),
     )
 
+    private var controller = PIDController(PIDGains(0.1, 0.0, 0.0))
+
     var isIntakeRunning = false
 
     init {
@@ -80,9 +79,9 @@ object Manipulator : Subsystem {
 
     fun intake(): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
-        Commands.waitUntil { inputs.laserCanDistance < 0.2.meters },
+        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
         runOnce { io.setVoltage(0.5.volts) },
-        Commands.waitUntil { inputs.laserCanDistance > 0.2.meters },
+        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
             blinkLimelight().schedule()
@@ -91,6 +90,19 @@ object Manipulator : Subsystem {
         .onlyWhile {
             isIntakeRunning
         }
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+
+    fun intakeAuto(): Command = Commands.sequence(
+        runOnce { io.setVoltage(2.0.volts) },
+        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
+        runOnce { io.setVoltage(0.5.volts) },
+        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        runOnce { io.setSpeed(-0.02) },
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
+    )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
     fun intakeNoRaceWithOutInterrupt(): Command = run(

@@ -2,7 +2,6 @@ package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.BargeTargetZone
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
@@ -175,7 +174,7 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "intake",
             Commands.race(
-                Manipulator.intake(),
+                Manipulator.intakeAuto(),
                 Funnel.intake()
             ).withTimeout(3.0)
         )
