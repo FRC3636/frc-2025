@@ -80,7 +80,7 @@ object Manipulator : Subsystem {
     fun intake(): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
         Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
-        runOnce { io.setVoltage(0.5.volts) },
+        runOnce { io.setVoltage(0.6.volts) },
         Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
