@@ -85,7 +85,7 @@ object Elevator : Subsystem {
         Stowed(0.meters),
         LowBar(0.79.rotations.toLinear(SPOOL_RADIUS)),
         AlgaeMidBar(1.43.rotations.toLinear(SPOOL_RADIUS)),
-        MidBar(2.18.rotations.toLinear(SPOOL_RADIUS)),
+        MidBar(2.275.rotations.toLinear(SPOOL_RADIUS)),
 
         // FIXME: this may be too high after we tune elevator
         HighBar(4.54.rotations.toLinear(SPOOL_RADIUS)),
