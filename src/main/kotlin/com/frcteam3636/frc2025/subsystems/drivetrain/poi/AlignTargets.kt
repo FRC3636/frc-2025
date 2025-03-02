@@ -96,9 +96,20 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
                 .toTypedArray()
         }
 
+        private val redBranchTags = 6..11
+        private val blueBranchTags = 17..22
+
+        val redReefAlgaeTargets: Array<AprilTagTarget> = redBranchTags.map {
+            AprilTagTarget(it, Translation2d())
+        }.toTypedArray()
+
+        val blueReefAlgaeTargets: Array<AprilTagTarget> = blueBranchTags.map {
+            AprilTagTarget(it, Translation2d())
+        }.toTypedArray()
+
         val redAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
-            *branchTargetsFromIds(6..11),
+            *branchTargetsFromIds(redBranchTags),
             // Processor
 //            TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
             // Human Player Stations
@@ -108,7 +119,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val blueAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
-            *branchTargetsFromIds(17..22),
+            *branchTargetsFromIds(blueBranchTags),
             // Processor
 //            TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
             // Human Player Stations
@@ -121,6 +132,14 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
                 return when (DriverStation.getAlliance().getOrNull()) {
                     DriverStation.Alliance.Red -> redAllianceTargets
                     else -> blueAllianceTargets
+                }
+            }
+
+        val currentAllianceReefAlgaeTargets: Array<AprilTagTarget>
+            get() {
+                return when (DriverStation.getAlliance().getOrNull()) {
+                    DriverStation.Alliance.Red -> redReefAlgaeTargets
+                    else -> blueReefAlgaeTargets
                 }
             }
     }
@@ -194,6 +213,13 @@ class BargeTarget private constructor(override val pose: Pose2d) : AlignableTarg
         }
     }
 }
+
+fun Iterable<AprilTagTarget>.closestToPose(
+    pose: Pose2d,
+): AprilTagTarget =
+    minByOrNull { it ->
+        it.pose.relativeTo(pose).translation.norm
+    } ?: error("Can't find closest target")
 
 @Suppress("unused")
 fun Iterable<TargetGroup>.closestTargetTo(pose: Pose2d): TargetSelection =

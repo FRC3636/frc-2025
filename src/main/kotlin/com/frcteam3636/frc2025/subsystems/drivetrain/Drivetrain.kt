@@ -363,11 +363,18 @@ object Drivetrain : Subsystem, Sendable {
                 .closestTargetToPoseWithSelection(estimatedPose, sideOverride ?: currentTargetSelection).pose
         }
 
-    fun alignToBarge() = alignToTarget {
+    fun alignToBarge(usePathfinding: Boolean = true) = alignToTarget(usePathfinding) {
         BargeTarget.closestTo(
             estimatedPose.translation,
             DriverStation.getAlliance().getOrDefault(DriverStation.Alliance.Blue)
         ).pose
+    }
+
+    fun alignToReefAlgae(usePathfinding: Boolean = true) = alignToTarget(usePathfinding) {
+        AprilTagTarget.currentAllianceReefAlgaeTargets
+            .asIterable()
+            .closestToPose(estimatedPose)
+            .pose
     }
 
     fun alignToTarget(usePathfinding: Boolean = true, target: () -> Pose2d): Command = defer {

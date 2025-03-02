@@ -188,7 +188,54 @@ object Robot : LoggedRobot() {
             Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
                 .withTimeout(1.seconds)
         )
+        NamedCommands.registerCommand(
+            "raiseElevatorAlgae",
+            Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar)
+        )
+        NamedCommands.registerCommand(
+            "alignToReefAlgae",
+            Drivetrain.alignToReefAlgae(usePathfinding = false)
+                .withTimeout(1.seconds)
+        )
+        NamedCommands.registerCommand(
+            "alignToBarge",
+            Drivetrain.alignToBarge(usePathfinding = false)
+                .withTimeout(1.seconds)
+        )
+        NamedCommands.registerCommand(
+            "intakeAlgae",
+            Commands.sequence(
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = true
+                }),
+                Manipulator.intakeAlgae(),
+            )
+        )
+        NamedCommands.registerCommand(
+            "tossAlgae",
+            tossAlgae()
+        )
     }
+
+    private fun tossAlgae(): Command = Commands.sequence(
+        Commands.parallel(
+            Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
+            Commands.sequence(
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = true
+                }),
+                Commands.race(
+                    Manipulator.intakeAlgae(),
+                    Commands.waitSeconds(0.5),
+                ),
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = false
+                }),
+                Manipulator.outtakeAlgae().withTimeout(0.75),
+            )
+        ),
+        Elevator.setTargetHeight(Elevator.Position.Stowed)
+    )
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
@@ -206,6 +253,7 @@ object Robot : LoggedRobot() {
         }))
 
         joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI())
+//        joystickLeft.button(1).whileTrue(Drivetrain.alignToReefAlgae())
         joystickRight.button(1).whileTrue(Manipulator.outtake())
 
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
@@ -239,25 +287,7 @@ object Robot : LoggedRobot() {
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
         controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
         joystickLeft.button(2).onTrue(
-            Commands.sequence(
-                Commands.parallel(
-                    Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
-                    Commands.sequence(
-                        Commands.runOnce({
-                            Manipulator.isIntakeRunning = true
-                        }),
-                        Commands.race(
-                            Manipulator.intakeAlgae(),
-                            Commands.waitSeconds(0.5),
-                        ),
-                        Commands.runOnce({
-                            Manipulator.isIntakeRunning = false
-                        }),
-                        Manipulator.outtakeAlgae().withTimeout(0.75),
-                    )
-                ),
-                Elevator.setTargetHeight(Elevator.Position.Stowed)
-            )
+            tossAlgae()
         )
 //
         controller.leftBumper().whileTrue(Funnel.outtake())
