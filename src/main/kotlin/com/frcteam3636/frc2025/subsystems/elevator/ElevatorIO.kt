@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.DynamicMotionMagicTorqueCurrentFOC
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.signals.InvertedValue
@@ -13,7 +14,8 @@ import edu.wpi.first.math.controller.ElevatorFeedforward
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
-import edu.wpi.first.units.Units.*
+import edu.wpi.first.units.measure.AngularAcceleration
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.BatterySim
@@ -25,20 +27,23 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class ElevatorInputs {
-    var height = Meters.zero()!!
-    var rightCurrent = Amps.zero()!!
-    var leftCurrent = Amps.zero()!!
-    var velocity = MetersPerSecond.zero()!!
+    var height = 0.meters
+    var rightCurrent = 0.amps
+    var leftCurrent = 0.amps
+    var velocity = 0.metersPerSecond
 }
 
 interface ElevatorIO {
     fun updateInputs(inputs: ElevatorInputs)
 
     fun runToHeight(height: Distance)
+    fun runToHeightWithOverride(height: Distance, velocity: AngularVelocity, acceleration: AngularAcceleration)
 
     fun setVoltage(volts: Voltage)
 
     fun setEncoderPosition(position: Distance)
+
+    fun setBrakeMode(enabled: Boolean) {}
 }
 
 class ElevatorIOReal : ElevatorIO {
@@ -53,42 +58,54 @@ class ElevatorIOReal : ElevatorIO {
 //        configurator.apply(config)
 //    }
 
-    val config = TalonFXConfiguration().apply {
-        MotorOutput.apply {
-            NeutralMode = NeutralModeValue.Brake
-        }
-
-        Slot0.apply {
-            pidGains = PID_GAINS
-            motorFFGains = FF_GAINS
-            kG = GRAVITY_GAIN
-        }
-
-        Feedback.apply {
-            SensorToMechanismRatio = ROTOR_TO_MECHANISM_GEAR_RATIO
-        }
-
-        MotionMagic.apply {
-            MotionMagicCruiseVelocity = PROFILE_VELOCITY.rotationsPerSecond
-            MotionMagicAcceleration = PROFILE_ACCELERATION
-            MotionMagicJerk = PROFILE_JERK
-        }
-
-        CurrentLimits.apply {
-            StatorCurrentLimitEnable = true
-            StatorCurrentLimit = 37.0
-        }
-
+    private val leftConfig = TalonFXConfiguration().apply {
+        MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+    }
+    private val rightConfig = TalonFXConfiguration().apply {
+        MotorOutput.Inverted = InvertedValue.Clockwise_Positive
     }
 
-    private val rightElevatorMotor = TalonFX(CTREDeviceId.RightElevatorMotor).apply {
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive
-        configurator.apply(config)
+    private val rightElevatorMotor = TalonFX(CTREDeviceId.RightElevatorMotor)
+    private val leftElevatorMotor = TalonFX(CTREDeviceId.LeftElevatorMotor)
+
+    init {
+        configure {
+            MotorOutput.apply {
+                NeutralMode = NeutralModeValue.Brake
+            }
+
+            Slot0.apply {
+                pidGains = PID_GAINS
+                motorFFGains = FF_GAINS
+                kG = GRAVITY_GAIN
+            }
+
+            Feedback.apply {
+                SensorToMechanismRatio = ROTOR_TO_MECHANISM_GEAR_RATIO
+            }
+
+            MotionMagic.apply {
+                MotionMagicCruiseVelocity = PROFILE_VELOCITY.inRotationsPerSecond()
+                MotionMagicAcceleration = PROFILE_ACCELERATION
+                MotionMagicJerk = PROFILE_JERK
+            }
+
+            CurrentLimits.apply {
+                StatorCurrentLimitEnable = true
+                StatorCurrentLimit = 37.0
+
+                SupplyCurrentLimitEnable = true
+                SupplyCurrentLimit = 20.0
+            }
+        }
     }
 
-    private val leftElevatorMotor = TalonFX(CTREDeviceId.LeftElevatorMotor).apply {
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
-        configurator.apply(config)
+    private inline fun configure(config: TalonFXConfiguration.() -> Unit) {
+        leftConfig.apply(config)
+        rightConfig.apply(config)
+
+        leftElevatorMotor.configurator.apply(leftConfig)
+        rightElevatorMotor.configurator.apply(rightConfig)
     }
 
     override fun updateInputs(inputs: ElevatorInputs) {
@@ -106,31 +123,55 @@ class ElevatorIOReal : ElevatorIO {
         leftElevatorMotor.setControl(controlRequest)
     }
 
+    override fun runToHeightWithOverride(
+        height: Distance,
+        velocity: AngularVelocity,
+        acceleration: AngularAcceleration
+    ) {
+        Logger.recordOutput("Elevator/Height Setpoint", height)
+        val desiredMotorAngle = height.toAngular(SPOOL_RADIUS)
+        val controlRequest = DynamicMotionMagicTorqueCurrentFOC(
+            desiredMotorAngle.inRotations(),
+            velocity.inRotationsPerSecond(),
+            acceleration.baseUnitMagnitude(),
+            0.0
+        )
+        rightElevatorMotor.setControl(controlRequest)
+        leftElevatorMotor.setControl(controlRequest)
+    }
+
     override fun setVoltage(volts: Voltage) {
-        assert(volts in Volts.of(-12.0)..Volts.of(12.0))
-        val controlRequest = VoltageOut(volts.volts)
+        assert(volts in (-12).volts..12.volts)
+        val controlRequest = VoltageOut(volts.inVolts())
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
 
     override fun setEncoderPosition(position: Distance) {
-        assert(position in Meters.of(0.0)..Meters.of(1.5))
+        assert(position in 0.meters..1.5.meters)
         rightElevatorMotor.setPosition(position.toAngular(SPOOL_RADIUS))
         leftElevatorMotor.setPosition(position.toAngular(SPOOL_RADIUS))
+    }
+
+    override fun setBrakeMode(enabled: Boolean) {
+        val neutralMode = if (enabled) NeutralModeValue.Brake else NeutralModeValue.Coast
+        configure {
+            MotorOutput.NeutralMode = neutralMode
+        }
     }
 
     internal companion object Constants {
         // https://www.reca.lc/linear?angle=%7B%22s%22%3A90%2C%22u%22%3A%22deg%22%7D&currentLimit=%7B%22s%22%3A37%2C%22u%22%3A%22A%22%7D&efficiency=85.4&limitAcceleration=0&limitDeceleration=0&limitVelocity=0&limitedAcceleration=%7B%22s%22%3A400%2C%22u%22%3A%22in%2Fs2%22%7D&limitedDeceleration=%7B%22s%22%3A50%2C%22u%22%3A%22in%2Fs2%22%7D&limitedVelocity=%7B%22s%22%3A10%2C%22u%22%3A%22in%2Fs%22%7D&load=%7B%22s%22%3A12%2C%22u%22%3A%22lbs%22%7D&motor=%7B%22quantity%22%3A2%2C%22name%22%3A%22Kraken%20X60%20%28FOC%29%2A%22%7D&ratio=%7B%22magnitude%22%3A8%2C%22ratioType%22%3A%22Reduction%22%7D&spoolDiameter=%7B%22s%22%3A1.54%2C%22u%22%3A%22in%22%7D&travelDistance=%7B%22s%22%3A48%2C%22u%22%3A%22in%22%7D
         private const val ROTOR_TO_MECHANISM_GEAR_RATIO = 8.0
-        val SPOOL_RADIUS = Inches.of(0.77)!!
+        val SPOOL_RADIUS = 0.77.inches
 
         //        private val DISTANCE_PER_TURN = Meters.per(Radian).of(SPOOL_RADIUS.meters)
         private val PID_GAINS = PIDGains(160.92, 0.0, 5.3624)
         private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
         private const val GRAVITY_GAIN = 0.27592
-        private val PROFILE_ACCELERATION = 10.0
+        private val PROFILE_ACCELERATION = 16.0
         private const val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = InchesPerSecond.of(140.0).toAngular(SPOOL_RADIUS)
+        private val PROFILE_VELOCITY = 200.inchesPerSecond.toAngular(SPOOL_RADIUS)
     }
 
 }
@@ -165,10 +206,10 @@ class ElevatorIOSim : ElevatorIO {
 
     override fun updateInputs(inputs: ElevatorInputs) {
         elevatorSim.update(Robot.period)
-        inputs.height = Meters.of(elevatorSim.positionMeters)
-        inputs.velocity = MetersPerSecond.of(elevatorSim.velocityMetersPerSecond)
-        inputs.leftCurrent = Amps.of(elevatorSim.currentDrawAmps)
-        inputs.rightCurrent = Amps.of(elevatorSim.currentDrawAmps)
+        inputs.height = elevatorSim.positionMeters.meters
+        inputs.velocity = elevatorSim.velocityMetersPerSecond.metersPerSecond
+        inputs.leftCurrent = elevatorSim.currentDrawAmps.amps
+        inputs.rightCurrent = elevatorSim.currentDrawAmps.amps
         RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(elevatorSim.currentDrawAmps))
     }
 
@@ -178,8 +219,16 @@ class ElevatorIOSim : ElevatorIO {
         elevatorSim.setInputVoltage(pidOutput + feedforwardOutput)
     }
 
+    override fun runToHeightWithOverride(
+        height: Distance,
+        velocity: AngularVelocity,
+        acceleration: AngularAcceleration
+    ) {
+        TODO("Not yet implemented")
+    }
+
     override fun setVoltage(volts: Voltage) {
-        elevatorSim.setInputVoltage(volts.volts)
+        elevatorSim.setInputVoltage(volts.inVolts())
         Logger.recordOutput("/Elevator/OutVolt", volts)
     }
 

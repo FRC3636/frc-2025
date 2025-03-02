@@ -1,9 +1,9 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
-import com.frcteam3636.frc2025.utils.math.degreesPerSecond
-import edu.wpi.first.units.Units.*
-import edu.wpi.first.units.measure.Current
+import com.frcteam3636.frc2025.utils.LimelightHelpers
+import com.frcteam3636.frc2025.utils.math.*
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
@@ -22,24 +22,30 @@ object Manipulator : Subsystem {
 
     var inputs = LoggedManipulatorInputs()
 
+    private var coralState: CoralState = CoralState.NONE
+        set(value) {
+            field = value
+            rgbPublisher.set(value.ordinal.toLong())
+        }
+    private var rgbPublisher = NetworkTableInstance.getDefault().getIntegerTopic("RGB/Coral State").publish()
+
     private var mechanism = LoggedMechanism2d(100.0, 100.0)
     private var motorAngleVisualizer =
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
-    private var lastCurrent: Current = Amps.of(0.0)
+    private fun waitForIntake(): Command = Commands.sequence(
+        Commands.waitUntil { inputs.laserCanDistance < 0.2.meters },
+        Commands.waitSeconds(0.2),
+        Commands.waitUntil { inputs.laserCanDistance > 0.2.meters },
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
+    )
 
-    private fun isStalled(waitTimes: Int): Command {
-        val listOfTimes = mutableListOf<Command>()
-        repeat(waitTimes) {
-            // holy cursed
-            listOfTimes.add(Commands.waitUntil {
-                val condition = inputs.current > Amps.of(1.0) && lastCurrent < Amps.of(1.0)
-                lastCurrent = inputs.current
-                condition
-            })
-        }
-        return Commands.sequence(*listOfTimes.toTypedArray())
-    }
+    private var controller = PIDController(PIDGains(0.1, 0.0, 0.0))
+
+    var isIntakeRunning = false
 
     init {
         mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
@@ -51,29 +57,87 @@ object Manipulator : Subsystem {
         io.updateInputs(inputs)
         Logger.processInputs("Manipulator", inputs)
 
-        motorAngleVisualizer.angle += inputs.velocity.degreesPerSecond * Robot.period
+        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
+        Logger.recordOutput("/Manipulator/Is Intake Running", isIntakeRunning)
     }
 
-    private val coralInIntakeBack get() = inputs.backUltrasonicDistance < Meters.zero()
-    private val coralInIntakeFront get() = inputs.frontUltrasonicDistance < Meters.zero()
+    private fun blinkLimelight(): Command = Commands.runOnce({
+        LimelightHelpers.setLEDMode_ForceBlink("limelight-rear")
+    })
+        .andThen(Commands.waitSeconds(0.3))
+        .finallyDo { ->
+            LimelightHelpers.setLEDMode_PipelineControl("limelight-rear")
+        }
 
-    fun intake(): Command = startEnd(
-        { io.setSpeed(0.1) },
-        { io.setSpeed(0.0) }
-    ).raceWith(
-        Commands.sequence(
-            isStalled(2),
-            Commands.waitTime(Seconds.of(0.325)) // FIXME: Tune
-        )
+
+    fun idle(): Command = startEnd({
+        io.setSpeed(-0.02)
+    }, {
+        io.setSpeed(0.0)
+    })
+
+    fun intake(): Command = Commands.sequence(
+        runOnce { io.setVoltage(2.0.volts) },
+        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
+        runOnce { io.setVoltage(0.6.volts) },
+        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
     )
-    // FIXME: Uncomment when ultrasonic
-//        .until { coralInIntakeBack || isStalled }
+        .onlyWhile {
+            isIntakeRunning
+        }
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+
+    fun intakeAuto(): Command = Commands.sequence(
+        runOnce { io.setVoltage(2.0.volts) },
+        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
+        runOnce { io.setVoltage(0.5.volts) },
+        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        runOnce { io.setSpeed(-0.02) },
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
+    )
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+
+    fun intakeNoRaceWithOutInterrupt(): Command = run(
+        { io.setVoltage(0.78.volts) },
+    )
 
     fun outtake(): Command = startEnd(
-        { io.setCurrent(Amps.of(37.0)) },
-        { io.setSpeed(0.0) }
+        { io.setCurrent(60.amps) },
+        {
+            io.setSpeed(0.0)
+            coralState = CoralState.NONE
+        }
     )
-    // FIXME: Uncomment when ultrasonic
-//    .until { !(coralInIntakeBack || coralInIntakeFront) }
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+
+    fun outtakeAlgae(): Command = startEnd(
+        { io.setCurrent(-60.amps) },
+        {
+            io.setSpeed(0.0)
+            coralState = CoralState.NONE
+        }
+    )
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+
+    fun intakeAlgae(): Command = startEnd(
+        { io.setVoltage(2.0.volts) },
+        {
+            io.setSpeed(0.0)
+        }
+    ).onlyWhile {
+        isIntakeRunning
+    }.withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+}
+
+enum class CoralState {
+    NONE,
+    HELD
 }

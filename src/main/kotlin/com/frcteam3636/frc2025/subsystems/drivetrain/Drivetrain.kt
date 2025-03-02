@@ -11,15 +11,10 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.closestTargetToWithSelection
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
 import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
-import com.frcteam3636.frc2025.utils.math.PIDController
-import com.frcteam3636.frc2025.utils.math.PIDGains
-import com.frcteam3636.frc2025.utils.math.TAU
-import com.frcteam3636.frc2025.utils.math.toPPLib
+import com.frcteam3636.frc2025.utils.math.*
 import com.frcteam3636.frc2025.utils.swerve.*
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
@@ -37,18 +32,19 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.util.Units
-import edu.wpi.first.units.Units.*
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import java.util.*
+import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
 
@@ -81,10 +77,10 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         else -> mapOf(
-//            "Limelight Front" to LimelightPoseProvider(
-//                "limelight-front",
-//                algorithm = mt2Algo
-//            ),
+            "Limelight Front" to LimelightPoseProvider(
+                "limelight-front",
+                algorithm = mt2Algo
+            ),
 //            "Limelight Rear" to LimelightPoseProvider(
 //                "limelight-rear",
 //                algorithm = mt2Algo
@@ -118,9 +114,9 @@ object Drivetrain : Subsystem, Sendable {
     val isMoving: Boolean
         get() {
             val speeds = measuredChassisSpeeds
-            val translationalSpeed = MetersPerSecond.of(speeds.translation2dPerSecond.norm)
-            return translationalSpeed < MetersPerSecond.of(0.5)
-                    && speeds.angularVelocity < RotationsPerSecond.of(0.5)
+            val translationalSpeed = speeds.translation2dPerSecond.norm.metersPerSecond
+            return translationalSpeed < 0.5.metersPerSecond
+                    && speeds.angularVelocity < 0.5.rotationsPerSecond
         }
 
 
@@ -156,6 +152,9 @@ object Drivetrain : Subsystem, Sendable {
             poseEstimator.resetPose(io.swerveDriveSimulation.simulatedDriveTrainPose)
             io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
         }
+
+        BargeTargetZone.RED.log("Drivetrain/BargeTargetZone/Red")
+        BargeTargetZone.BLUE.log("Drivetrain/BargeTargetZone/Blue")
     }
 
     override fun periodic() {
@@ -163,18 +162,18 @@ object Drivetrain : Subsystem, Sendable {
         Logger.processInputs("Drivetrain", inputs)
 
         // Update absolute pose sensors and add their measurements to the pose estimator
-        for ((_, ioPair) in absolutePoseIOs) {
+        for ((name, ioPair) in absolutePoseIOs) {
             val (sensorIO, inputs) = ioPair
 
             sensorIO.updateInputs(inputs)
-//            Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
+            Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
 
 //            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
 //                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
 //                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
-//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
+                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
         }
 
@@ -190,14 +189,14 @@ object Drivetrain : Subsystem, Sendable {
 
 //        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
-//        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
-//        Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
+        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
+        Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
         Logger.recordOutput("Drivetrain/Localizer", localizer.name)
-//        Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
+        Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
 //        questNavInactiveAlert.set(localizer != Localizer.QuestNav)
 
         Logger.recordOutput(
-            "Drivetrain/TagPoses", *APRIL_TAGS.tags
+            "Drivetrain/TagPoses", *FIELD_LAYOUT.tags
                 .filter { tag ->
                     absolutePoseIOs.values.any { it.second.observedTags.contains(tag.ID) }
                 }
@@ -214,7 +213,7 @@ object Drivetrain : Subsystem, Sendable {
                 SwerveDriveKinematics.desaturateWheelSpeeds(stateArr, FREE_SPEED)
 
                 io.desiredStates = PerCorner.fromConventionalArray(stateArr)
-//                Logger.recordOutput("Drivetrain/Desired States", *stateArr)
+                Logger.recordOutput("Drivetrain/Desired States", *stateArr)
             }
         }
 
@@ -356,19 +355,76 @@ object Drivetrain : Subsystem, Sendable {
         })
     }
 
-    fun alignToClosestPOV(): Command = defer {
-        val target = AprilTagTarget.currentAllianceTargets
-            .asIterable()
-            .closestTargetToWithSelection(estimatedPose, currentTargetSelection)
+    private val alignController = PIDController(Constants.ALIGN_PID_GAINS)
 
-        AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS)
+    fun alignToClosestPOI(sideOverride: ReefBranchSide? = null, usePathfinding: Boolean = true) =
+        alignToTarget(usePathfinding) {
+            AprilTagTarget.currentAllianceTargets.asIterable()
+                .closestTargetToPoseWithSelection(estimatedPose, sideOverride ?: currentTargetSelection).pose
+        }
+
+    fun alignToBarge(usePathfinding: Boolean = true) = alignToTarget(usePathfinding) {
+        BargeTarget.closestTo(
+            estimatedPose.translation,
+            DriverStation.getAlliance().getOrDefault(DriverStation.Alliance.Blue)
+        ).pose
     }
 
-    fun zeroGyro() {
+    fun alignToReefAlgae(usePathfinding: Boolean = true) = alignToTarget(usePathfinding) {
+        AprilTagTarget.currentAllianceReefAlgaeTargets
+            .asIterable()
+            .closestToPose(estimatedPose)
+            .pose
+    }
+
+    fun alignToTarget(usePathfinding: Boolean = true, target: () -> Pose2d): Command = defer {
+        val target = target()
+        Logger.recordOutput("Drivetrain/Auto-align Target", target)
+
+        val commands = mutableListOf<Command>()
+
+        if (usePathfinding) {
+            commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.5.metersPerSecond))
+        }
+
+        commands.addAll(
+            arrayOf(
+                runOnce {
+                    alignController.reset()
+                    Logger.recordOutput("/Drivetrain/Align-Running", true)
+                },
+                runEnd({
+                    val distanceToTarget = estimatedPose.relativeTo(target).translation.norm
+                    val angleToTarget = estimatedPose.relativeTo(target).translation.angle
+                    val output = alignController.calculate(distanceToTarget, 0.0)
+                    val desiredSpeed = Translation2d(output, angleToTarget)
+                    val chassisSpeeds = ChassisSpeeds(
+                        desiredSpeed.x, desiredSpeed.y, 0.0
+                    )
+                    Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
+                    desiredChassisSpeeds = chassisSpeeds
+                }, {
+                    desiredModuleStates = BRAKE_POSITION
+                    Logger.recordOutput("/Drivetrain/Align-Running", false)
+                })
+            )
+        )
+
+        Commands.sequence(*commands.toTypedArray())
+//            .onlyWhile {
+//                estimatedPose.relativeTo(target.pose).translation.norm >
+//                        Inches.of(0.1).meters
+//            }
+    }
+
+    fun zeroGyro(isReversed: Boolean = false) {
         // Tell the gyro that the robot is facing the other alliance.
-        val zeroPos = when (DriverStation.getAlliance().getOrNull()) {
+        var zeroPos = when (DriverStation.getAlliance().getOrNull()) {
             DriverStation.Alliance.Red -> Rotation2d.k180deg
             else -> Rotation2d.kZero
+        }
+        if (isReversed) {
+            zeroPos += Rotation2d.k180deg
         }
         estimatedPose = Pose2d(estimatedPose.translation, zeroPos)
 //        io.setGyro(zeroPos)
@@ -382,80 +438,73 @@ object Drivetrain : Subsystem, Sendable {
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
-            null,
-            Volts.of(4.0),
-            null,
-            {
+            0.5.voltsPerSecond, 2.volts, null, {
                 SignalLogger.writeString("state", it.toString())
-            }
-        ),
-        SysIdRoutine.Mechanism(
+            }), SysIdRoutine.Mechanism(
             io::runCharacterization,
             null,
             this,
         )
     )
 
-    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
-        sysID.quasistatic(direction)!!
+    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) = run {
+        io.runCharacterization(0.volts)
+    }.withTimeout(1.0).andThen(sysID.quasistatic(direction))!!
 
-    fun sysIdDynamic(direction: SysIdRoutine.Direction) =
-        sysID.dynamic(direction)!!
+    fun sysIdDynamic(direction: SysIdRoutine.Direction) = run {
+        io.runCharacterization(0.volts)
+    }.withTimeout(1.0).andThen(sysID.dynamic(direction))!!
 
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
-        const val TRANSLATION_SENSITIVITY = 0.5
+        const val TRANSLATION_SENSITIVITY = 0.65
 
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.8
 
-        val WHEEL_BASE = Inches.of(30.0)
-        val TRACK_WIDTH = Inches.of(28.0)
+        val WHEEL_BASE = 30.inches
+        val TRACK_WIDTH = 28.inches
 
-        val BUMPER_WIDTH = Inches.of(33.5)
-        val BUMPER_LENGTH = Inches.of(35.5)
+        val BUMPER_WIDTH = 33.5.inches
+        val BUMPER_LENGTH = 35.5.inches
 
         const val JOYSTICK_DEADBAND = 0.15
 
-        val MODULE_POSITIONS =
-            PerCorner(
-                frontLeft =
-                    Pose2d(
-                        Translation2d(WHEEL_BASE, TRACK_WIDTH) / 2.0,
-                        Rotation2d.fromDegrees(0.0)
-                    ),
-                frontRight =
-                    Pose2d(
-                        Translation2d(WHEEL_BASE, -TRACK_WIDTH) / 2.0,
-                        Rotation2d.fromDegrees(270.0)
-                    ),
-                backLeft =
-                    Pose2d(
-                        Translation2d(-WHEEL_BASE, TRACK_WIDTH) / 2.0,
-                        Rotation2d.fromDegrees(90.0)
-                    ),
-                backRight =
-                    Pose2d(
-                        Translation2d(-WHEEL_BASE, -TRACK_WIDTH) / 2.0,
-                        Rotation2d.fromDegrees(180.0)
-                    ),
-            )
+        val MODULE_POSITIONS = PerCorner(
+            frontLeft = Pose2d(
+                Translation2d(WHEEL_BASE, TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(0.0)
+            ),
+            frontRight = Pose2d(
+                Translation2d(WHEEL_BASE, -TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(270.0)
+            ),
+            backLeft = Pose2d(
+                Translation2d(-WHEEL_BASE, TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(90.0)
+            ),
+            backRight = Pose2d(
+                Translation2d(-WHEEL_BASE, -TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(180.0)
+            ),
+        )
 
         // Chassis Control
-        val FREE_SPEED = MetersPerSecond.of(8.132)!!
-        private val ROTATION_SPEED = RadiansPerSecond.of(14.604)!!
+        val FREE_SPEED = 5.5.metersPerSecond
+        private val ROTATION_SPEED = 14.604.radiansPerSecond
 
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
 
         //        // Pathing
         val DEFAULT_PATHING_CONSTRAINTS =
-            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879 * 1.5, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
+            PathConstraints(
+                FREE_SPEED.baseUnitMagnitude() * 2,
+                (3.879 * 1.5) * 2.0,
+                ROTATION_SPEED.baseUnitMagnitude(),
+                24.961
+            )
 
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(
-            Pounds.of(120.0), // FIXME: Placeholder
-            KilogramSquareMeters.of(0.0), // FIXME: Placeholder
+            120.0.pounds, // FIXME: Placeholder
+            0.kilogramSquareMeters, // FIXME: Placeholder
             ModuleConfig(
                 WHEEL_RADIUS,
                 FREE_SPEED,
@@ -470,8 +519,8 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         val PP_ROBOT_CONFIG_PROTOTYPE = RobotConfig(
-            Pounds.of(120.0), // FIXME: Placeholder
-            KilogramSquareMeters.of(0.0), // FIXME: Placeholder
+            120.pounds, // FIXME: Placeholder
+            0.kilogramSquareMeters, // FIXME: Placeholder
             ModuleConfig(
                 WHEEL_RADIUS,
                 NEO_DRIVING_FREE_SPEED,
@@ -546,10 +595,12 @@ object Drivetrain : Subsystem, Sendable {
 
         val QUESTNAV_DEVICE_OFFSET = Transform2d(
             // TODO: find these constants
-            Inches.of(0.0),
-            Inches.of(0.0),
-            Rotation2d(Degrees.of(0.0))
+            0.inches,
+            0.inches,
+            Rotation2d(0.degrees)
         )
+
+        val ALIGN_PID_GAINS = PIDGains(10.0, 0.0, 0.5)
     }
 
     enum class Localizer {

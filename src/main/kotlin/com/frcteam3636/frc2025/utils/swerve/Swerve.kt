@@ -1,12 +1,12 @@
 package com.frcteam3636.frc2025.utils.swerve
 
+import com.frcteam3636.frc2025.utils.math.inMetersPerSecond
 import com.frcteam3636.frc2025.utils.math.metersPerSecond
+import com.frcteam3636.frc2025.utils.math.radiansPerSecond
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.units.Units.MetersPerSecond
-import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 
@@ -79,9 +79,9 @@ fun SwerveDriveKinematics(translations: PerCorner<Translation2d>) =
 
 /** The speed of the swerve module. */
 var SwerveModuleState.speed: LinearVelocity
-    get() = MetersPerSecond.of(speedMetersPerSecond)
+    get() = speedMetersPerSecond.metersPerSecond
     set(value) {
-        speedMetersPerSecond = value.metersPerSecond
+        speedMetersPerSecond = value.inMetersPerSecond()
     }
 
 /** This swerve module state as a `Translation2d`. */
@@ -92,4 +92,4 @@ val ChassisSpeeds.translation2dPerSecond: Translation2d
     get() = Translation2d(vxMetersPerSecond, vyMetersPerSecond)
 
 val ChassisSpeeds.angularVelocity: AngularVelocity
-    get() = RadiansPerSecond.of(omegaRadiansPerSecond)
+    get() = omegaRadiansPerSecond.radiansPerSecond

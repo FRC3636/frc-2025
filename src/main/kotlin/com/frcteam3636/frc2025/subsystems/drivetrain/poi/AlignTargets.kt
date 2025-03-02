@@ -1,14 +1,20 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain.poi
 
-import com.frcteam3636.frc2025.subsystems.drivetrain.APRIL_TAGS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.FIELD_LAYOUT
+import com.frcteam3636.frc2025.utils.math.dot
+import com.frcteam3636.frc2025.utils.math.inches
+import com.frcteam3636.frc2025.utils.math.meters
+import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
-import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.wpilibj.DriverStation
+import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
+import kotlin.math.max
+import kotlin.math.min
 
 enum class ReefBranchSide {
     Left,
@@ -42,17 +48,17 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
     constructor(aprilTagId: Int, side: ReefBranchSide) : this(
         aprilTagId,
         Translation2d(
-            Meters.zero(),
+            0.meters,
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
-                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET
-                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET
+                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET + 0.5.inches
+                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET - 0.5.inches
             }
         ),
     )
 
     init {
-        val aprilTagPose = APRIL_TAGS
+        val aprilTagPose = FIELD_LAYOUT
             .getTagPose(aprilTagId)
             .orElseThrow {
                 IllegalArgumentException(
@@ -66,14 +72,14 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             Rotation2d.k180deg,
         )
 
-        val offsetWithSpaceForBumpers = Translation2d(
-            -Drivetrain.Constants.BUMPER_LENGTH / 1.5,
+        val offsetFromPoseFacingAprilTagWithBumperSpacer = Translation2d(
             // We don't want to be *on top* of the april tag, so back up a bit from the tag.
-            Meters.zero()
+            -Drivetrain.Constants.BUMPER_LENGTH / 2.0,
+            0.meters,
         )
             .plus(offset)
 
-        pose = poseFacingAprilTag + Transform2d(offsetWithSpaceForBumpers, Rotation2d.kZero)
+        pose = poseFacingAprilTag + Transform2d(offsetFromPoseFacingAprilTagWithBumperSpacer, Rotation2d.kZero)
     }
 
     companion object {
@@ -90,24 +96,35 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
                 .toTypedArray()
         }
 
+        private val redBranchTags = 6..11
+        private val blueBranchTags = 17..22
+
+        val redReefAlgaeTargets: Array<AprilTagTarget> = redBranchTags.map {
+            AprilTagTarget(it, Translation2d())
+        }.toTypedArray()
+
+        val blueReefAlgaeTargets: Array<AprilTagTarget> = blueBranchTags.map {
+            AprilTagTarget(it, Translation2d())
+        }.toTypedArray()
+
         val redAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
-                *branchTargetsFromIds(6..11),
+            *branchTargetsFromIds(redBranchTags),
             // Processor
-                TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(3, Translation2d()))),
             // Human Player Stations
-            TargetGroup(arrayOf(AprilTagTarget(1, Translation2d()))),
-            TargetGroup(arrayOf(AprilTagTarget(2, Translation2d())))
+//            TargetGroup(arrayOf(AprilTagTarget(1, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(2, Translation2d())))
         )
 
         val blueAllianceTargets: Array<TargetGroup> = arrayOf(
             // Reef branches
-                *branchTargetsFromIds(17..22),
+            *branchTargetsFromIds(blueBranchTags),
             // Processor
-                TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(16, Translation2d()))),
             // Human Player Stations
-            TargetGroup(arrayOf(AprilTagTarget(13, Translation2d()))),
-            TargetGroup(arrayOf(AprilTagTarget(12, Translation2d())))
+//            TargetGroup(arrayOf(AprilTagTarget(13, Translation2d()))),
+//            TargetGroup(arrayOf(AprilTagTarget(12, Translation2d())))
         )
 
         val currentAllianceTargets: Array<TargetGroup>
@@ -117,8 +134,92 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
                     else -> blueAllianceTargets
                 }
             }
+
+        val currentAllianceReefAlgaeTargets: Array<AprilTagTarget>
+            get() {
+                return when (DriverStation.getAlliance().getOrNull()) {
+                    DriverStation.Alliance.Red -> redReefAlgaeTargets
+                    else -> blueReefAlgaeTargets
+                }
+            }
     }
 }
+
+val AprilTagFieldLayout.center: Translation2d
+    get() {
+        return Translation2d(
+            (fieldLength / 2.0).meters,
+            (fieldWidth / 2.0).meters,
+        )
+    }
+
+data class BargeTargetZone(val start: Translation2d, val end: Translation2d) {
+    val line: Translation2d get() = end - start
+    val length get() = line.norm
+
+    fun rotateAround(center: Translation2d, rotation: Rotation2d): BargeTargetZone {
+        return BargeTargetZone(
+            start.rotateAround(center, rotation),
+            end.rotateAround(center, rotation),
+        )
+    }
+
+    fun pointClosestTo(other: Translation2d): Translation2d {
+        // mostly based on https://stackoverflow.com/a/28931906
+
+        val line = line
+        val length = length
+
+        val lineScaledToUnitLength = line / length
+        val otherToStart = other - start
+
+        val projection = otherToStart.dot(lineScaledToUnitLength)
+        return start + lineScaledToUnitLength * min(length, max(0.0, projection))
+    }
+
+    fun log(name: String) {
+        Logger.recordOutput("$name/Start", Pose2d(start, Rotation2d()))
+        Logger.recordOutput("$name/End", Pose2d(end, Rotation2d()))
+    }
+
+    companion object {
+        val RED = BargeTargetZone(
+            Translation2d(10.2.meters, 0.7.meters),
+            Translation2d(10.2.meters, 3.18.meters),
+        )
+        val BLUE = RED.rotateAround(FIELD_LAYOUT.center, Rotation2d.k180deg)
+
+        fun forAlliance(alliance: DriverStation.Alliance): BargeTargetZone {
+            return when (alliance) {
+                DriverStation.Alliance.Red -> RED
+                DriverStation.Alliance.Blue -> BLUE
+            }
+        }
+    }
+}
+
+class BargeTarget private constructor(override val pose: Pose2d) : AlignableTarget {
+
+    companion object {
+        fun closestTo(robot: Translation2d, alliance: DriverStation.Alliance): BargeTarget {
+            val zone = BargeTargetZone.forAlliance(alliance)
+            val closestPoint = zone.pointClosestTo(robot)
+            val rotation = when (alliance) {
+                DriverStation.Alliance.Red -> Rotation2d.k180deg
+                DriverStation.Alliance.Blue -> Rotation2d.kZero
+            }
+
+            return BargeTarget(Pose2d(closestPoint, rotation))
+        }
+    }
+}
+
+fun Iterable<AprilTagTarget>.closestToPose(
+    pose: Pose2d,
+): AprilTagTarget =
+    minByOrNull { it ->
+        it.pose.relativeTo(pose).translation.norm
+    } ?: error("Can't find closest target")
 
 @Suppress("unused")
 fun Iterable<TargetGroup>.closestTargetTo(pose: Pose2d): TargetSelection =
@@ -130,15 +231,18 @@ fun Iterable<TargetGroup>.closestTargetTo(pose: Pose2d): TargetSelection =
         it.pose.relativeTo(pose).translation.norm
     } ?: error("Can't find closest target")
 
-fun Iterable<TargetGroup>.closestTargetToWithSelection(pose: Pose2d, reefBranchSide: ReefBranchSide): TargetSelection =
+fun Iterable<TargetGroup>.closestTargetToPoseWithSelection(
+    pose: Pose2d,
+    reefBranchSide: ReefBranchSide
+): TargetSelection =
     map { group ->
         if (group.targets.size >= reefBranchSide.ordinal + 1) {
             TargetSelection(group, idx = reefBranchSide.ordinal)
         } else {
             TargetSelection(group, idx = 0)
         }
-    }.minByOrNull { it : TargetSelection ->
+    }.minByOrNull { it: TargetSelection ->
         it.pose.relativeTo(pose).translation.norm
     } ?: error("Can't find closest target")
 
-private val APRIL_TAG_HORIZONTAL_OFFSET = Meters.of(0.147525)
+private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters
