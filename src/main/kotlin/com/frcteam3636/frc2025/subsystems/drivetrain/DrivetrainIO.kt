@@ -144,7 +144,7 @@ class DrivetrainIOSim : DrivetrainIO() {
     )
 
     val vision = VisionSystemSim("main").apply {
-        addAprilTags(APRIL_TAGS)
+        addAprilTags(FIELD_LAYOUT)
     }
 
     override val modules = PerCorner.generate { SimSwerveModule(swerveDriveSimulation.modules[it.ordinal]) }
@@ -171,6 +171,6 @@ class DrivetrainIOSim : DrivetrainIO() {
     // Register the drivetrain simulation to the default simulation world
 }
 
-val APRIL_TAGS = AprilTagFieldLayout.loadFromResource(
+val FIELD_LAYOUT = AprilTagFieldLayout.loadFromResource(
     AprilTagFields.k2025ReefscapeWelded.m_resourceFile
 )!!
