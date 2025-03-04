@@ -155,7 +155,6 @@ class LimelightPoseProvider(
                 LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name)?.let { estimate ->
                     measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
                     val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
-                    Logger.recordOutput("Drivetrain/Absolute Pose/$name/High Speed Rejection", highSpeed)
                     if (estimate.tagCount == 0 || highSpeed) return measurement
 
 
