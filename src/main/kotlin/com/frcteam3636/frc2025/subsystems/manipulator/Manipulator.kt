@@ -27,6 +27,7 @@ object Manipulator : Subsystem {
             field = value
             rgbPublisher.set(value.ordinal.toLong())
         }
+
     private var rgbPublisher = NetworkTableInstance.getDefault().getIntegerTopic("RGB/Coral State").publish()
 
     private var mechanism = LoggedMechanism2d(100.0, 100.0)
@@ -81,10 +82,13 @@ object Manipulator : Subsystem {
         runOnce { io.setVoltage(2.0.volts) },
         Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
         runOnce { io.setVoltage(0.6.volts) },
+        Commands.runOnce({
+            coralState = CoralState.TRANSIT
+        }),
         Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
-            blinkLimelight().schedule()
+//            blinkLimelight().schedule()
         }),
     )
         .onlyWhile {
@@ -96,11 +100,14 @@ object Manipulator : Subsystem {
         runOnce { io.setVoltage(2.0.volts) },
         Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
         runOnce { io.setVoltage(0.5.volts) },
+        Commands.runOnce({
+            coralState = CoralState.TRANSIT
+        }),
         Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
         runOnce { io.setSpeed(-0.02) },
         Commands.runOnce({
             coralState = CoralState.HELD
-            blinkLimelight().schedule()
+//            blinkLimelight().schedule()
         }),
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
@@ -139,5 +146,6 @@ object Manipulator : Subsystem {
 
 enum class CoralState {
     NONE,
-    HELD
+    HELD,
+    TRANSIT
 }
