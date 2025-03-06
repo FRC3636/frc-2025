@@ -88,7 +88,7 @@ object Manipulator : Subsystem {
         Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
-//            blinkLimelight().schedule()
+            blinkLimelight().schedule()
         }),
     )
         .onlyWhile {
@@ -107,7 +107,7 @@ object Manipulator : Subsystem {
         runOnce { io.setSpeed(-0.02) },
         Commands.runOnce({
             coralState = CoralState.HELD
-//            blinkLimelight().schedule()
+            blinkLimelight().schedule()
         }),
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
