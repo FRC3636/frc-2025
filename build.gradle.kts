@@ -105,13 +105,13 @@ deploy {
 
         roborio.artifacts {
             register<FRCJavaArtifact>("frcJava") {
-                jvmArgs.add("-Dcom.sun.management.jmxremote=true")
-                jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
-                jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
-                jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
-                jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
-                jvmArgs.add("-Djava.rmi.server.hostname=10.36.36.2")
-                jvmArgs.add("-ea")
+                // jvmArgs.add("-Dcom.sun.management.jmxremote=true")
+                // jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
+                // jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
+                // jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
+                // jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
+                // jvmArgs.add("-Djava.rmi.server.hostname=10.36.36.2")
+                // jvmArgs.add("-ea")
                 setJarTask(tasks.jar)
             }
 
