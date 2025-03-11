@@ -301,7 +301,7 @@ object Drivetrain : Subsystem, Sendable {
         } else {
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 calculateInputCurve(translationInput.x) * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
-                calculateInputCurve(translationInput.y) * translationInput.y.sign * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                calculateInputCurve(translationInput.y) * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 calculateInputCurve(rotationInput.y) * TAU * ROTATION_SENSITIVITY,
                 estimatedPose.rotation
             )
