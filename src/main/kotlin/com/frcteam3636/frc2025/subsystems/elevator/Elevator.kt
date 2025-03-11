@@ -50,6 +50,12 @@ object Elevator : Subsystem {
         }, {})
             .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
+    fun setTargetHeightAlgae(position: Position): Command =
+        startEnd({
+            io.runToHeightWithOverride(position.height, 200.0.rotationsPerSecond, 20.0.rotationsPerSecondPerSecond)
+        }, {})
+            .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
+
     fun runHoming(): Command =
         runEnd({
             io.setVoltage((-1.0).volts)
@@ -79,7 +85,7 @@ object Elevator : Subsystem {
         Stowed(0.meters),
         LowBar(0.79.rotations.toLinear(SPOOL_RADIUS)),
         AlgaeMidBar(1.43.rotations.toLinear(SPOOL_RADIUS)),
-        MidBar(2.18.rotations.toLinear(SPOOL_RADIUS)),
+        MidBar(2.27.rotations.toLinear(SPOOL_RADIUS)),
 
         // FIXME: this may be too high after we tune elevator
         HighBar(4.54.rotations.toLinear(SPOOL_RADIUS)),

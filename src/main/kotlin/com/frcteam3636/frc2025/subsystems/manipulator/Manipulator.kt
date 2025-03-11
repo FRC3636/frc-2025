@@ -27,6 +27,7 @@ object Manipulator : Subsystem {
             field = value
             rgbPublisher.set(value.ordinal.toLong())
         }
+
     private var rgbPublisher = NetworkTableInstance.getDefault().getIntegerTopic("RGB/Coral State").publish()
 
     private var mechanism = LoggedMechanism2d(100.0, 100.0)
@@ -35,12 +36,15 @@ object Manipulator : Subsystem {
 
     private fun waitForIntake(): Command = Commands.sequence(
         Commands.waitUntil { inputs.laserCanDistance < 0.2.meters },
+        Commands.waitSeconds(0.2),
         Commands.waitUntil { inputs.laserCanDistance > 0.2.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
             blinkLimelight().schedule()
         }),
     )
+
+    private var controller = PIDController(PIDGains(0.1, 0.0, 0.0))
 
     var isIntakeRunning = false
 
@@ -56,6 +60,7 @@ object Manipulator : Subsystem {
 
         motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
         Logger.recordOutput("/Manipulator/Mechanism", mechanism)
+        Logger.recordOutput("/Manipulator/Is Intake Running", isIntakeRunning)
     }
 
     private fun blinkLimelight(): Command = Commands.runOnce({
@@ -73,14 +78,38 @@ object Manipulator : Subsystem {
         io.setSpeed(0.0)
     })
 
-    fun intake(): Command = startEnd(
-        { io.setVoltage(0.5.volts) },
-        { io.setSpeed(0.0) }
+    fun intake(): Command = Commands.sequence(
+        runOnce { io.setVoltage(2.0.volts) },
+        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
+        runOnce { io.setVoltage(0.6.volts) },
+        Commands.runOnce({
+            coralState = CoralState.TRANSIT
+        }),
+        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
     )
-        .raceWith(waitForIntake())
         .onlyWhile {
             isIntakeRunning
         }
+        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+
+    fun intakeAuto(): Command = Commands.sequence(
+        runOnce { io.setVoltage(2.0.volts) },
+        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
+        runOnce { io.setVoltage(0.5.volts) },
+        Commands.runOnce({
+            coralState = CoralState.TRANSIT
+        }),
+        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        runOnce { io.setSpeed(-0.02) },
+        Commands.runOnce({
+            coralState = CoralState.HELD
+            blinkLimelight().schedule()
+        }),
+    )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
     fun intakeNoRaceWithOutInterrupt(): Command = run(
@@ -104,9 +133,19 @@ object Manipulator : Subsystem {
         }
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+
+    fun intakeAlgae(): Command = startEnd(
+        { io.setVoltage(2.0.volts) },
+        {
+            io.setSpeed(0.0)
+        }
+    ).onlyWhile {
+        isIntakeRunning
+    }.withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 }
 
 enum class CoralState {
     NONE,
-    HELD
+    HELD,
+    TRANSIT
 }

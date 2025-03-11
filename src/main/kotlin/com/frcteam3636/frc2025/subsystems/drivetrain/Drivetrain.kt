@@ -11,9 +11,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
-import com.frcteam3636.frc2025.subsystems.drivetrain.poi.closestTargetToWithSelection
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
 import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.*
@@ -40,11 +38,13 @@ import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import java.util.*
+import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
 import kotlin.math.pow
@@ -154,6 +154,9 @@ object Drivetrain : Subsystem, Sendable {
             poseEstimator.resetPose(io.swerveDriveSimulation.simulatedDriveTrainPose)
             io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
         }
+
+        BargeTargetZone.RED.log("Drivetrain/BargeTargetZone/Red")
+        BargeTargetZone.BLUE.log("Drivetrain/BargeTargetZone/Blue")
     }
 
     override fun periodic() {
@@ -195,7 +198,7 @@ object Drivetrain : Subsystem, Sendable {
 //        questNavInactiveAlert.set(localizer != Localizer.QuestNav)
 
         Logger.recordOutput(
-            "Drivetrain/TagPoses", *APRIL_TAGS.tags
+            "Drivetrain/TagPoses", *FIELD_LAYOUT.tags
                 .filter { tag ->
                     absolutePoseIOs.values.any { it.second.observedTags.contains(tag.ID) }
                 }
@@ -360,63 +363,60 @@ object Drivetrain : Subsystem, Sendable {
 
     private val alignController = PIDController(Constants.ALIGN_PID_GAINS)
 
-    fun alignToClosestPOI(sideOverride: ReefBranchSide? = null): Command = defer {
-        val target = AprilTagTarget.currentAllianceTargets
-            .asIterable()
-            .closestTargetToWithSelection(estimatedPose, sideOverride ?: currentTargetSelection)
+    fun alignToClosestPOI(sideOverride: ReefBranchSide? = null, usePathfinding: Boolean = true) =
+        alignToTarget(usePathfinding) {
+            AprilTagTarget.currentAllianceTargets.asIterable()
+                .closestTargetToPoseWithSelection(estimatedPose, sideOverride ?: currentTargetSelection).pose
+        }
 
-        Logger.recordOutput("Drivetrain/Auto-align Target", target.pose)
-        AutoBuilder.pathfindToPose(target.pose, DEFAULT_PATHING_CONSTRAINTS, 3.metersPerSecond)
-            .andThen(runOnce {
-                alignController.reset()
-                Logger.recordOutput("/Drivetrain/Align-Running", true)
-            })
-            .andThen(runEnd({
-                val distanceToTarget = estimatedPose.relativeTo(target.pose).translation.norm
-                val angleToTarget = estimatedPose.relativeTo(target.pose).translation.angle
-                val output = alignController.calculate(distanceToTarget, 0.0)
-                val desiredSpeed = Translation2d(output, angleToTarget)
-                desiredChassisSpeeds = ChassisSpeeds(
-                    desiredSpeed.x,
-                    desiredSpeed.y,
-                    0.0
-                )
-            }, {
-                desiredModuleStates = BRAKE_POSITION
-                Logger.recordOutput("/Drivetrain/Align-Running", false)
-            }))
-//            .onlyWhile {
-//                estimatedPose.relativeTo(target.pose).translation.norm >
-//                        Inches.of(0.1).meters
-//            }
+    fun alignToBarge(usePathfinding: Boolean = true) = alignToTarget(usePathfinding) {
+        BargeTarget.closestTo(
+            estimatedPose.translation,
+            DriverStation.getAlliance().getOrDefault(DriverStation.Alliance.Blue)
+        ).pose
     }
 
-    fun alignToTargetWithPIDController(sideOverride: ReefBranchSide? = null): Command = defer {
-        val target = AprilTagTarget.currentAllianceTargets
+    fun alignToReefAlgae(usePathfinding: Boolean = true) = alignToTarget(usePathfinding) {
+        AprilTagTarget.currentAllianceReefAlgaeTargets
             .asIterable()
-            .closestTargetToWithSelection(estimatedPose, sideOverride ?: currentTargetSelection)
+            .closestToPose(estimatedPose)
+            .pose
+    }
 
-        Logger.recordOutput("Drivetrain/Auto-align Target", target.pose)
-        runOnce {
-            alignController.reset()
-            Logger.recordOutput("/Drivetrain/Align-Running", true)
+    fun alignToTarget(usePathfinding: Boolean = true, target: () -> Pose2d): Command = defer {
+        val target = target()
+        Logger.recordOutput("Drivetrain/Auto-align Target", target)
+
+        val commands = mutableListOf<Command>()
+
+        if (usePathfinding) {
+            commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.5.metersPerSecond))
         }
-            .andThen(runEnd({
-                val distanceToTarget = estimatedPose.relativeTo(target.pose).translation.norm
-                val angleToTarget = estimatedPose.relativeTo(target.pose).translation.angle
-                val output = alignController.calculate(distanceToTarget, 0.0)
-                val desiredSpeed = Translation2d(output, angleToTarget)
-                val chassisSpeeds = ChassisSpeeds(
-                    desiredSpeed.x,
-                    desiredSpeed.y,
-                    0.0
-                )
-                Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
-                desiredChassisSpeeds = chassisSpeeds
-            }, {
-                desiredModuleStates = BRAKE_POSITION
-                Logger.recordOutput("/Drivetrain/Align-Running", false)
-            }))
+
+        commands.addAll(
+            arrayOf(
+                runOnce {
+                    alignController.reset()
+                    Logger.recordOutput("/Drivetrain/Align-Running", true)
+                },
+                runEnd({
+                    val distanceToTarget = estimatedPose.relativeTo(target).translation.norm
+                    val angleToTarget = estimatedPose.relativeTo(target).translation.angle
+                    val output = alignController.calculate(distanceToTarget, 0.0)
+                    val desiredSpeed = Translation2d(output, angleToTarget)
+                    val chassisSpeeds = ChassisSpeeds(
+                        desiredSpeed.x, desiredSpeed.y, 0.0
+                    )
+                    Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
+                    desiredChassisSpeeds = chassisSpeeds
+                }, {
+                    desiredModuleStates = BRAKE_POSITION
+                    Logger.recordOutput("/Drivetrain/Align-Running", false)
+                })
+            )
+        )
+
+        Commands.sequence(*commands.toTypedArray())
 //            .onlyWhile {
 //                estimatedPose.relativeTo(target.pose).translation.norm >
 //                        Inches.of(0.1).meters
@@ -438,33 +438,22 @@ object Drivetrain : Subsystem, Sendable {
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
-            0.5.voltsPerSecond,
-            2.volts,
-            null,
-            {
+            0.5.voltsPerSecond, 2.volts, null, {
                 SignalLogger.writeString("state", it.toString())
-            }
-        ),
-        SysIdRoutine.Mechanism(
+            }), SysIdRoutine.Mechanism(
             io::runCharacterization,
             null,
             this,
         )
     )
 
-    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
-        run {
-            io.runCharacterization(0.volts)
-        }
-            .withTimeout(1.0)
-            .andThen(sysID.quasistatic(direction))!!
+    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) = run {
+        io.runCharacterization(0.volts)
+    }.withTimeout(1.0).andThen(sysID.quasistatic(direction))!!
 
-    fun sysIdDynamic(direction: SysIdRoutine.Direction) =
-        run {
-            io.runCharacterization(0.volts)
-        }
-            .withTimeout(1.0)
-            .andThen(sysID.dynamic(direction))!!
+    fun sysIdDynamic(direction: SysIdRoutine.Direction) = run {
+        io.runCharacterization(0.volts)
+    }.withTimeout(1.0).andThen(sysID.dynamic(direction))!!
 
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
@@ -482,29 +471,20 @@ object Drivetrain : Subsystem, Sendable {
 
         const val JOYSTICK_DEADBAND = 0.15
 
-        val MODULE_POSITIONS =
-            PerCorner(
-                frontLeft =
-                    Pose2d(
-                        Translation2d(WHEEL_BASE, TRACK_WIDTH) / 2.0,
-                        Rotation2d.fromDegrees(0.0)
-                    ),
-                frontRight =
-                    Pose2d(
-                        Translation2d(WHEEL_BASE, -TRACK_WIDTH) / 2.0,
-                        Rotation2d.fromDegrees(270.0)
-                    ),
-                backLeft =
-                    Pose2d(
-                        Translation2d(-WHEEL_BASE, TRACK_WIDTH) / 2.0,
-                        Rotation2d.fromDegrees(90.0)
-                    ),
-                backRight =
-                    Pose2d(
-                        Translation2d(-WHEEL_BASE, -TRACK_WIDTH) / 2.0,
-                        Rotation2d.fromDegrees(180.0)
-                    ),
-            )
+        val MODULE_POSITIONS = PerCorner(
+            frontLeft = Pose2d(
+                Translation2d(WHEEL_BASE, TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(0.0)
+            ),
+            frontRight = Pose2d(
+                Translation2d(WHEEL_BASE, -TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(270.0)
+            ),
+            backLeft = Pose2d(
+                Translation2d(-WHEEL_BASE, TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(90.0)
+            ),
+            backRight = Pose2d(
+                Translation2d(-WHEEL_BASE, -TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(180.0)
+            ),
+        )
 
         // Chassis Control
         val FREE_SPEED = 5.5.metersPerSecond
@@ -617,7 +597,7 @@ object Drivetrain : Subsystem, Sendable {
             // TODO: find these constants
             0.inches,
             0.inches,
-            Rotation2d(0.deg)
+            Rotation2d(0.degrees)
         )
 
         val ALIGN_PID_GAINS = PIDGains(10.0, 0.0, 0.5)

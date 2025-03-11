@@ -5,7 +5,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.QuestNav
-import com.frcteam3636.frc2025.utils.math.deg
+import com.frcteam3636.frc2025.utils.math.degrees
 import com.frcteam3636.frc2025.utils.math.inSeconds
 import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
@@ -155,7 +155,6 @@ class LimelightPoseProvider(
                 LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name)?.let { estimate ->
                     measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
                     val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
-                    Logger.recordOutput("Drivetrain/Absolute Pose/$name/High Speed Rejection", highSpeed)
                     if (estimate.tagCount == 0 || highSpeed) return measurement
 
 
@@ -221,7 +220,7 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
 
     private val estimator =
         PhotonPoseEstimator(
-            APRIL_TAGS,
+            FIELD_LAYOUT,
             PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
             chassisToCamera
         )
@@ -342,4 +341,4 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 //    )
 //}
 
-val LIMELIGHT_FOV = 75.76079874010732.deg
+val LIMELIGHT_FOV = 75.76079874010732.degrees

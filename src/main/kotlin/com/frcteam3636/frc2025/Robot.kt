@@ -27,8 +27,8 @@ import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.button.JoystickButton
 import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
@@ -53,8 +53,8 @@ import kotlin.io.path.exists
  */
 object Robot : LoggedRobot() {
     private val controller = CommandXboxController(2)
-    private val joystickLeft = Joystick(0)
-    private val joystickRight = Joystick(1)
+    private val joystickLeft = CommandJoystick(0)
+    private val joystickRight = CommandJoystick(1)
 
     @Suppress("unused")
     private val joystickDev = Joystick(3)
@@ -84,6 +84,7 @@ object Robot : LoggedRobot() {
     private fun configureAdvantageKit() {
         Logger.recordMetadata("Git SHA", GIT_SHA)
         Logger.recordMetadata("Build Date", BUILD_DATE)
+        @Suppress("KotlinConstantConditions")
         Logger.recordMetadata("Git Tree Dirty", (DIRTY == 1).toString())
         Logger.recordMetadata("Git Branch", GIT_BRANCH)
         Logger.recordMetadata("Model", model.name)
@@ -173,39 +174,87 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "intake",
             Commands.race(
-                Manipulator.intake(),
+                Manipulator.intakeAuto(),
                 Funnel.intake()
             ).withTimeout(3.0)
         )
         NamedCommands.registerCommand(
             "alignToTarget",
-            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Left)
+            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = false)
                 .withTimeout(1.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
-            Drivetrain.alignToTargetWithPIDController(sideOverride = ReefBranchSide.Right)
+            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
                 .withTimeout(1.seconds)
+        )
+        NamedCommands.registerCommand(
+            "raiseElevatorAlgae",
+            Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar)
+        )
+        NamedCommands.registerCommand(
+            "alignToReefAlgae",
+            Drivetrain.alignToReefAlgae(usePathfinding = false)
+                .withTimeout(1.seconds)
+        )
+        NamedCommands.registerCommand(
+            "alignToBarge",
+            Drivetrain.alignToBarge(usePathfinding = false)
+                .withTimeout(1.seconds)
+        )
+        NamedCommands.registerCommand(
+            "intakeAlgae",
+            Commands.sequence(
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = true
+                }),
+                Manipulator.intakeAlgae(),
+            )
+        )
+        NamedCommands.registerCommand(
+            "tossAlgae",
+            tossAlgae()
         )
     }
 
+    private fun tossAlgae(): Command = Commands.sequence(
+        Commands.parallel(
+            Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
+            Commands.sequence(
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = true
+                }),
+                Commands.race(
+                    Manipulator.intakeAlgae(),
+                    Commands.waitSeconds(0.5),
+                ),
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = false
+                }),
+                Manipulator.outtakeAlgae().withTimeout(0.75),
+            )
+        ),
+        Elevator.setTargetHeight(Elevator.Position.Stowed)
+    )
+
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
-        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft, joystickRight)
+        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
         Manipulator.defaultCommand = Manipulator.idle()
 
-        JoystickButton(joystickRight, 3).onTrue(Commands.runOnce({
+        joystickRight.button(3).onTrue(Commands.runOnce({
             println("Setting desired target node to left branch.")
             Drivetrain.currentTargetSelection = ReefBranchSide.Left
         }))
 
-        JoystickButton(joystickRight, 4).onTrue(Commands.runOnce({
+        joystickRight.button(4).onTrue(Commands.runOnce({
             println("Setting desired target node to right branch.")
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        JoystickButton(joystickLeft, 1).whileTrue(Drivetrain.alignToClosestPOI())
-        JoystickButton(joystickRight, 1).whileTrue(Manipulator.outtake())
+        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI())
+//        joystickLeft.button(1).whileTrue(Drivetrain.alignToReefAlgae())
+        joystickRight.button(1).whileTrue(Manipulator.outtake())
 
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 
@@ -220,31 +269,25 @@ object Robot : LoggedRobot() {
 //        }))
 
         // (The button with the yellow tape on it)
-        JoystickButton(joystickLeft, 8).onTrue(Commands.runOnce({
+        joystickLeft.button(8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
         // Left close middle
-        JoystickButton(joystickLeft, 9)
+        joystickLeft.button(9)
             .and { Robot.isDisabled }
             .toggleOnTrue(Elevator.coast().ignoringDisable(true))
 
-        JoystickButton(joystickLeft, 14).onTrue(Elevator.runHoming())
+        joystickLeft.button(14).onTrue(Elevator.runHoming())
 
         controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
         controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
-        controller.pov(180).onTrue(
-            Commands.parallel(
-                Elevator.setTargetHeight(Elevator.Position.HighBar),
-                Commands.sequence(
-                    Commands.waitSeconds(0.45),
-                    Manipulator.outtakeAlgae().withTimeout(0.75)
-                )
-            )
+        joystickLeft.button(2).onTrue(
+            tossAlgae()
         )
 //
         controller.leftBumper().whileTrue(Funnel.outtake())
@@ -268,12 +311,23 @@ object Robot : LoggedRobot() {
             })
         )
 
-        JoystickButton(joystickRight, 2).whileTrue(
-            Commands.parallel(
-                Manipulator.intakeNoRaceWithOutInterrupt(),
-                Funnel.intake()
+        controller.leftTrigger().onTrue(
+            Commands.sequence(
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = true
+                }),
+                Manipulator.intakeAlgae(),
             )
         )
+
+        // TODO: find a good button for this if needed
+//        joystickRight.button(2).whileTrue(
+//            Commands.parallel(
+//                Manipulator.intakeNoRaceWithOutInterrupt(),
+//                Funnel.intake()
+//            )
+//        )
+        joystickRight.button(2).whileTrue(Drivetrain.alignToBarge())
 
 //            Manipulator.intake()
 

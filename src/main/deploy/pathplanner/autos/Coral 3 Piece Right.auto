@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Coral 1 Piece Blue"
+                  "pathName": "Coral 1 Piece Red"
                 }
               }
             ]
@@ -49,7 +49,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Coral 2 Piece Blue HP 1"
+                  "pathName": "Coral 2 Piece Red HP 1"
                 }
               },
               {
@@ -78,7 +78,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "Coral 2 Piece Blue Score 1"
+                        "pathName": "Coral 2 Piece Red Score 1"
                       }
                     }
                   ]
@@ -131,7 +131,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Coral 3 Piece Blue HP 2"
+                  "pathName": "Coral 3 Piece Red HP 2"
                 }
               }
             ]
@@ -154,7 +154,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "Coral 3 Piece Blue Score 2"
+                        "pathName": "Coral 3 Piece Red Score 2"
                       }
                     }
                   ]
