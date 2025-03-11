@@ -47,6 +47,8 @@ import org.littletonrobotics.junction.Logger
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.sign
 
 /** A singleton object representing the drivetrain. */
 object Drivetrain : Subsystem, Sendable {
@@ -295,12 +297,16 @@ object Drivetrain : Subsystem, Sendable {
             desiredModuleStates = BRAKE_POSITION
         } else {
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
-                translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
-                rotationInput.y * TAU * ROTATION_SENSITIVITY,
+                calculateInputCurve(translationInput.x) * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                calculateInputCurve(translationInput.y) * translationInput.y.sign * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                calculateInputCurve(rotationInput.y) * TAU * ROTATION_SENSITIVITY,
                 estimatedPose.rotation
             )
         }
+    }
+
+    private fun calculateInputCurve(input: Double): Double {
+        return input.pow(2) * input.sign
     }
 
     fun driveWithJoysticks(translationJoystick: Joystick, rotationJoystick: Joystick): Command =
@@ -463,7 +469,7 @@ object Drivetrain : Subsystem, Sendable {
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
-        const val TRANSLATION_SENSITIVITY = 0.65
+        const val TRANSLATION_SENSITIVITY = 0.65 // FIXME: Increase
 
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.8
