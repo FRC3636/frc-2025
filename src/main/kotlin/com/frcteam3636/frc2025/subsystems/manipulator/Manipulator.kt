@@ -64,11 +64,11 @@ object Manipulator : Subsystem {
     }
 
     private fun blinkLimelight(): Command = Commands.runOnce({
-        LimelightHelpers.setLEDMode_ForceBlink("limelight-rear")
+        LimelightHelpers.setLEDMode_ForceBlink("limelight-left")
     })
         .andThen(Commands.waitSeconds(0.3))
         .finallyDo { ->
-            LimelightHelpers.setLEDMode_PipelineControl("limelight-rear")
+            LimelightHelpers.setLEDMode_PipelineControl("limelight-left")
         }
 
 
