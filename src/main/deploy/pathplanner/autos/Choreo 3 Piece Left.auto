@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "3 Piece.0"
+            "pathName": "3 Piece Left.0"
           }
         },
         {
@@ -29,7 +29,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "3 Piece.1"
+                  "pathName": "3 Piece Left.1"
                 }
               },
               {
@@ -70,7 +70,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "3 Piece.2"
+                        "pathName": "3 Piece Left.2"
                       }
                     }
                   ]
@@ -98,7 +98,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "3 Piece.3"
+                  "pathName": "3 Piece Left.3"
                 }
               },
               {
@@ -139,7 +139,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "3 Piece.4"
+                        "pathName": "3 Piece Left.4"
                       }
                     }
                   ]
