@@ -377,6 +377,14 @@ object Drivetrain : Subsystem, Sendable {
             .pose
     }
 
+    fun alignToLeftStation() = alignToTarget(usePathfinding = false) {
+        AprilTagTarget.currentAllianceLeftStation.pose
+    }
+
+    fun alignToRightStation() = alignToTarget(usePathfinding = false) {
+        AprilTagTarget.currentAllianceRightStation.pose
+    }
+
     fun alignToTarget(usePathfinding: Boolean = true, target: () -> Pose2d): Command = defer {
         val target = target()
         Logger.recordOutput("Drivetrain/Auto-align Target", target)
