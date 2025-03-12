@@ -47,7 +47,9 @@ import java.util.*
 import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
+import kotlin.math.absoluteValue
 import kotlin.math.pow
+import kotlin.math.withSign
 
 /** A singleton object representing the drivetrain. */
 object Drivetrain : Subsystem, Sendable {
@@ -308,11 +310,9 @@ object Drivetrain : Subsystem, Sendable {
     }
 
     private fun calculateInputCurve(input: Double): Double {
-//        abs((7.0 * input.pow(3)) / (input.pow(2) - 8)) * input.sign // its proprietary
-        if (input > 0.0) {
-            return input.pow(1.7)
-        }
-        return -(-input).pow(1.7)
+        val exponent = 1.7
+
+        return input.absoluteValue.pow(exponent).withSign(input)
     }
 
     fun driveWithJoysticks(translationJoystick: Joystick, rotationJoystick: Joystick): Command =
