@@ -48,7 +48,6 @@ import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
 import kotlin.math.pow
-import kotlin.math.sign
 
 /** A singleton object representing the drivetrain. */
 object Drivetrain : Subsystem, Sendable {
@@ -302,14 +301,18 @@ object Drivetrain : Subsystem, Sendable {
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 calculateInputCurve(translationInput.x) * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 calculateInputCurve(translationInput.y) * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
-                calculateInputCurve(rotationInput.y) * TAU * ROTATION_SENSITIVITY,
+                rotationInput.y * TAU * ROTATION_SENSITIVITY,
                 estimatedPose.rotation
             )
         }
     }
 
     private fun calculateInputCurve(input: Double): Double {
-        return input.pow(2) * input.sign
+//        abs((7.0 * input.pow(3)) / (input.pow(2) - 8)) * input.sign // its proprietary
+        if (input > 0.0) {
+            return input.pow(1.7)
+        }
+        return -(-input).pow(1.7)
     }
 
     fun driveWithJoysticks(translationJoystick: Joystick, rotationJoystick: Joystick): Command =
@@ -390,7 +393,7 @@ object Drivetrain : Subsystem, Sendable {
         val commands = mutableListOf<Command>()
 
         if (usePathfinding) {
-            commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.5.metersPerSecond))
+            commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.0.metersPerSecond))
         }
 
         commands.addAll(
@@ -458,7 +461,7 @@ object Drivetrain : Subsystem, Sendable {
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
-        const val TRANSLATION_SENSITIVITY = 0.65 // FIXME: Increase
+        const val TRANSLATION_SENSITIVITY = 1.0 // FIXME: Increase
 
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.8
@@ -469,7 +472,7 @@ object Drivetrain : Subsystem, Sendable {
         val BUMPER_WIDTH = 33.5.inches
         val BUMPER_LENGTH = 35.5.inches
 
-        const val JOYSTICK_DEADBAND = 0.15
+        const val JOYSTICK_DEADBAND = 0.075
 
         val MODULE_POSITIONS = PerCorner(
             frontLeft = Pose2d(
