@@ -80,14 +80,14 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         else -> mapOf(
-            "Limelight Front" to LimelightPoseProvider(
-                "limelight-front",
+            "Limelight Right" to LimelightPoseProvider(
+                "limelight-right",
                 algorithm = mt2Algo
             ),
-//            "Limelight Rear" to LimelightPoseProvider(
-//                "limelight-rear",
-//                algorithm = mt2Algo
-//            ),
+            "Limelight Left" to LimelightPoseProvider(
+                "limelight-left",
+                algorithm = mt2Algo
+            ),
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
@@ -171,11 +171,11 @@ object Drivetrain : Subsystem, Sendable {
             sensorIO.updateInputs(inputs)
             Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
 
-//            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
+            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
-//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
-//                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
+                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
+                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
                 Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
         }
@@ -603,7 +603,7 @@ object Drivetrain : Subsystem, Sendable {
             Rotation2d(0.degrees)
         )
 
-        val ALIGN_PID_GAINS = PIDGains(10.0, 0.0, 0.5)
+        val ALIGN_PID_GAINS = PIDGains(5.0)
     }
 
     enum class Localizer {
