@@ -4,6 +4,7 @@ import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
+import com.frcteam3636.frc2025.subsystems.elevator.Elevator.Position
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
@@ -254,7 +255,12 @@ object Robot : LoggedRobot() {
 
         joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI())
 //        joystickLeft.button(1).whileTrue(Drivetrain.alignToReefAlgae())
-        joystickRight.button(1).whileTrue(Manipulator.outtake())
+        joystickRight.button(1).whileTrue(
+            Commands.sequence(
+                Manipulator.outtake().withTimeout(0.25),
+                Elevator.setTargetHeight(Position.Stowed)
+            )
+        )
 
 //        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
 
