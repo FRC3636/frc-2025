@@ -51,7 +51,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             0.meters,
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
-                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET + FIELD_OFFSET
+                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET
                 ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET - FIELD_OFFSET
             }
         ),
