@@ -2,7 +2,7 @@ package com.frcteam3636.frc2025.subsystems.elevator
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.DynamicMotionMagicTorqueCurrentFOC
-import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
+import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
@@ -39,7 +39,7 @@ interface ElevatorIO {
     fun runToHeight(height: Distance)
     fun runToHeightWithOverride(height: Distance, velocity: AngularVelocity, acceleration: AngularAcceleration)
 
-    fun setVoltage(volts: Voltage)
+    fun setVoltage(voltage: Voltage)
 
     fun setEncoderPosition(position: Distance)
 
@@ -115,10 +115,14 @@ class ElevatorIOReal : ElevatorIO {
         inputs.leftCurrent = leftElevatorMotor.supplyCurrent.value
     }
 
+    val motionMagicVoltage = MotionMagicVoltage(0.0).apply {
+        EnableFOC = true
+    }
+
     override fun runToHeight(height: Distance) {
         Logger.recordOutput("Elevator/Height Setpoint", height)
         val desiredMotorAngle = height.toAngular(SPOOL_RADIUS)
-        val controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
+        val controlRequest = motionMagicVoltage.withPosition(desiredMotorAngle)
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
@@ -140,9 +144,13 @@ class ElevatorIOReal : ElevatorIO {
         leftElevatorMotor.setControl(controlRequest)
     }
 
-    override fun setVoltage(volts: Voltage) {
-        assert(volts in (-12).volts..12.volts)
-        val controlRequest = VoltageOut(volts.inVolts())
+    private val voltageControl = VoltageOut(0.0).apply {
+        EnableFOC = true
+    }
+
+    override fun setVoltage(voltage: Voltage) {
+        assert(voltage in (-12).volts..12.volts)
+        val controlRequest = voltageControl.withOutput(voltage)
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
@@ -166,12 +174,12 @@ class ElevatorIOReal : ElevatorIO {
         val SPOOL_RADIUS = 0.77.inches
 
         //        private val DISTANCE_PER_TURN = Meters.per(Radian).of(SPOOL_RADIUS.meters)
-        private val PID_GAINS = PIDGains(160.92, 0.0, 5.3624)
-        private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
-        private const val GRAVITY_GAIN = 0.27592
-        private val PROFILE_ACCELERATION = 16.0
+        private val PID_GAINS = PIDGains(50.0)
+        private val FF_GAINS = MotorFFGains(0.047079, 1.0319, 0.026251)
+        private const val GRAVITY_GAIN = 0.31823
+        private val PROFILE_ACCELERATION = 20.0
         private const val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = 200.inchesPerSecond.toAngular(SPOOL_RADIUS)
+        private val PROFILE_VELOCITY = 250.inchesPerSecond.toAngular(SPOOL_RADIUS)
     }
 
 }
@@ -227,9 +235,9 @@ class ElevatorIOSim : ElevatorIO {
         TODO("Not yet implemented")
     }
 
-    override fun setVoltage(volts: Voltage) {
-        elevatorSim.setInputVoltage(volts.inVolts())
-        Logger.recordOutput("/Elevator/OutVolt", volts)
+    override fun setVoltage(voltage: Voltage) {
+        elevatorSim.setInputVoltage(voltage.inVolts())
+        Logger.recordOutput("/Elevator/OutVolt", voltage)
     }
 
     override fun setEncoderPosition(position: Distance) {

@@ -3,6 +3,7 @@ package com.frcteam3636.frc2025.subsystems.elevator
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants.SPOOL_RADIUS
+import com.frcteam3636.frc2025.utils.SysIdSubsystem
 import com.frcteam3636.frc2025.utils.math.*
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
@@ -12,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import kotlin.math.abs
 
-object Elevator : Subsystem {
+object Elevator : Subsystem, SysIdSubsystem {
     private val io: ElevatorIO = when (Robot.model) {
         Robot.Model.SIMULATION -> ElevatorIOSim()
         Robot.Model.COMPETITION -> ElevatorIOReal()
@@ -75,10 +76,10 @@ object Elevator : Subsystem {
         io.setBrakeMode(true)
     })
 
-    fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
+    override fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
         sysID.quasistatic(direction)!!
 
-    fun sysIdDynamic(direction: SysIdRoutine.Direction) =
+    override fun sysIdDynamic(direction: SysIdRoutine.Direction) =
         sysID.dynamic(direction)!!
 
     enum class Position(val height: Distance) {
@@ -88,7 +89,7 @@ object Elevator : Subsystem {
         MidBar(2.27.rotations.toLinear(SPOOL_RADIUS)),
 
         // FIXME: this may be too high after we tune elevator
-        HighBar(4.54.rotations.toLinear(SPOOL_RADIUS)),
+        HighBar(4.45.rotations.toLinear(SPOOL_RADIUS)),
 //        LowAlgae(Meters.of(0.0)),
 //        HighAlgae(Meters.of(0.0)),
     }

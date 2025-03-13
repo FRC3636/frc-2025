@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025
 
+import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
@@ -9,6 +10,7 @@ import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
+import com.frcteam3636.frc2025.utils.SysIdSubsystem
 import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
@@ -29,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
@@ -239,6 +242,13 @@ object Robot : LoggedRobot() {
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
+        when (Preferences.getString("ControlScheme", "normal")) {
+            "elevator-sysid" -> {
+                configureSysIdBindings(Elevator)
+                return
+            }
+        }
+
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
         Manipulator.defaultCommand = Manipulator.idle()
 
@@ -289,7 +299,7 @@ object Robot : LoggedRobot() {
         joystickLeft.button(2).onTrue(
             tossAlgae()
         )
-//
+
         controller.leftBumper().whileTrue(Funnel.outtake())
         controller.rightBumper().onTrue(
             Commands.sequence(
@@ -331,14 +341,16 @@ object Robot : LoggedRobot() {
 
 //            Manipulator.intake()
 
+    }
 
-//        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
-//        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
-////
-//        controller.y().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-//        controller.a().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-//        controller.b().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kForward));
-//        controller.x().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    private fun configureSysIdBindings(subsystem: SysIdSubsystem) {
+        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
+        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
+
+        controller.y().whileTrue(subsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+        controller.a().whileTrue(subsystem.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+        controller.b().whileTrue(subsystem.sysIdDynamic(SysIdRoutine.Direction.kForward))
+        controller.x().whileTrue(subsystem.sysIdDynamic(SysIdRoutine.Direction.kReverse))
     }
 
     /** Add data to the driver station dashboard. */
