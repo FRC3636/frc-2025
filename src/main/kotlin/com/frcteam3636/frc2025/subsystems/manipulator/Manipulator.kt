@@ -34,18 +34,6 @@ object Manipulator : Subsystem {
     private var motorAngleVisualizer =
         LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
-    private fun waitForIntake(): Command = Commands.sequence(
-        Commands.waitUntil { inputs.laserCanDistance < 0.2.meters },
-        Commands.waitSeconds(0.2),
-        Commands.waitUntil { inputs.laserCanDistance > 0.2.meters },
-        Commands.runOnce({
-            coralState = CoralState.HELD
-            blinkLimelight().schedule()
-        }),
-    )
-
-    private var controller = PIDController(PIDGains(0.1, 0.0, 0.0))
-
     var isIntakeRunning = false
 
     init {
@@ -88,7 +76,7 @@ object Manipulator : Subsystem {
         Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
-            blinkLimelight().schedule()
+            //blinkLimelight().schedule()
         }),
     )
         .onlyWhile {
@@ -99,7 +87,7 @@ object Manipulator : Subsystem {
     fun intakeAuto(): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
         Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
-        runOnce { io.setVoltage(0.5.volts) },
+        runOnce { io.setVoltage(0.6.volts) },
         Commands.runOnce({
             coralState = CoralState.TRANSIT
         }),
@@ -107,14 +95,10 @@ object Manipulator : Subsystem {
         runOnce { io.setSpeed(-0.02) },
         Commands.runOnce({
             coralState = CoralState.HELD
-            blinkLimelight().schedule()
+            //blinkLimelight().schedule()
         }),
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
-
-    fun intakeNoRaceWithOutInterrupt(): Command = run(
-        { io.setVoltage(0.78.volts) },
-    )
 
     fun outtake(): Command = startEnd(
         { io.setCurrent(50.amps) },
