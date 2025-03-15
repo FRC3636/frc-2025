@@ -247,4 +247,4 @@ fun Iterable<TargetGroup>.closestTargetToPoseWithSelection(
 
 private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters
 private val FIELD_OFFSET = 1.inches
-private val REEF_DISTANCE_OFFSET = (-1.1).inches
+private val REEF_DISTANCE_OFFSET = (-0.5).inches

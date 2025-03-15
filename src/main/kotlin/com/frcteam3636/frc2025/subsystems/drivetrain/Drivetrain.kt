@@ -365,6 +365,7 @@ object Drivetrain : Subsystem, Sendable {
     }
 
     private val alignController = PIDController(Constants.ALIGN_PID_GAINS)
+    private val rotationAlignController = PIDController(Constants.ROTATION_ALIGN_PID_GAINS)
 
     fun alignToClosestPOI(sideOverride: ReefBranchSide? = null, usePathfinding: Boolean = true) =
         alignToTarget(usePathfinding) {
@@ -400,15 +401,28 @@ object Drivetrain : Subsystem, Sendable {
             arrayOf(
                 runOnce {
                     alignController.reset()
+                    rotationAlignController.reset()
                     Logger.recordOutput("/Drivetrain/Align-Running", true)
                 },
                 runEnd({
-                    val distanceToTarget = estimatedPose.relativeTo(target).translation.norm
-                    val angleToTarget = estimatedPose.relativeTo(target).translation.angle
+                    val relativePose = estimatedPose.relativeTo(target)
+                    val distanceToTarget = relativePose.translation.norm
+                    val angleToTarget = relativePose.translation.angle
                     val output = alignController.calculate(distanceToTarget, 0.0)
                     val desiredSpeed = Translation2d(output, angleToTarget)
+
+                    val rotation = rotationAlignController
+                        .calculate(
+                            relativePose.rotation.degrees,
+                            0.0
+                        )
+                        .degreesPerSecond
+
+
                     val chassisSpeeds = ChassisSpeeds(
-                        desiredSpeed.x, desiredSpeed.y, 0.0
+                        desiredSpeed.x.metersPerSecond,
+                        desiredSpeed.y.metersPerSecond,
+                        rotation,
                     )
                     Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
                     desiredChassisSpeeds = chassisSpeeds
@@ -603,7 +617,8 @@ object Drivetrain : Subsystem, Sendable {
             Rotation2d(0.degrees)
         )
 
-        val ALIGN_PID_GAINS = PIDGains(5.0)
+        val ALIGN_PID_GAINS = PIDGains(7.0)
+        val ROTATION_ALIGN_PID_GAINS = PIDGains(0.5)
     }
 
     enum class Localizer {
