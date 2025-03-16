@@ -5,11 +5,13 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
+import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.Elastic
 import com.frcteam3636.frc2025.utils.ElasticNotification
 import com.frcteam3636.frc2025.utils.NotificationLevel
 import com.frcteam3636.frc2025.utils.math.seconds
+import com.frcteam3636.frc2025.utils.rumble
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -18,10 +20,7 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.Joystick
-import edu.wpi.first.wpilibj.PowerDistribution
-import edu.wpi.first.wpilibj.Preferences
+import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
@@ -185,7 +184,7 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "outtake",
-            Manipulator.outtake().withTimeout(0.5.seconds) // FIXME: TURN THIS DOWN
+            Manipulator.outtake().withTimeout(0.3.seconds)
         )
         NamedCommands.registerCommand(
             "intake",
@@ -211,11 +210,11 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "alignToReefAlgae",
             Drivetrain.alignToReefAlgae(usePathfinding = false)
-                .withTimeout(1.seconds)
+                .withTimeout(2.seconds)
         )
         NamedCommands.registerCommand(
             "alignToBarge",
-            Drivetrain.alignToLeftStation()
+            Drivetrain.alignToBarge(usePathfinding = false)
                 .withTimeout(1.seconds)
         )
         NamedCommands.registerCommand(
@@ -237,6 +236,15 @@ object Robot : LoggedRobot() {
                 Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
                     .withTimeout(1.seconds),
                 Elevator.setTargetHeight(Elevator.Position.HighBar),
+            )
+        )
+        NamedCommands.registerCommand(
+            "waitForIntake",
+            Commands.race(
+                Commands.waitUntil {
+                    Manipulator.coralState != CoralState.NONE
+                },
+                Commands.waitSeconds(1.0)
             )
         )
     }
@@ -327,7 +335,13 @@ object Robot : LoggedRobot() {
                     Manipulator.isIntakeRunning = true
                 }),
                 Commands.race(
-                    Manipulator.intake(),
+                    Manipulator.intake(
+                        driverFeedback = controller.rumble(
+                            GenericHID.RumbleType.kBothRumble,
+                            1.0,
+                            0.5.seconds,
+                        )
+                    ),
                     Funnel.intake()
                 )
             ).andThen({

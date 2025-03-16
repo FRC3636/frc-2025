@@ -8,20 +8,20 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.847598815548161,
-        "y": 4.173442716753196
+        "x": 6.532400556809709,
+        "y": 4.182129997946735
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 7.144672131147541,
+        "x": 6.125717213114753,
         "y": 4.1748463114754095
       },
       "prevControl": {
-        "x": 6.3556282546567715,
-        "y": 4.1725920848100255
+        "x": 5.490284430268212,
+        "y": 4.170436278654967
       },
       "nextControl": null,
       "isLocked": false,
@@ -45,7 +45,7 @@
     "rotation": -178.92414937920873
   },
   "reversed": false,
-  "folder": "Algae1",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
     "rotation": 180.0

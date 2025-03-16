@@ -195,9 +195,22 @@
           }
         },
         {
-          "type": "named",
+          "type": "parallel",
           "data": {
-            "name": "stowElevator"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "stowElevator"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Coral 3 Piece Blue HP 3"
+                }
+              }
+            ]
           }
         }
       ]

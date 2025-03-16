@@ -1,10 +1,14 @@
 package com.frcteam3636.frc2025.utils
 
-import com.frcteam3636.frc2025.Robot
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
+import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.Joystick
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import kotlin.jvm.optionals.getOrNull
 
 
@@ -30,3 +34,11 @@ val Joystick.translation2d: Translation2d
     get() = Translation2d(
         -y, -x
     )
+
+fun CommandXboxController.rumble(rumbleType: GenericHID.RumbleType, power: Double, time: Time): Command =
+    Commands.startEnd({
+        setRumble(rumbleType, power)
+    }, {
+        setRumble(rumbleType, 0.0)
+    })
+        .withTimeout(time)

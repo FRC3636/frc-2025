@@ -369,9 +369,6 @@ object Drivetrain : Subsystem, Sendable {
         })
     }
 
-    private val alignController = PIDController(Constants.ALIGN_PID_GAINS)
-    private val rotationAlignController = PIDController(Constants.ROTATION_ALIGN_PID_GAINS)
-
     fun alignToClosestPOI(sideOverride: ReefBranchSide? = null, usePathfinding: Boolean = true) =
         alignToTarget(usePathfinding) {
             AprilTagTarget.currentAllianceTargets.asIterable()
@@ -471,9 +468,9 @@ object Drivetrain : Subsystem, Sendable {
                 if (enableEndCondition) {
                     val relativePose = estimatedPose.relativeTo(target)
 
-                    relativePose.translation.norm < 1.inches.inMeters() // Translation
+                    relativePose.translation.norm < 0.3.inches.inMeters() // Translation
                             && abs(relativePose.rotation.degrees) < 1.5 // Rotation
-                            && measuredChassisSpeeds.translation2dPerSecond.norm < 0.5 // Speed
+                            && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
                 } else {
                     false
                 }
