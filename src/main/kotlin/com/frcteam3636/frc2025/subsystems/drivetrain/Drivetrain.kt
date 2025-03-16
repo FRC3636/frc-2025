@@ -48,6 +48,9 @@ import java.util.*
 import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.pow
+import kotlin.math.withSign
 
 /** A singleton object representing the drivetrain. */
 object Drivetrain : Subsystem, Sendable {
@@ -78,8 +81,12 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         else -> mapOf(
-            "Limelight Front" to LimelightPoseProvider(
-                "limelight-front",
+            "Limelight Right" to LimelightPoseProvider(
+                "limelight-right",
+                algorithm = mt2Algo
+            ),
+            "Limelight Left" to LimelightPoseProvider(
+                "limelight-left",
                 algorithm = mt2Algo
             ),
 //            "Limelight Rear" to LimelightPoseProvider(
@@ -169,11 +176,11 @@ object Drivetrain : Subsystem, Sendable {
             sensorIO.updateInputs(inputs)
             Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
 
-//            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
+            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
-//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
-//                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
+                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
+                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
                 Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
         }
@@ -299,12 +306,18 @@ object Drivetrain : Subsystem, Sendable {
             desiredModuleStates = BRAKE_POSITION
         } else {
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                translationInput.x * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
-                translationInput.y * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                calculateInputCurve(translationInput.x) * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
+                calculateInputCurve(translationInput.y) * FREE_SPEED.baseUnitMagnitude() * TRANSLATION_SENSITIVITY,
                 rotationInput.y * TAU * ROTATION_SENSITIVITY,
                 estimatedPose.rotation
             )
         }
+    }
+
+    private fun calculateInputCurve(input: Double): Double {
+        val exponent = 1.7
+
+        return input.absoluteValue.pow(exponent).withSign(input)
     }
 
     fun driveWithJoysticks(translationJoystick: Joystick, rotationJoystick: Joystick): Command =
@@ -355,6 +368,9 @@ object Drivetrain : Subsystem, Sendable {
             Logger.recordOutput("Drivetrain/Auto-align Target", Translation2d())
         })
     }
+
+    private val alignController = PIDController(Constants.ALIGN_PID_GAINS)
+    private val rotationAlignController = PIDController(Constants.ROTATION_ALIGN_PID_GAINS)
 
     fun alignToClosestPOI(sideOverride: ReefBranchSide? = null, usePathfinding: Boolean = true) =
         alignToTarget(usePathfinding) {
@@ -408,7 +424,7 @@ object Drivetrain : Subsystem, Sendable {
         val commands = mutableListOf<Command>()
 
         if (usePathfinding) {
-            commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.5.metersPerSecond))
+            commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.0.metersPerSecond))
         }
 
         commands.addAll(
@@ -499,7 +515,7 @@ object Drivetrain : Subsystem, Sendable {
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
-        const val TRANSLATION_SENSITIVITY = 0.65
+        const val TRANSLATION_SENSITIVITY = 1.0 // FIXME: Increase
 
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.8
@@ -510,7 +526,7 @@ object Drivetrain : Subsystem, Sendable {
         val BUMPER_WIDTH = 33.5.inches
         val BUMPER_LENGTH = 35.5.inches
 
-        const val JOYSTICK_DEADBAND = 0.15
+        const val JOYSTICK_DEADBAND = 0.075
 
         val MODULE_POSITIONS = PerCorner(
             frontLeft = Pose2d(
@@ -641,8 +657,8 @@ object Drivetrain : Subsystem, Sendable {
             Rotation2d(0.degrees)
         )
 
-        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(10.0, 0.0, 0.5)
-        val ALIGN_ROTATION_PID_GAINS = PIDGains(0.5, 0.0, 0.0)
+        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(7.0)
+        val ALIGN_ROTATION_PID_GAINS = PIDGains(0.5)
     }
 
     enum class Localizer {

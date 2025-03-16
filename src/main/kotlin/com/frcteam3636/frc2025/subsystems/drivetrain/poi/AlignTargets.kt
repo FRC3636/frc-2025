@@ -51,8 +51,8 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             0.meters,
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
-                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET + 0.5.inches
-                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET - 0.5.inches
+                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET + FIELD_OFFSET
+                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET - FIELD_OFFSET
             }
         ),
     )
@@ -74,7 +74,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val offsetFromPoseFacingAprilTagWithBumperSpacer = Translation2d(
             // We don't want to be *on top* of the april tag, so back up a bit from the tag.
-            -Drivetrain.Constants.BUMPER_LENGTH / 2.0,
+            -(Drivetrain.Constants.BUMPER_LENGTH / 2.0) + REEF_DISTANCE_OFFSET,
             0.meters,
         )
             .plus(offset)
@@ -263,3 +263,5 @@ fun Iterable<TargetGroup>.closestTargetToPoseWithSelection(
     } ?: error("Can't find closest target")
 
 private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters
+private val FIELD_OFFSET = 1.inches
+private val REEF_DISTANCE_OFFSET = (-0.5).inches
