@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Coral 1 Piece Blue"
+                  "pathName": "Coral 1 Piece Red"
                 }
               }
             ]
@@ -24,7 +24,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "alignToTarget"
+                  "name": "alignToTargetRight"
                 }
               },
               {
@@ -49,7 +49,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Coral 2 Piece Blue HP 1"
+                  "pathName": "Coral 2 Piece Red HP 1"
                 }
               },
               {
@@ -78,83 +78,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "Coral 2 Piece Blue Score 1"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "alignToTarget"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "raiseElevatorL4"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "outtake"
-          }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "stowElevator"
-                }
-              },
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Coral 3 Piece Blue HP 2"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "waitForIntake"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Coral 3 Piece Blue Score 2"
+                        "pathName": "Coral 2 Piece Red Score 1"
                       }
                     }
                   ]
@@ -195,9 +119,98 @@
           }
         },
         {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "stowElevator"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Coral 3 Piece Red HP 2"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "waitForIntake"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "Coral 3 Piece Red Score 2"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "alignToTarget"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "raiseElevatorL4"
+                }
+              }
+            ]
+          }
+        },
+        {
           "type": "named",
           "data": {
-            "name": "stowElevator"
+            "name": "outtake"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "stowElevator"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Coral 3 Piece Red HP 3"
+                }
+              }
+            ]
           }
         }
       ]

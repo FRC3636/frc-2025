@@ -55,12 +55,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "Algae1 #3 Approach Algae"
-          }
-        },
-        {
           "type": "parallel",
           "data": {
             "commands": [

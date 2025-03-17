@@ -142,6 +142,23 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
                     else -> blueReefAlgaeTargets
                 }
             }
+
+        val redLeftStationTarget = AprilTagTarget(1, Translation2d())
+        val redRightStationTarget = AprilTagTarget(2, Translation2d())
+        val blueLeftStationTarget = AprilTagTarget(13, Translation2d())
+        val blueRightStationTarget = AprilTagTarget(12, Translation2d())
+
+        val currentAllianceLeftStation
+            get() = when (DriverStation.getAlliance().getOrNull()) {
+                DriverStation.Alliance.Red -> redLeftStationTarget
+                else -> blueLeftStationTarget
+            }
+
+        val currentAllianceRightStation
+            get() = when (DriverStation.getAlliance().getOrNull()) {
+                DriverStation.Alliance.Red -> redRightStationTarget
+                else -> blueRightStationTarget
+            }
     }
 }
 

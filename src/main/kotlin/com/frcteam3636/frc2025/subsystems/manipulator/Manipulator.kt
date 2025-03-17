@@ -2,7 +2,10 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
-import com.frcteam3636.frc2025.utils.math.*
+import com.frcteam3636.frc2025.utils.math.amps
+import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
+import com.frcteam3636.frc2025.utils.math.meters
+import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
@@ -22,8 +25,8 @@ object Manipulator : Subsystem {
 
     var inputs = LoggedManipulatorInputs()
 
-    private var coralState: CoralState = CoralState.NONE
-        set(value) {
+    var coralState: CoralState = CoralState.NONE
+        private set(value) {
             field = value
             rgbPublisher.set(value.ordinal.toLong())
         }
@@ -66,7 +69,7 @@ object Manipulator : Subsystem {
         io.setSpeed(0.0)
     })
 
-    fun intake(): Command = Commands.sequence(
+    fun intake(driverFeedback: Command = Commands.none()): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
         Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
         runOnce { io.setVoltage(0.6.volts) },
@@ -76,7 +79,7 @@ object Manipulator : Subsystem {
         Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
         Commands.runOnce({
             coralState = CoralState.HELD
-            //blinkLimelight().schedule()
+            driverFeedback.schedule()
         }),
     )
         .onlyWhile {
@@ -95,7 +98,6 @@ object Manipulator : Subsystem {
         runOnce { io.setSpeed(-0.02) },
         Commands.runOnce({
             coralState = CoralState.HELD
-            //blinkLimelight().schedule()
         }),
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)

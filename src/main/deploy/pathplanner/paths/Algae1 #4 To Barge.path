@@ -45,7 +45,7 @@
     "rotation": -1.0230301886678763
   },
   "reversed": false,
-  "folder": "Algae1",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
     "rotation": 180.0
