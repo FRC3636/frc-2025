@@ -32,6 +32,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.util.Units
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.Alert
@@ -210,6 +211,8 @@ object Drivetrain : Subsystem, Sendable {
                 }
                 .map { it.pose }
                 .toTypedArray())
+
+
     }
 
     /** The desired speeds and angles of the swerve modules. */
@@ -402,6 +405,23 @@ object Drivetrain : Subsystem, Sendable {
     private val alignTranslationController = PIDController(Constants.ALIGN_TRANSLATION_PID_GAINS)
     private val alignRotationController = PIDController(Constants.ALIGN_ROTATION_PID_GAINS)
 
+    private val alignPositionPublisher = NetworkTableInstance.getDefault()
+        .getDoubleArrayTopic("/RGB/Auto Align/Position Relative to Align Target")
+        .publish()
+    private val alignStatePublisher = NetworkTableInstance.getDefault()
+        .getIntegerTopic("/RGB/Movement State")
+        .publish()
+        .apply {
+            setDefault(AlignState.NotRunning.raw)
+        }
+
+    private enum class AlignState(val raw: Long) {
+        NotRunning(0),
+        AlignPathfinding(1),
+        Aligning(2),
+        Success(3),
+    }
+
     /**
      * Drive to a pose on the field.
      *
@@ -418,9 +438,17 @@ object Drivetrain : Subsystem, Sendable {
         val target = target()
         Logger.recordOutput("Drivetrain/Auto-align Target", target)
 
+        fun isAtTarget(relativePose: Pose2d): Boolean =
+            (relativePose.translation.norm < 0.3.inches.inMeters() // Translation
+                    && abs(relativePose.rotation.degrees) < 1.5 // Rotation
+                    && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25) // Speed
+
         val commands = mutableListOf<Command>()
 
         if (usePathfinding) {
+            commands.add(Commands.runOnce({
+                alignStatePublisher.set(AlignState.AlignPathfinding.raw)
+            }))
             commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.0.metersPerSecond))
         }
 
@@ -456,24 +484,39 @@ object Drivetrain : Subsystem, Sendable {
                     )
                     Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
                     desiredChassisSpeeds = chassisSpeeds
+
+                    alignStatePublisher.set(
+                        if (isAtTarget(relativePose)) {
+                            AlignState.Success.raw
+                        } else {
+                            AlignState.Aligning.raw
+                        }
+                    )
                 }, {
                     desiredModuleStates = BRAKE_POSITION
                     Logger.recordOutput("/Drivetrain/Align-Running", false)
+                    alignStatePublisher.set(AlignState.NotRunning.raw)
                 })
             )
         )
 
         Commands.sequence(*commands.toTypedArray())
-            .until {
-                if (enableEndCondition) {
+            .alongWith(
+                // Update RGB state
+                Commands.run({
                     val relativePose = estimatedPose.relativeTo(target)
 
-                    relativePose.translation.norm < 0.3.inches.inMeters() // Translation
-                            && abs(relativePose.rotation.degrees) < 1.5 // Rotation
-                            && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
-                } else {
-                    false
-                }
+                    alignPositionPublisher.set(
+                        doubleArrayOf(
+                            relativePose.x,
+                            relativePose.y,
+                        )
+                    )
+                })
+            )
+            .until {
+                enableEndCondition
+                        && isAtTarget(estimatedPose.relativeTo(target))
             }
     }
 
