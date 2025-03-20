@@ -20,6 +20,8 @@ enum class REVMotorControllerId(val num: Int) {
     BackRightDrivingMotor(3),
     FrontRightDrivingMotor(4),
 
+    GroundIntakeRollerMotor(10),
+
     ManipulatorLaserCAN(21),
 }
 
@@ -38,8 +40,11 @@ enum class CTREDeviceId(val num: Int, val bus: String) {
     RightElevatorMotor(12, "*"),
     ManipulatorMotor(13, "*"),
     FunnelMotor(14, "*"),
+    LeftPivotMotor(15, "*"),
+    RightPivotMotor(16,"*"),
     PigeonGyro(20, "*"),
     ElevatorEncoder(30, "*"),
+    PivotEncoder(31,"*"),
 }
 
 fun CANcoder(id: CTREDeviceId) = CANcoder(id.num, id.bus)
