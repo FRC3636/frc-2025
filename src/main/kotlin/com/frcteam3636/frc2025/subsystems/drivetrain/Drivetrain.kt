@@ -406,10 +406,10 @@ object Drivetrain : Subsystem, Sendable {
     private val alignRotationController = PIDController(Constants.ALIGN_ROTATION_PID_GAINS)
 
     private val alignPositionPublisher = NetworkTableInstance.getDefault()
-        .getDoubleArrayTopic("/RGB/Auto Align/Position Relative to Align Target")
+        .getDoubleArrayTopic("RGB/Auto Align/Position Relative to Align Target")
         .publish()
     private val alignStatePublisher = NetworkTableInstance.getDefault()
-        .getIntegerTopic("/RGB/Movement State")
+        .getIntegerTopic("RGB/Movement State")
         .publish()
         .apply {
             setDefault(AlignState.NotRunning.raw)
