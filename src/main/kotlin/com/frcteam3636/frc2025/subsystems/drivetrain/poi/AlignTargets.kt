@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.DriverStation
 import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
@@ -51,8 +52,8 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
             0.meters,
             // Move left/right from the april tag to get in front of the reef branch
             when (side) {
-                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET + FIELD_OFFSET
-                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET - FIELD_OFFSET
+                ReefBranchSide.Left -> APRIL_TAG_HORIZONTAL_OFFSET + FieldOffset.current.distance
+                ReefBranchSide.Right -> -APRIL_TAG_HORIZONTAL_OFFSET - FieldOffset.current.distance
             }
         ),
     )
@@ -263,5 +264,15 @@ fun Iterable<TargetGroup>.closestTargetToPoseWithSelection(
     } ?: error("Can't find closest target")
 
 private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters
-private val FIELD_OFFSET = 1.inches
+
+private enum class FieldOffset(val distance: Distance) {
+    Stemnasium(1.inches),
+    ClackamasAcademy(0.25.inches),
+    Wilsonville(0.25.inches);
+
+    companion object {
+        val current = Wilsonville
+    }
+}
+
 private val REEF_DISTANCE_OFFSET = (-0.5).inches
