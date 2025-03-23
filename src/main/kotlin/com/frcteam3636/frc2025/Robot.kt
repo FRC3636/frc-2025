@@ -196,12 +196,12 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "alignToTarget",
             Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = false)
-                .withTimeout(1.5.seconds)
+                .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
             Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
-                .withTimeout(1.5.seconds)
+                .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "raiseElevatorAlgae",

@@ -268,7 +268,7 @@ private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters
 private enum class FieldOffset(val distance: Distance) {
     Stemnasium(1.inches),
     ClackamasAcademy(0.25.inches),
-    Wilsonville(0.25.inches);
+    Wilsonville(0.5.inches);
 
     companion object {
         val current = Wilsonville
