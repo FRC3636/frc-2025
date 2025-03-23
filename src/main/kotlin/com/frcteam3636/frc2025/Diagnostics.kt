@@ -37,7 +37,7 @@ object Diagnostics {
 
         object HIDDeviceIsWrongType :
             Fault(
-                "Check USB devices in Driver Station! Driver/operator are likely in the wrong order.",
+                "Check USB device order in Driver Station! The connected devices are likely in the wrong order.",
                 AlertType.kWarning
             )
 
