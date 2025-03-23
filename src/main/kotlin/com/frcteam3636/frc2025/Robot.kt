@@ -8,9 +8,6 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
-import com.frcteam3636.frc2025.utils.Elastic
-import com.frcteam3636.frc2025.utils.ElasticNotification
-import com.frcteam3636.frc2025.utils.NotificationLevel
 import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.frc2025.utils.rumble
 import com.frcteam3636.version.BUILD_DATE
@@ -95,13 +92,11 @@ object Robot : LoggedRobot() {
         if (isReal()) {
             Logger.addDataReceiver(WPILOGWriter()) // Log to a USB stick
             if (!Path("/U").exists()) {
-                Elastic.sendAlert(
-                    ElasticNotification(
-                        "logging USB stick not plugged into radio",
-                        "You gotta plug in a usb stick yo",
-                        NotificationLevel.WARNING
-                    )
+                Alert(
+                    "The Log USB drive is not connected to the roboRIO, so a match replay will not be saved. (If convenient, insert it and restart robot code.)",
+                    Alert.AlertType.kInfo
                 )
+                    .set(true)
             }
             Logger.addDataReceiver(NT4Publisher()) // Publish data to NetworkTables
             // Enables power distribution logging
