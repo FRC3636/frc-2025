@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.CANBus
-import com.ctre.phoenix6.StatusCode
 import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
 import com.frcteam3636.frc2025.utils.cachedStatus
 import com.frcteam3636.frc2025.utils.math.hasElapsed
@@ -64,8 +63,6 @@ object Diagnostics {
     /** Report the CAN Bus's errors */
     fun report(canBus: CANBus) {
         val status = canBus.cachedStatus
-
-        status.Status = StatusCode.InternalError
 
         // Can't connect to the CAN Bus at all? It's probably unplugged or might have even failed.
         if (status.Status.isError) {
