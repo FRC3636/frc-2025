@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.frcteam3636.frc2025.CTREDeviceId
+import com.frcteam3636.frc2025.Diagnostics
 import com.frcteam3636.frc2025.Pigeon2
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER_LENGTH
@@ -158,6 +159,8 @@ class DrivetrainIOSim : DrivetrainIO() {
         super.updateInputs(inputs)
         vision.update(swerveDriveSimulation.simulatedDriveTrainPose)
         Logger.recordOutput("FieldSimulation/RobotPosition", swerveDriveSimulation.simulatedDriveTrainPose)
+
+        Diagnostics.report(gyro)
     }
 
     fun registerPoseProviders(providers: Iterable<AbsolutePoseProvider>) {

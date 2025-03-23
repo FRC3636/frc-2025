@@ -5,12 +5,17 @@ package com.frcteam3636.frc2025.utils.math
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.VoltageUnit
 import edu.wpi.first.units.measure.*
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.Ultrasonic
 
 fun Distance.toAngular(radius: Distance): Angle = Radians.of(this.inMeters() / radius.inMeters())
 fun Angle.toLinear(radius: Distance): Distance = Meters.of(this.inRadians() * radius.inMeters())
 
 inline val Ultrasonic.range: Distance get() = rangeMM.millimeters
+
+/** Returns true if the period has elapsed. If it has, advances the clock by the period */
+inline fun Timer.advanceIfElapsed(time: Time) = advanceIfElapsed(time.inSeconds())
+inline fun Timer.hasElapsed(time: Time) = hasElapsed(time.inSeconds())
 
 // Number -> Measure
 

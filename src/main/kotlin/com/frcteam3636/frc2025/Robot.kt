@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025
 
+import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
@@ -59,6 +60,9 @@ object Robot : LoggedRobot() {
     private val joystickDev = Joystick(3)
 
     private var autoCommand: Command? = null
+
+    private val rioCANBus = CANBus("rio")
+    private val canivore = CANBus("*")
 
     /** Status signals used to check the health of the robot's hardware */
     val statusSignals = mutableMapOf<String, StatusSignal<*>>()
@@ -412,9 +416,14 @@ object Robot : LoggedRobot() {
 
     override fun robotPeriodic() {
         Dashboard.update()
-        Diagnostics.collect(statusSignals).reportAlerts()
+
+        Diagnostics.periodic()
+        Diagnostics.report(rioCANBus)
+        Diagnostics.report(canivore)
+
         CommandScheduler.getInstance().run()
 
+        Diagnostics.send()
     }
 
     override fun autonomousInit() {

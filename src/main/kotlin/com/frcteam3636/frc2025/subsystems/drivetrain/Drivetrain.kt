@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.CTREDeviceId
+import com.frcteam3636.frc2025.Diagnostics
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
@@ -182,6 +183,10 @@ object Drivetrain : Subsystem, Sendable {
                 Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
                 Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
                 Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
+            }
+
+            if (!inputs.connected) {
+                Diagnostics.reportFault(Diagnostics.Fault.LimelightDisconnected)
             }
         }
 

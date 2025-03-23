@@ -60,31 +60,32 @@ object Dashboard {
             .withSize(4, 2)
             .withPosition(10, 6)
 
+
         // Status Indicators
 //        tab.addNumber("Battery Voltage") { RobotController.getBatteryVoltage() }
 //            .withWidget(BuiltInWidgets.kVoltageView)
 //            .withSize(6, 2)
 //            .withPosition(0, 2)
 
-        tab.addBoolean("NavX OK") { Diagnostics.latest.navXConnected }
-            .withPosition(10, 0)
-            .withSize(2, 1)
-        tab.addBoolean("Cameras OK") { Diagnostics.latest.navXConnected }
-            .withPosition(10, 1)
-            .withSize(2, 1)
-        tab.addBoolean("CAN Bus OK") { Diagnostics.latest.canStatus.transmitErrorCount == 0 && Diagnostics.latest.canStatus.receiveErrorCount == 0 }
-            .withPosition(10, 2)
-            .withSize(2, 1)
-        tab.addBoolean("TalonFX OK") { Diagnostics.latest.errorStatusCodes.isEmpty() }
-            .withPosition(10, 3)
-            .withSize(2, 1)
+//        tab.addBoolean("NavX OK") { Diagnostics.latest.navXConnected }
+//            .withPosition(10, 0)
+//            .withSize(2, 1)
+//        tab.addBoolean("Cameras OK") { Diagnostics.latest.navXConnected }
+//            .withPosition(10, 1)
+//            .withSize(2, 1)
+//        tab.addBoolean("CAN Bus OK") { Diagnostics.latest.canStatus.transmitErrorCount == 0 && Diagnostics.latest.canStatus.receiveErrorCount == 0 }
+//            .withPosition(10, 2)
+//            .withSize(2, 1)
+//        tab.addBoolean("TalonFX OK") { Diagnostics.latest.errorStatusCodes.isEmpty() }
+//            .withPosition(10, 3)
+//            .withSize(2, 1)
 //        tab.addBoolean("Battery Full") { RobotController.getBatteryVoltage() >= 12.3 }
 //            .withPosition(10, 4)
 //            .withSize(2, 2)
-        tab.addNumber("CAN Bus Utilization") { Diagnostics.latest.canStatus.percentBusUtilization * 100.0 }
-            .withWidget(BuiltInWidgets.kNumberBar)
-            .withProperties(mapOf("min_value" to 0.0, "max_value" to 100.0))
-            .withPosition(14, 6)
-            .withSize(4, 2)
+//        tab.addNumber("CAN Bus Utilization") { Diagnostics.latest.canStatus.percentBusUtilization * 100.0 }
+//            .withWidget(BuiltInWidgets.kNumberBar)
+//            .withProperties(mapOf("min_value" to 0.0, "max_value" to 100.0))
+//            .withPosition(14, 6)
+//            .withSize(4, 2)
     }
 }
