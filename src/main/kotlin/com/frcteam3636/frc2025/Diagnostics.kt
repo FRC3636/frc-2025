@@ -7,6 +7,7 @@ import com.frcteam3636.frc2025.utils.math.hasElapsed
 import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
+import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.InstantCommand
 
@@ -28,8 +29,20 @@ object Diagnostics {
                 AlertType.kWarning
             )
 
+        object JoystickDisconnected :
+            Fault("One or more Joysticks have disconnected, driver controls will not work.")
+
+        object ControllerDisconnected :
+            Fault("An Xbox Controller has disconnected, operator controls will not work.")
+
+        object HIDDeviceIsWrongType :
+            Fault(
+                "Check USB devices in Driver Station! Driver/operator are likely in the wrong order.",
+                AlertType.kWarning
+            )
+
         class CAN private constructor(bus: CANBus) {
-            private class BusFailure(bus: CANBus) : Fault("The \"${bus.humanReadableName}\" CAN bus has failed!!!")
+            private class BusFailure(bus: CANBus) : Fault("The \"${bus.humanReadableName}\" CAN bus has FAILED!")
             private class BusError(bus: CANBus) :
                 Fault("Devices on the \"${bus.humanReadableName}\" CAN bus are experiencing errors.")
 
@@ -87,6 +100,28 @@ object Diagnostics {
     fun report(gyro: Gyro) {
         if (!gyro.connected) {
             reportFault(Fault.GyroDisconnected)
+        }
+    }
+
+    fun reportDSPeripheral(controller: GenericHID, isController: Boolean) {
+        if (!controller.isConnected) {
+            if (isController) {
+                reportFault(Fault.ControllerDisconnected)
+            } else {
+                reportFault(Fault.JoystickDisconnected)
+            }
+            return
+        }
+
+        val type = controller.type
+        val isExpectedType = if (isController) {
+            type == GenericHID.HIDType.kHIDGamepad || type == GenericHID.HIDType.kXInputGamepad
+        } else {
+            type == GenericHID.HIDType.kHIDJoystick || type == GenericHID.HIDType.kHIDFlight
+        }
+
+        if (!isExpectedType) {
+            reportFault(Fault.HIDDeviceIsWrongType)
         }
     }
 

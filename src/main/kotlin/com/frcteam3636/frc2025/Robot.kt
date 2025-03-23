@@ -414,12 +414,18 @@ object Robot : LoggedRobot() {
 
     }
 
-    override fun robotPeriodic() {
-        Dashboard.update()
-
+    private fun reportDiagnostics() {
         Diagnostics.periodic()
         Diagnostics.report(rioCANBus)
         Diagnostics.report(canivore)
+        Diagnostics.reportDSPeripheral(joystickLeft.hid, isController = false)
+        Diagnostics.reportDSPeripheral(joystickRight.hid, isController = false)
+        Diagnostics.reportDSPeripheral(controller.hid, isController = true)
+    }
+
+    override fun robotPeriodic() {
+        Dashboard.update()
+        reportDiagnostics()
 
         CommandScheduler.getInstance().run()
 
