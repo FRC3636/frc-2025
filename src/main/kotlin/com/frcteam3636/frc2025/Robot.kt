@@ -195,12 +195,12 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "alignToTarget",
-            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = true)
+            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = false)
                 .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
-            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = true)
+            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
                 .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
