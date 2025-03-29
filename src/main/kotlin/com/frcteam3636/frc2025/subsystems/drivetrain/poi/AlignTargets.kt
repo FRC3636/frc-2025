@@ -271,7 +271,7 @@ private enum class FieldOffset(val distance: Distance) {
     Wilsonville(0.5.inches);
 
     companion object {
-        val current = Wilsonville
+        val current = Stemnasium
     }
 }
 

@@ -78,6 +78,8 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
+
+        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
     }
 
     /** Start logging or pull replay logs from a file */

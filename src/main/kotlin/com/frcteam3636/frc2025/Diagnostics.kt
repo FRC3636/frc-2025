@@ -10,6 +10,8 @@ import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.InstantCommand
+import java.net.InetAddress
+import kotlin.concurrent.thread
 
 /**
  * Reports diagnostics and sends notifications to the driver station.
@@ -125,27 +127,27 @@ object Diagnostics {
         }
     }
 
-//    private val limelightsSync = Any()
-//    private var limelightsConnected = false
-//    fun reportLimelightsInBackground(names: Array<String>) {
-//        thread {
-//            while (true) {
-//                val allReachable = names.asIterable().all { name ->
-//                    try {
-//                        InetAddress.getByName("$name.local").isReachable(1000)
-//                    } catch (_: Exception) {
-//                        false
-//                    }
-//                }
-//
-//                synchronized(limelightsSync) {
-//                    limelightsConnected = allReachable
-//                }
-//
-//                Thread.sleep(5_000)
-//            }
-//        }
-//    }
+    private val limelightsSync = Any()
+    private var limelightsConnected = false
+    fun reportLimelightsInBackground(names: Array<String>) {
+        thread {
+            while (true) {
+                val allReachable = names.asIterable().all { name ->
+                    try {
+                        InetAddress.getByName("$name.local").isReachable(1000)
+                    } catch (_: Exception) {
+                        false
+                    }
+                }
+
+                synchronized(limelightsSync) {
+                    limelightsConnected = allReachable
+                }
+
+                Thread.sleep(5_000)
+            }
+        }
+    }
 
     fun periodic() {
         reset()
@@ -155,11 +157,11 @@ object Diagnostics {
             reportFault(Fault.DubiousAutoChoice)
         }
 
-//        synchronized(limelightsSync) {
-//            if (!limelightsConnected) {
-//                reportFault(Fault.LimelightDisconnected)
-//            }
-//        }
+        synchronized(limelightsSync) {
+            if (!limelightsConnected) {
+                reportFault(Fault.LimelightDisconnected)
+            }
+        }
     }
 
     private var previousFaults = HashSet<Fault>()
