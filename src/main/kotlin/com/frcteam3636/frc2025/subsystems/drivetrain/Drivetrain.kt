@@ -408,73 +408,95 @@ object Drivetrain : Subsystem, Sendable {
      * @param usePathfinding - If enabled, uses PathPlanner to drive a long distance without colliding with anything.
      * @param target - A function that returns the desired pose (called each time the command starts)
      */
-    fun alignToTarget(usePathfinding: Boolean = true, target: () -> Pose2d): Command = defer {
-        // If true, controls rotation with PID
-        val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
-
-        // If true, ends the command when in place
-        val enableEndCondition = Preferences.getBoolean("AlignUseEndCondition", true)
-
-        val target = target()
-        Logger.recordOutput("Drivetrain/Auto-align Target", target)
-
-        val commands = mutableListOf<Command>()
-
-        if (usePathfinding) {
-            commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.0.metersPerSecond))
-        }
-
-        commands.addAll(
-            arrayOf(
-                runOnce {
-                    alignTranslationController.reset()
-                    alignRotationController.reset()
-                    Logger.recordOutput("/Drivetrain/Align-Running", true)
-                },
-                runEnd({
-                    val relativePose = estimatedPose.relativeTo(target)
-                    val distanceToTarget = relativePose.translation.norm
-                    val angleToTarget = relativePose.translation.angle
-                    val output = alignTranslationController.calculate(distanceToTarget, 0.0)
-                    val desiredSpeed = Translation2d(output, angleToTarget)
-
-                    val rotation = if (enableRotationControl) {
-                        alignRotationController
-                            .calculate(
-                                relativePose.rotation.degrees,
-                                0.0
-                            )
-                            .degreesPerSecond
-                    } else {
-                        0.degreesPerSecond
-                    }
-
-                    val chassisSpeeds = ChassisSpeeds(
-                        desiredSpeed.x.metersPerSecond,
-                        desiredSpeed.y.metersPerSecond,
-                        rotation,
-                    )
-                    Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
-                    desiredChassisSpeeds = chassisSpeeds
-                }, {
-                    desiredModuleStates = BRAKE_POSITION
-                    Logger.recordOutput("/Drivetrain/Align-Running", false)
-                })
-            )
+    fun alignToTarget(usePathfinding: Boolean = true, target: () -> Pose2d): Command {
+        Logger.recordOutput(
+            "/Drivetrain/Auto Align/Distance To Target",
+            0
         )
+        Logger.recordOutput(
+            "/Drivetrain/Auto Align/Has Reached Target",
+            false
+        )
+        return defer {
+            // If true, controls rotation with PID
+            val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
 
-        Commands.sequence(*commands.toTypedArray())
-            .until {
-                if (enableEndCondition) {
-                    val relativePose = estimatedPose.relativeTo(target)
+            // If true, ends the command when in place
+            val enableEndCondition = Preferences.getBoolean("AlignUseEndCondition", true)
 
-                    relativePose.translation.norm < 0.3.inches.inMeters() // Translation
-                            && abs(relativePose.rotation.degrees) < 1.5 // Rotation
-                            && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
-                } else {
-                    false
-                }
+            val target = target()
+            Logger.recordOutput("Drivetrain/Auto-align Target", target)
+
+            val commands = mutableListOf<Command>()
+
+            if (usePathfinding) {
+                commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.0.metersPerSecond))
             }
+
+            commands.addAll(
+                arrayOf(
+                    runOnce {
+                        alignTranslationController.reset()
+                        alignRotationController.reset()
+                        Logger.recordOutput("/Drivetrain/Align-Running", true)
+                    },
+                    runEnd({
+                        val relativePose = estimatedPose.relativeTo(target)
+                        val distanceToTarget = relativePose.translation.norm
+                        Logger.recordOutput(
+                            "/Drivetrain/Auto Align/Distance To Target",
+                            distanceToTarget
+                        )
+                        Logger.recordOutput(
+                            "/Drivetrain/Auto Align/Has Reached Target",
+                            distanceToTarget.meters < 7.centimeters
+                        )
+                        val angleToTarget = relativePose.translation.angle
+                        val output = alignTranslationController.calculate(distanceToTarget, 0.0)
+                        val desiredSpeed = Translation2d(output, angleToTarget)
+
+                        val rotation = if (enableRotationControl) {
+                            alignRotationController
+                                .calculate(
+                                    relativePose.rotation.degrees,
+                                    0.0
+                                )
+                                .degreesPerSecond
+                        } else {
+                            0.degreesPerSecond
+                        }
+
+                        val chassisSpeeds = ChassisSpeeds(
+                            desiredSpeed.x.metersPerSecond,
+                            desiredSpeed.y.metersPerSecond,
+                            rotation,
+                        )
+                        Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
+                        desiredChassisSpeeds = chassisSpeeds
+                    }, {
+                        desiredModuleStates = BRAKE_POSITION
+                        Logger.recordOutput("/Drivetrain/Align-Running", false)
+                        Logger.recordOutput(
+                            "/Drivetrain/Auto Align/Has Reached Target",
+                            false
+                        )
+                    })
+                )
+            )
+
+            Commands.sequence(*commands.toTypedArray())
+                .until {
+                    if (enableEndCondition) {
+                        val relativePose = estimatedPose.relativeTo(target)
+
+                        relativePose.translation.norm < 0.3.inches.inMeters() // Translation
+                                && abs(relativePose.rotation.degrees) < 1.5 // Rotation
+                                && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
+                    } else {
+                        false
+                    }
+                }
+        }
     }
 
     fun zeroGyro(isReversed: Boolean = false) {
