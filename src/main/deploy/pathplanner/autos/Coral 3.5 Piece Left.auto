@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Coral 1 Piece Blue"
+                  "pathName": "New Path"
                 }
               }
             ]
@@ -73,12 +73,6 @@
                       "type": "named",
                       "data": {
                         "name": "waitForIntake"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Coral 2 Piece Blue Score 1"
                       }
                     }
                   ]
@@ -149,12 +143,6 @@
                       "type": "named",
                       "data": {
                         "name": "waitForIntake"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Coral 3 Piece Blue Score 2"
                       }
                     }
                   ]
