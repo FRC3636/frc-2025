@@ -542,16 +542,13 @@ object Drivetrain : Subsystem, Sendable {
 
     fun zeroGyro(isReversed: Boolean = false) {
         // Tell the gyro that the robot is facing the other alliance.
-        var zeroPos = if (isReversed) {
-            when (DriverStation.getAlliance().getOrNull()) {
-                DriverStation.Alliance.Red -> Rotation2d.kZero
-                else -> Rotation2d.k180deg
-            }
-        } else {
-            when (DriverStation.getAlliance().getOrNull()) {
-                DriverStation.Alliance.Red -> Rotation2d.k180deg
-                else -> Rotation2d.kZero
-            }
+        var zeroPos = when (DriverStation.getAlliance().getOrNull()) {
+            DriverStation.Alliance.Red -> Rotation2d.k180deg
+            else -> Rotation2d.kZero
+        }
+
+        if (isReversed) {
+            zeroPos += Rotation2d.k180deg
         }
 
         estimatedPose = Pose2d(estimatedPose.translation, zeroPos)
