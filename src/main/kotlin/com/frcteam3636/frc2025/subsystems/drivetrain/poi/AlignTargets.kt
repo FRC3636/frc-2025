@@ -266,12 +266,13 @@ fun Iterable<TargetGroup>.closestTargetToPoseWithSelection(
 private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters
 
 private enum class FieldOffset(val distance: Distance) {
+    None(0.inches),
     Stemnasium(1.inches),
     ClackamasAcademy(0.25.inches),
-    Wilsonville(0.5.inches);
+    Wilsonville(0.75.inches);
 
     companion object {
-        val current = Stemnasium
+        val current = Wilsonville
     }
 }
 

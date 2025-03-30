@@ -154,14 +154,17 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "raiseElevatorL4",
             Elevator.setTargetHeight(Elevator.Position.HighBar)
+                .andThen(Commands.waitUntil { Elevator.isAtTarget })
         )
         NamedCommands.registerCommand(
             "raiseElevatorL3",
             Elevator.setTargetHeight(Elevator.Position.MidBar)
+                .andThen(Commands.waitUntil { Elevator.isAtTarget })
         )
         NamedCommands.registerCommand(
             "raiseElevatorL2",
             Elevator.setTargetHeight(Elevator.Position.LowBar)
+                .andThen(Commands.waitUntil { Elevator.isAtTarget })
         )
         NamedCommands.registerCommand(
             "stowElevator",
@@ -196,13 +199,21 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "alignToTarget",
-            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = true)
-                .withTimeout(2.5.seconds)
+            Drivetrain.alignToClosestPOI(
+                sideOverride = ReefBranchSide.Left,
+                usePathfinding = true,
+                raiseElevator = true
+            )
+//                .withTimeout(2.5.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
-            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = true)
-                .withTimeout(2.5.seconds)
+            Drivetrain.alignToClosestPOI(
+                sideOverride = ReefBranchSide.Right,
+                usePathfinding = true,
+                raiseElevator = true
+            )
+//                .withTimeout(2.5.seconds)
         )
         NamedCommands.registerCommand(
             "raiseElevatorAlgae",

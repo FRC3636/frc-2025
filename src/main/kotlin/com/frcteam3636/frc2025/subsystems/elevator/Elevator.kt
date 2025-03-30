@@ -22,6 +22,8 @@ object Elevator : Subsystem {
     var inputs = LoggedElevatorInputs()
 
     val isPressed get() = inputs.leftCurrent > 1.9.amps || inputs.rightCurrent > 1.9.amps
+    private var desiredHeight = 0.meters
+    val isAtTarget get() = (inputs.height - desiredHeight) < 0.5.inches
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
@@ -47,12 +49,14 @@ object Elevator : Subsystem {
     fun setTargetHeight(position: Position): Command =
         startEnd({
             io.runToHeight(position.height)
+            desiredHeight = position.height
         }, {})
             .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
     fun setTargetHeightAlgae(position: Position): Command =
         startEnd({
             io.runToHeightWithOverride(position.height, 200.0.rotationsPerSecond, 20.0.rotationsPerSecondPerSecond)
+            desiredHeight = position.height
         }, {})
             .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 

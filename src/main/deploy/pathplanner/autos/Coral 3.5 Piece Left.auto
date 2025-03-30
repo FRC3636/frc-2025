@@ -18,19 +18,13 @@
           }
         },
         {
-          "type": "parallel",
+          "type": "sequential",
           "data": {
             "commands": [
               {
                 "type": "named",
                 "data": {
                   "name": "alignToTargetRight"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "raiseElevatorL4"
                 }
               }
             ]
@@ -88,19 +82,13 @@
           }
         },
         {
-          "type": "parallel",
+          "type": "sequential",
           "data": {
             "commands": [
               {
                 "type": "named",
                 "data": {
                   "name": "alignToTarget"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "raiseElevatorL4"
                 }
               }
             ]
@@ -158,19 +146,13 @@
           }
         },
         {
-          "type": "parallel",
+          "type": "sequential",
           "data": {
             "commands": [
               {
                 "type": "named",
                 "data": {
                   "name": "alignToTargetRight"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "raiseElevatorL4"
                 }
               }
             ]
