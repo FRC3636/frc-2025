@@ -204,7 +204,7 @@ object Robot : LoggedRobot() {
                 usePathfinding = false,
                 raiseElevator = false
             )
-//                .withTimeout(2.5.seconds)
+                .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
@@ -213,7 +213,7 @@ object Robot : LoggedRobot() {
                 usePathfinding = false,
                 raiseElevator = false
             )
-//                .withTimeout(2.5.seconds)
+                .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "raiseElevatorAlgae",
