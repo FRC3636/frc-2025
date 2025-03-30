@@ -171,22 +171,6 @@ object Robot : LoggedRobot() {
             Elevator.setTargetHeight(Elevator.Position.Stowed)
         )
         NamedCommands.registerCommand(
-            "alignLeftAndRaiseElevator",
-            Commands.parallel(
-                Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = false)
-                    .withTimeout(1.seconds),
-                Elevator.setTargetHeight(Elevator.Position.HighBar),
-            )
-        )
-        NamedCommands.registerCommand(
-            "alignRightAndRaiseElevator",
-            Commands.parallel(
-                Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
-                    .withTimeout(1.seconds),
-                Elevator.setTargetHeight(Elevator.Position.HighBar),
-            )
-        )
-        NamedCommands.registerCommand(
             "outtake",
             Manipulator.outtake().withTimeout(0.3.seconds)
         )
@@ -204,7 +188,7 @@ object Robot : LoggedRobot() {
                 usePathfinding = false,
                 raiseElevator = false
             )
-                .withTimeout(1.25.seconds)
+//                .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
@@ -213,7 +197,7 @@ object Robot : LoggedRobot() {
                 usePathfinding = false,
                 raiseElevator = false
             )
-                .withTimeout(1.25.seconds)
+//                .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "raiseElevatorAlgae",

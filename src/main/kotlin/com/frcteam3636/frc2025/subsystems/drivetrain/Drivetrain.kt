@@ -409,11 +409,11 @@ object Drivetrain : Subsystem, Sendable {
 
     private val alignTranslationXController = ProfiledPIDController(
         Constants.ALIGN_TRANSLATION_PID_GAINS,
-        TrapezoidProfile.Constraints(4.5, 2.0),
+        TrapezoidProfile.Constraints(4.5 / 3.0, 0.4),
     )
     private val alignTranslationYController = ProfiledPIDController(
         Constants.ALIGN_TRANSLATION_PID_GAINS,
-        TrapezoidProfile.Constraints(4.5, 2.0),
+        TrapezoidProfile.Constraints(4.5 / 3.0, 0.4),
     )
     private val alignRotationController = PIDController(Constants.ALIGN_ROTATION_PID_GAINS)
 
@@ -528,12 +528,12 @@ object Drivetrain : Subsystem, Sendable {
             val endCondition = Trigger {
                 val relativePose = estimatedPose.relativeTo(target)
 
-                relativePose.translation.norm < 1.centimeters.inMeters() // Translation
+                relativePose.translation.norm < 3.centimeters.inMeters() // Translation
                         && Elevator.isAtTarget
 //                                && abs(relativePose.rotation.degrees) < 1.5 // Rotation
 //                                && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
             }
-                .debounce(1.0)
+                .debounce(0.75)
 
             Commands.sequence(*commands.toTypedArray())
                 .until(endCondition)
@@ -719,7 +719,7 @@ object Drivetrain : Subsystem, Sendable {
             Rotation2d(0.degrees)
         )
 
-        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(6.0)
+        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.5)
         val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
     }
 
