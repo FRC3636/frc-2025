@@ -655,7 +655,7 @@ object Drivetrain : Subsystem, Sendable {
         )
 
         val ALIGN_TRANSLATION_PID_GAINS = PIDGains(7.0)
-        val ALIGN_ROTATION_PID_GAINS = PIDGains(0.5)
+        val ALIGN_ROTATION_PID_GAINS = PIDGains(0.75)
     }
 
     enum class Localizer {
