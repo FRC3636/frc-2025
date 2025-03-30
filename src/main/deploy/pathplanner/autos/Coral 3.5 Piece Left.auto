@@ -11,20 +11,26 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "New Path"
+                  "pathName": "Coral 1 Piece Blue"
                 }
               }
             ]
           }
         },
         {
-          "type": "sequential",
+          "type": "parallel",
           "data": {
             "commands": [
               {
                 "type": "named",
                 "data": {
                   "name": "alignToTargetRight"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "raiseElevatorL4"
                 }
               }
             ]
@@ -68,6 +74,12 @@
                       "data": {
                         "name": "waitForIntake"
                       }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "Coral 2 Piece Blue Score 1"
+                      }
                     }
                   ]
                 }
@@ -82,13 +94,19 @@
           }
         },
         {
-          "type": "sequential",
+          "type": "parallel",
           "data": {
             "commands": [
               {
                 "type": "named",
                 "data": {
                   "name": "alignToTarget"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "raiseElevatorL4"
                 }
               }
             ]
@@ -132,6 +150,12 @@
                       "data": {
                         "name": "waitForIntake"
                       }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "Coral 3 Piece Blue Score 2"
+                      }
                     }
                   ]
                 }
@@ -146,13 +170,19 @@
           }
         },
         {
-          "type": "sequential",
+          "type": "parallel",
           "data": {
             "commands": [
               {
                 "type": "named",
                 "data": {
                   "name": "alignToTargetRight"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "raiseElevatorL4"
                 }
               }
             ]

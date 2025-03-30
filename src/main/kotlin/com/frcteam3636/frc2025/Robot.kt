@@ -201,8 +201,8 @@ object Robot : LoggedRobot() {
             "alignToTarget",
             Drivetrain.alignToClosestPOI(
                 sideOverride = ReefBranchSide.Left,
-                usePathfinding = true,
-                raiseElevator = true
+                usePathfinding = false,
+                raiseElevator = false
             )
 //                .withTimeout(2.5.seconds)
         )
@@ -210,8 +210,8 @@ object Robot : LoggedRobot() {
             "alignToTargetRight",
             Drivetrain.alignToClosestPOI(
                 sideOverride = ReefBranchSide.Right,
-                usePathfinding = true,
-                raiseElevator = true
+                usePathfinding = false,
+                raiseElevator = false
             )
 //                .withTimeout(2.5.seconds)
         )

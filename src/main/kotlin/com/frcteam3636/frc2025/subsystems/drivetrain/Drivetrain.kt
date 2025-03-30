@@ -409,11 +409,11 @@ object Drivetrain : Subsystem, Sendable {
 
     private val alignTranslationXController = ProfiledPIDController(
         Constants.ALIGN_TRANSLATION_PID_GAINS,
-        TrapezoidProfile.Constraints(4.0, 4.0),
+        TrapezoidProfile.Constraints(4.5, 2.0),
     )
     private val alignTranslationYController = ProfiledPIDController(
         Constants.ALIGN_TRANSLATION_PID_GAINS,
-        TrapezoidProfile.Constraints(4.0, 4.0),
+        TrapezoidProfile.Constraints(4.5, 2.0),
     )
     private val alignRotationController = PIDController(Constants.ALIGN_ROTATION_PID_GAINS)
 
@@ -471,8 +471,9 @@ object Drivetrain : Subsystem, Sendable {
                 arrayOf(
                     runOnce {
                         val relativePose = estimatedPose.relativeTo(target)
-                        alignTranslationXController.reset(relativePose.translation.x, 1.0)
-                        alignTranslationYController.reset(relativePose.translation.y, 1.0)
+                        Translation2d(1.0, relativePose.translation.angle)
+                        alignTranslationXController.reset(0.0)
+                        alignTranslationYController.reset(0.0)
                         alignRotationController.reset()
                         Logger.recordOutput("/Drivetrain/Align-Running", true)
                     },
@@ -528,6 +529,7 @@ object Drivetrain : Subsystem, Sendable {
                 val relativePose = estimatedPose.relativeTo(target)
 
                 relativePose.translation.norm < 1.centimeters.inMeters() // Translation
+                        && Elevator.isAtTarget
 //                                && abs(relativePose.rotation.degrees) < 1.5 // Rotation
 //                                && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
             }
@@ -720,7 +722,7 @@ object Drivetrain : Subsystem, Sendable {
             Rotation2d(0.degrees)
         )
 
-        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.0)
+        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(6.0)
         val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
     }
 
