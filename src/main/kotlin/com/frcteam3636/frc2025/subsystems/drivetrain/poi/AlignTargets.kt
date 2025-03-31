@@ -3,6 +3,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain.poi
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.FIELD_LAYOUT
 import com.frcteam3636.frc2025.utils.math.dot
+import com.frcteam3636.frc2025.utils.math.inMeters
 import com.frcteam3636.frc2025.utils.math.inches
 import com.frcteam3636.frc2025.utils.math.meters
 import edu.wpi.first.apriltag.AprilTagFieldLayout
@@ -101,7 +102,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
         private val blueBranchTags = 17..22
 
         val redReefAlgaeTargets: Array<AprilTagTarget> = redBranchTags.map {
-            AprilTagTarget(it, Translation2d())
+            AprilTagTarget(it, Translation2d(1.5.inches.inMeters(), 0.0))
         }.toTypedArray()
 
         val blueReefAlgaeTargets: Array<AprilTagTarget> = blueBranchTags.map {

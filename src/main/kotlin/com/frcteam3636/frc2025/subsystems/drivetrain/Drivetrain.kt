@@ -390,7 +390,7 @@ object Drivetrain : Subsystem, Sendable {
         ).pose
     }
 
-    fun alignToReefAlgae(usePathfinding: Boolean = true) = alignToTarget(usePathfinding) {
+    fun alignToReefAlgae(usePathfinding: Boolean = true) = alignToTarget(usePathfinding, disableEndConditionOverride = true) {
         AprilTagTarget.currentAllianceReefAlgaeTargets
             .asIterable()
             .closestToPose(estimatedPose)
@@ -423,7 +423,7 @@ object Drivetrain : Subsystem, Sendable {
      * @param usePathfinding - If enabled, uses PathPlanner to drive a long distance without colliding with anything.
      * @param target - A function that returns the desired pose (called each time the command starts)
      */
-    fun alignToTarget(usePathfinding: Boolean = true, raiseElevator: Boolean = false, target: () -> Pose2d): Command {
+    fun alignToTarget(usePathfinding: Boolean = true, raiseElevator: Boolean = false, disableEndConditionOverride: Boolean = false, target: () -> Pose2d): Command {
         Logger.recordOutput(
             "/Drivetrain/Auto Align/Distance To Target",
             0
@@ -445,7 +445,7 @@ object Drivetrain : Subsystem, Sendable {
             val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
 
             // If true, ends the command when in place
-            Preferences.getBoolean("AlignUseEndCondition", true)
+            val useEndCondition = Preferences.getBoolean("AlignUseEndCondition", true) && !disableEndConditionOverride
 
             val target = target()
             Logger.recordOutput("Drivetrain/Auto-align Target", target)
@@ -528,15 +528,19 @@ object Drivetrain : Subsystem, Sendable {
             val endCondition = Trigger {
                 val relativePose = estimatedPose.relativeTo(target)
 
-                relativePose.translation.norm < 3.centimeters.inMeters() // Translation
+                relativePose.translation.norm < 2.centimeters.inMeters() // Translation
                         && Elevator.isAtTarget
 //                                && abs(relativePose.rotation.degrees) < 1.5 // Rotation
 //                                && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
             }
                 .debounce(0.75)
 
-            Commands.sequence(*commands.toTypedArray())
-                .until(endCondition)
+            if (useEndCondition) {
+                Commands.sequence(*commands.toTypedArray())
+                    .until(endCondition)
+            } else {
+                Commands.sequence(*commands.toTypedArray())
+            }
         }
     }
 
@@ -719,7 +723,7 @@ object Drivetrain : Subsystem, Sendable {
             Rotation2d(0.degrees)
         )
 
-        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.5)
+        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.0)
         val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
     }
 

@@ -121,7 +121,7 @@ object Manipulator : Subsystem {
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
 
     fun intakeAlgae(): Command = startEnd(
-        { io.setVoltage(2.0.volts) },
+        { io.setVoltage(3.0.volts) },
         {
             io.setSpeed(0.0)
         }
