@@ -106,7 +106,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
         }.toTypedArray()
 
         val blueReefAlgaeTargets: Array<AprilTagTarget> = blueBranchTags.map {
-            AprilTagTarget(it, Translation2d())
+            AprilTagTarget(it, Translation2d(1.5.inches.inMeters(), 0.0))
         }.toTypedArray()
 
         val redAllianceTargets: Array<TargetGroup> = arrayOf(
