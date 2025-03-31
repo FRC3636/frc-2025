@@ -3,7 +3,9 @@ package com.frcteam3636.frc2025.utils.math
 import com.ctre.phoenix6.configs.Slot0Configs
 import com.ctre.phoenix6.configs.SlotConfigs
 import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.controller.SimpleMotorFeedforward
+import edu.wpi.first.math.trajectory.TrapezoidProfile
 
 data class MotorFFGains(val s: Double = 0.0, val v: Double = 0.0, val a: Double = 0.0)
 
@@ -26,6 +28,8 @@ fun SlotConfigs.withPIDGains(gains: PIDGains) =
 data class PIDGains(val p: Double = 0.0, val i: Double = 0.0, val d: Double = 0.0)
 
 fun PIDController(gains: PIDGains) = PIDController(gains.p, gains.i, gains.d)
+fun ProfiledPIDController(gains: PIDGains, constraints: TrapezoidProfile.Constraints) =
+    ProfiledPIDController(gains.p, gains.i, gains.d, constraints)
 
 var PIDController.gains: PIDGains
     get() = PIDGains(p = p, i = i, d = d)

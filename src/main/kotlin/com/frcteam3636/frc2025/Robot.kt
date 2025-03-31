@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025
 
+import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
@@ -7,9 +8,6 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
-import com.frcteam3636.frc2025.utils.Elastic
-import com.frcteam3636.frc2025.utils.ElasticNotification
-import com.frcteam3636.frc2025.utils.NotificationLevel
 import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.frc2025.utils.rumble
 import com.frcteam3636.version.BUILD_DATE
@@ -60,6 +58,9 @@ object Robot : LoggedRobot() {
 
     private var autoCommand: Command? = null
 
+    private val rioCANBus = CANBus("rio")
+    private val canivore = CANBus("*")
+
     /** Status signals used to check the health of the robot's hardware */
     val statusSignals = mutableMapOf<String, StatusSignal<*>>()
 
@@ -77,6 +78,8 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
+
+        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
     }
 
     /** Start logging or pull replay logs from a file */
@@ -91,13 +94,11 @@ object Robot : LoggedRobot() {
         if (isReal()) {
             Logger.addDataReceiver(WPILOGWriter()) // Log to a USB stick
             if (!Path("/U").exists()) {
-                Elastic.sendAlert(
-                    ElasticNotification(
-                        "logging USB stick not plugged into radio",
-                        "You gotta plug in a usb stick yo",
-                        NotificationLevel.WARNING
-                    )
+                Alert(
+                    "The Log USB drive is not connected to the roboRIO, so a match replay will not be saved. (If convenient, insert it and restart robot code.)",
+                    Alert.AlertType.kInfo
                 )
+                    .set(true)
             }
             Logger.addDataReceiver(NT4Publisher()) // Publish data to NetworkTables
             // Enables power distribution logging
@@ -153,34 +154,21 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "raiseElevatorL4",
             Elevator.setTargetHeight(Elevator.Position.HighBar)
+                .andThen(Commands.waitUntil { Elevator.isAtTarget })
         )
         NamedCommands.registerCommand(
             "raiseElevatorL3",
             Elevator.setTargetHeight(Elevator.Position.MidBar)
+                .andThen(Commands.waitUntil { Elevator.isAtTarget })
         )
         NamedCommands.registerCommand(
             "raiseElevatorL2",
             Elevator.setTargetHeight(Elevator.Position.LowBar)
+                .andThen(Commands.waitUntil { Elevator.isAtTarget })
         )
         NamedCommands.registerCommand(
             "stowElevator",
             Elevator.setTargetHeight(Elevator.Position.Stowed)
-        )
-        NamedCommands.registerCommand(
-            "alignLeftAndRaiseElevator",
-            Commands.parallel(
-                Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = false)
-                    .withTimeout(1.seconds),
-                Elevator.setTargetHeight(Elevator.Position.HighBar),
-            )
-        )
-        NamedCommands.registerCommand(
-            "alignRightAndRaiseElevator",
-            Commands.parallel(
-                Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
-                    .withTimeout(1.seconds),
-                Elevator.setTargetHeight(Elevator.Position.HighBar),
-            )
         )
         NamedCommands.registerCommand(
             "outtake",
@@ -195,13 +183,21 @@ object Robot : LoggedRobot() {
         )
         NamedCommands.registerCommand(
             "alignToTarget",
-            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Left, usePathfinding = false)
-                .withTimeout(2.5.seconds)
+            Drivetrain.alignToClosestPOI(
+                sideOverride = ReefBranchSide.Left,
+                usePathfinding = false,
+                raiseElevator = false
+            )
+//                .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
-            Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
-                .withTimeout(2.5.seconds)
+            Drivetrain.alignToClosestPOI(
+                sideOverride = ReefBranchSide.Right,
+                usePathfinding = false,
+                raiseElevator = false
+            )
+//                .withTimeout(1.25.seconds)
         )
         NamedCommands.registerCommand(
             "raiseElevatorAlgae",
@@ -410,11 +406,22 @@ object Robot : LoggedRobot() {
 
     }
 
+    private fun reportDiagnostics() {
+        Diagnostics.periodic()
+        Diagnostics.report(rioCANBus)
+        Diagnostics.report(canivore)
+        Diagnostics.reportDSPeripheral(joystickLeft.hid, isController = false)
+        Diagnostics.reportDSPeripheral(joystickRight.hid, isController = false)
+        Diagnostics.reportDSPeripheral(controller.hid, isController = true)
+    }
+
     override fun robotPeriodic() {
         Dashboard.update()
-        Diagnostics.collect(statusSignals).reportAlerts()
+        reportDiagnostics()
+
         CommandScheduler.getInstance().run()
 
+        Diagnostics.send()
     }
 
     override fun autonomousInit() {

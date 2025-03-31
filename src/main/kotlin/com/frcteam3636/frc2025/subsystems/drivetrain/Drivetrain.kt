@@ -12,6 +12,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
+import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.*
@@ -31,6 +32,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
@@ -42,6 +44,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import java.util.*
@@ -341,6 +344,7 @@ object Drivetrain : Subsystem, Sendable {
 
     @Suppress("unused")
     fun driveAlignedTo(translationJoystick: Joystick, targetGetter: () -> Translation2d): Command {
+
         return runEnd({
             val target = targetGetter()
 
@@ -369,8 +373,12 @@ object Drivetrain : Subsystem, Sendable {
         })
     }
 
-    fun alignToClosestPOI(sideOverride: ReefBranchSide? = null, usePathfinding: Boolean = true) =
-        alignToTarget(usePathfinding) {
+    fun alignToClosestPOI(
+        sideOverride: ReefBranchSide? = null,
+        usePathfinding: Boolean = true,
+        raiseElevator: Boolean = false
+    ) =
+        alignToTarget(usePathfinding, raiseElevator) {
             AprilTagTarget.currentAllianceTargets.asIterable()
                 .closestTargetToPoseWithSelection(estimatedPose, sideOverride ?: currentTargetSelection).pose
         }
@@ -382,7 +390,7 @@ object Drivetrain : Subsystem, Sendable {
         ).pose
     }
 
-    fun alignToReefAlgae(usePathfinding: Boolean = true) = alignToTarget(usePathfinding) {
+    fun alignToReefAlgae(usePathfinding: Boolean = true) = alignToTarget(usePathfinding, disableEndConditionOverride = true) {
         AprilTagTarget.currentAllianceReefAlgaeTargets
             .asIterable()
             .closestToPose(estimatedPose)
@@ -399,7 +407,14 @@ object Drivetrain : Subsystem, Sendable {
         AprilTagTarget.currentAllianceRightStation.pose
     }
 
-    private val alignTranslationController = PIDController(Constants.ALIGN_TRANSLATION_PID_GAINS)
+    private val alignTranslationXController = ProfiledPIDController(
+        Constants.ALIGN_TRANSLATION_PID_GAINS,
+        TrapezoidProfile.Constraints(4.5 / 3.0, 0.4),
+    )
+    private val alignTranslationYController = ProfiledPIDController(
+        Constants.ALIGN_TRANSLATION_PID_GAINS,
+        TrapezoidProfile.Constraints(4.5 / 3.0, 0.4),
+    )
     private val alignRotationController = PIDController(Constants.ALIGN_ROTATION_PID_GAINS)
 
     /**
@@ -408,73 +423,125 @@ object Drivetrain : Subsystem, Sendable {
      * @param usePathfinding - If enabled, uses PathPlanner to drive a long distance without colliding with anything.
      * @param target - A function that returns the desired pose (called each time the command starts)
      */
-    fun alignToTarget(usePathfinding: Boolean = true, target: () -> Pose2d): Command = defer {
-        // If true, controls rotation with PID
-        val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
-
-        // If true, ends the command when in place
-        val enableEndCondition = Preferences.getBoolean("AlignUseEndCondition", true)
-
-        val target = target()
-        Logger.recordOutput("Drivetrain/Auto-align Target", target)
-
-        val commands = mutableListOf<Command>()
-
-        if (usePathfinding) {
-            commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.0.metersPerSecond))
-        }
-
-        commands.addAll(
-            arrayOf(
-                runOnce {
-                    alignTranslationController.reset()
-                    alignRotationController.reset()
-                    Logger.recordOutput("/Drivetrain/Align-Running", true)
-                },
-                runEnd({
-                    val relativePose = estimatedPose.relativeTo(target)
-                    val distanceToTarget = relativePose.translation.norm
-                    val angleToTarget = relativePose.translation.angle
-                    val output = alignTranslationController.calculate(distanceToTarget, 0.0)
-                    val desiredSpeed = Translation2d(output, angleToTarget)
-
-                    val rotation = if (enableRotationControl) {
-                        alignRotationController
-                            .calculate(
-                                relativePose.rotation.degrees,
-                                0.0
-                            )
-                            .degreesPerSecond
-                    } else {
-                        0.degreesPerSecond
-                    }
-
-                    val chassisSpeeds = ChassisSpeeds(
-                        desiredSpeed.x.metersPerSecond,
-                        desiredSpeed.y.metersPerSecond,
-                        rotation,
-                    )
-                    Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
-                    desiredChassisSpeeds = chassisSpeeds
-                }, {
-                    desiredModuleStates = BRAKE_POSITION
-                    Logger.recordOutput("/Drivetrain/Align-Running", false)
-                })
-            )
+    fun alignToTarget(usePathfinding: Boolean = true, raiseElevator: Boolean = false, disableEndConditionOverride: Boolean = false, target: () -> Pose2d): Command {
+        Logger.recordOutput(
+            "/Drivetrain/Auto Align/Distance To Target",
+            0
         )
+        Logger.recordOutput(
+            "/Drivetrain/Auto Align/Has Reached Target",
+            false
+        )
+        Logger.recordOutput(
+            "/Drivetrain/Auto Align/Distance To Target X",
+            0
+        )
+        Logger.recordOutput(
+            "/Drivetrain/Auto Align/Distance To Target Y",
+            0
+        )
+        return defer {
+            // If true, controls rotation with PID
+            val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
 
-        Commands.sequence(*commands.toTypedArray())
-            .until {
-                if (enableEndCondition) {
-                    val relativePose = estimatedPose.relativeTo(target)
+            // If true, ends the command when in place
+            val useEndCondition = Preferences.getBoolean("AlignUseEndCondition", true) && !disableEndConditionOverride
 
-                    relativePose.translation.norm < 0.3.inches.inMeters() // Translation
-                            && abs(relativePose.rotation.degrees) < 1.5 // Rotation
-                            && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
-                } else {
-                    false
-                }
+            val target = target()
+            Logger.recordOutput("Drivetrain/Auto-align Target", target)
+
+            Logger.recordOutput(
+                "/Drivetrain/Auto Align/Has Reached Target",
+                false
+            )
+
+            val commands = mutableListOf<Command>()
+
+            if (usePathfinding) {
+                commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.0.metersPerSecond))
             }
+
+            if (raiseElevator) {
+                commands.add(
+                    Elevator.setTargetHeight(Elevator.Position.HighBar)
+                )
+            }
+
+            commands.addAll(
+                arrayOf(
+                    runOnce {
+                        val relativePose = estimatedPose.relativeTo(target)
+                        Translation2d(1.0, relativePose.translation.angle)
+                        alignTranslationXController.reset(0.0)
+                        alignTranslationYController.reset(0.0)
+                        alignRotationController.reset()
+                        Logger.recordOutput("/Drivetrain/Align-Running", true)
+                    },
+                    runEnd({
+                        val relativePose = estimatedPose.relativeTo(target)
+                        val distanceToTarget = relativePose.translation.norm
+                        Logger.recordOutput(
+                            "/Drivetrain/Auto Align/Distance To Target",
+                            distanceToTarget
+                        )
+                        Logger.recordOutput(
+                            "/Drivetrain/Auto Align/Has Reached Target",
+                            distanceToTarget.meters < 1.centimeters
+                        )
+                        Logger.recordOutput(
+                            "/Drivetrain/Auto Align/Distance To Target X",
+                            relativePose.translation.x
+                        )
+                        Logger.recordOutput(
+                            "/Drivetrain/Auto Align/Distance To Target Y",
+                            relativePose.translation.y
+                        )
+                        val outputX = alignTranslationXController.calculate(relativePose.translation.x, 0.0)
+                        val outputY = alignTranslationYController.calculate(relativePose.translation.y, 0.0)
+                        val desiredSpeed = Translation2d(outputX, outputY)
+
+                        val rotation = if (enableRotationControl) {
+                            alignRotationController
+                                .calculate(
+                                    relativePose.rotation.degrees,
+                                    0.0
+                                )
+                                .degreesPerSecond
+                        } else {
+                            0.degreesPerSecond
+                        }
+
+                        val chassisSpeeds = ChassisSpeeds(
+                            desiredSpeed.x.metersPerSecond,
+                            desiredSpeed.y.metersPerSecond,
+                            rotation,
+                        )
+                        Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
+                        desiredChassisSpeeds = chassisSpeeds
+                    }, {
+                        desiredModuleStates = BRAKE_POSITION
+                        Logger.recordOutput("/Drivetrain/Align-Running", false)
+                    })
+                )
+            )
+
+            val endCondition = Trigger {
+                val relativePose = estimatedPose.relativeTo(target)
+
+                relativePose.translation.norm < 2.centimeters.inMeters() // Translation
+                        && Elevator.isAtTarget
+//                                && abs(relativePose.rotation.degrees) < 1.5 // Rotation
+//                                && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
+            }
+                .debounce(0.75)
+
+            if (useEndCondition) {
+                Commands.sequence(*commands.toTypedArray())
+                    .until(endCondition)
+            } else {
+                Commands.sequence(*commands.toTypedArray())
+            }
+        }
     }
 
     fun zeroGyro(isReversed: Boolean = false) {
@@ -483,9 +550,11 @@ object Drivetrain : Subsystem, Sendable {
             DriverStation.Alliance.Red -> Rotation2d.k180deg
             else -> Rotation2d.kZero
         }
+
         if (isReversed) {
             zeroPos += Rotation2d.k180deg
         }
+
         estimatedPose = Pose2d(estimatedPose.translation, zeroPos)
 //        io.setGyro(zeroPos)
     }
@@ -654,8 +723,8 @@ object Drivetrain : Subsystem, Sendable {
             Rotation2d(0.degrees)
         )
 
-        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(7.0)
-        val ALIGN_ROTATION_PID_GAINS = PIDGains(0.75)
+        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.0)
+        val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
     }
 
     enum class Localizer {
