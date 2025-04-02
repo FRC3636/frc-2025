@@ -280,7 +280,7 @@ object Robot : LoggedRobot() {
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI())
+        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.25))
         joystickRight.povUp().whileTrue(
             Drivetrain.alignToReefAlgae()
         )

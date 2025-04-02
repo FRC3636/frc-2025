@@ -394,9 +394,10 @@ object Drivetrain : Subsystem, Sendable {
     fun alignToClosestPOI(
         sideOverride: ReefBranchSide? = null,
         usePathfinding: Boolean = true,
-        raiseElevator: Boolean = false
+        raiseElevator: Boolean = false,
+        endConditionTimeout: Double = 0.75
     ) =
-        alignToTarget(usePathfinding, raiseElevator) {
+        alignToTarget(usePathfinding, raiseElevator, endConditionTimeout = endConditionTimeout) {
             AprilTagTarget.currentAllianceTargets.asIterable()
                 .closestTargetToPoseWithSelection(estimatedPose, sideOverride ?: currentTargetSelection).pose
         }
@@ -450,7 +451,13 @@ object Drivetrain : Subsystem, Sendable {
      * @param usePathfinding - If enabled, uses PathPlanner to drive a long distance without colliding with anything.
      * @param target - A function that returns the desired pose (called each time the command starts)
      */
-    fun alignToTarget(usePathfinding: Boolean = true, raiseElevator: Boolean = false, disableEndConditionOverride: Boolean = false, target: () -> Pose2d): Command {
+    fun alignToTarget(
+        usePathfinding: Boolean = true,
+        raiseElevator: Boolean = false,
+        disableEndConditionOverride: Boolean = false,
+        endConditionTimeout: Double = 0.75,
+        target: () -> Pose2d
+    ): Command {
         Logger.recordOutput(
             "/Drivetrain/Auto Align/Distance To Target",
             0
@@ -562,7 +569,7 @@ object Drivetrain : Subsystem, Sendable {
                 val relativePose = estimatedPose.relativeTo(target)
                 isAtTarget(relativePose)
             }
-                .debounce(0.75)
+                .debounce(endConditionTimeout)
 
             if (useEndCondition) {
                 Commands.sequence(*commands.toTypedArray())
@@ -584,7 +591,6 @@ object Drivetrain : Subsystem, Sendable {
                         } else {
                             alignStatePublisher.set(AlignState.NotRunning.raw)
                         }
-//                        updateRGBToNoState().schedule()
                     }
                     .until(endCondition)
             } else {
