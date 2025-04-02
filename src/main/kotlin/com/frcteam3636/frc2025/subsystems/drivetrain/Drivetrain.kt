@@ -34,6 +34,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.math.util.Units
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.Alert
@@ -71,6 +72,23 @@ object Drivetrain : Subsystem, Sendable {
     private var questNavCalibrated = false
 
     var currentTargetSelection: ReefBranchSide = ReefBranchSide.Right
+
+    private val alignPositionPublisher = NetworkTableInstance.getDefault()
+        .getDoubleArrayTopic("RGB/Auto Align/Position Relative to Align Target")
+        .publish()
+    val alignStatePublisher = NetworkTableInstance.getDefault()
+        .getIntegerTopic("RGB/Movement State")
+        .publish()
+        .apply {
+            setDefault(AlignState.NotRunning.raw)
+        }
+
+    enum class AlignState(val raw: Long) {
+        NotRunning(0),
+        AlignPathfinding(1),
+        Aligning(2),
+        Success(3),
+    }
 
     private val mt2Algo = LimelightAlgorithm.MegaTag2({
         poseEstimator.estimatedPosition.rotation
@@ -417,6 +435,15 @@ object Drivetrain : Subsystem, Sendable {
     )
     private val alignRotationController = PIDController(Constants.ALIGN_ROTATION_PID_GAINS)
 
+    fun isAtTarget(relativePose: Pose2d): Boolean =
+        relativePose.translation.norm < 2.centimeters.inMeters() // Translation
+                && Elevator.isAtTarget
+
+    private fun updateRGBToNoState(): Command = Commands.waitSeconds(1.5)
+        .finallyDo { ->
+            alignStatePublisher.set(AlignState.NotRunning.raw)
+        }
+
     /**
      * Drive to a pose on the field.
      *
@@ -458,6 +485,9 @@ object Drivetrain : Subsystem, Sendable {
             val commands = mutableListOf<Command>()
 
             if (usePathfinding) {
+                commands.add(Commands.runOnce({
+                    alignStatePublisher.set(AlignState.AlignPathfinding.raw)
+                }))
                 commands.add(AutoBuilder.pathfindToPose(target, DEFAULT_PATHING_CONSTRAINTS, 1.0.metersPerSecond))
             }
 
@@ -518,25 +548,44 @@ object Drivetrain : Subsystem, Sendable {
                         )
                         Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
                         desiredChassisSpeeds = chassisSpeeds
+
+                        alignStatePublisher.set(AlignState.Aligning.raw)
                     }, {
                         desiredModuleStates = BRAKE_POSITION
                         Logger.recordOutput("/Drivetrain/Align-Running", false)
+                        alignStatePublisher.set(AlignState.NotRunning.raw)
                     })
                 )
             )
 
             val endCondition = Trigger {
                 val relativePose = estimatedPose.relativeTo(target)
-
-                relativePose.translation.norm < 2.centimeters.inMeters() // Translation
-                        && Elevator.isAtTarget
-//                                && abs(relativePose.rotation.degrees) < 1.5 // Rotation
-//                                && measuredChassisSpeeds.translation2dPerSecond.norm < 0.25 // Speed
+                isAtTarget(relativePose)
             }
                 .debounce(0.75)
 
             if (useEndCondition) {
                 Commands.sequence(*commands.toTypedArray())
+                    .alongWith(
+                        Commands.run({
+                            val relativePose = estimatedPose.relativeTo(target)
+
+                            alignPositionPublisher.set(
+                                doubleArrayOf(
+                                    relativePose.x,
+                                    relativePose.y,
+                                )
+                            )
+                        })
+                    )
+                    .finallyDo { ->
+                        if (endCondition.asBoolean) {
+                            alignStatePublisher.set(AlignState.Success.raw)
+                        } else {
+                            alignStatePublisher.set(AlignState.NotRunning.raw)
+                        }
+//                        updateRGBToNoState().schedule()
+                    }
                     .until(endCondition)
             } else {
                 Commands.sequence(*commands.toTypedArray())

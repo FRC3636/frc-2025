@@ -281,6 +281,9 @@ object Robot : LoggedRobot() {
         }))
 
         joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI())
+        joystickRight.povUp().whileTrue(
+            Drivetrain.alignToReefAlgae()
+        )
 //        joystickLeft.button(1).whileTrue(Drivetrain.alignToReefAlgae())
         joystickRight.button(1).whileTrue(
 //            Commands.sequence(

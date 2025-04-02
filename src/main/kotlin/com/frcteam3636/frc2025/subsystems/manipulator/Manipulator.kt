@@ -1,6 +1,8 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.alignStatePublisher
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
@@ -102,11 +104,12 @@ object Manipulator : Subsystem {
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
-    fun outtake(): Command = startEnd(
+    fun outtake(): Command = runEnd(
         { io.setCurrent(50.amps) },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE
+            alignStatePublisher.set(Drivetrain.AlignState.NotRunning.raw)
         }
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
@@ -116,6 +119,7 @@ object Manipulator : Subsystem {
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE
+            alignStatePublisher.set(Drivetrain.AlignState.NotRunning.raw)
         }
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
