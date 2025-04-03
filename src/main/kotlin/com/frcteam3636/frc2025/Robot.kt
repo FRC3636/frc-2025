@@ -18,6 +18,7 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
@@ -280,7 +281,7 @@ object Robot : LoggedRobot() {
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.25))
+        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.75))
         joystickRight.povUp().whileTrue(
             Drivetrain.alignToReefAlgae()
         )
@@ -310,6 +311,13 @@ object Robot : LoggedRobot() {
             println("Zeroing gyro.")
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
+
+        joystickLeft.button(16).onTrue(Commands.runOnce({
+            println("Zeroing gyro.")
+            Drivetrain.zeroGyro(offset = Rotation2d.fromDegrees(-60.0))
+        }).ignoringDisable(true))
+
+
 
         // Left close middle
         joystickLeft.button(9)

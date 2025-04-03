@@ -271,7 +271,7 @@ private enum class FieldOffset(val distance: Distance) {
     Stemnasium(0.75.inches),
     ClackamasAcademy(0.25.inches),
     Wilsonville(0.25.inches),
-    DCMP(0.25.inches); // TODO: Find on the field!
+    DCMP(0.5.inches); // TODO: Find on the field!
 
     companion object {
         val current = DCMP
