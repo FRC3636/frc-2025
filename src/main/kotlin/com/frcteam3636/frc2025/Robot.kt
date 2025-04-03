@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.CANBus
+import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
@@ -71,6 +72,8 @@ object Robot : LoggedRobot() {
             tResourceType.kResourceType_Language, tInstances.kLanguage_Kotlin, 0, WPILibVersion.Version
         )
 
+        SignalLogger.enableAutoLogging(false)
+
         // Joysticks are likely to be missing in simulation, which usually isn't a problem.
         DriverStation.silenceJoystickConnectionWarning(model != Model.COMPETITION)
 
@@ -81,6 +84,7 @@ object Robot : LoggedRobot() {
         configureDashboard()
 
         Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
+
     }
 
     /** Start logging or pull replay logs from a file */
