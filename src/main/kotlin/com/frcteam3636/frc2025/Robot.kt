@@ -191,7 +191,8 @@ object Robot : LoggedRobot() {
             Drivetrain.alignToClosestPOI(
                 sideOverride = ReefBranchSide.Left,
                 usePathfinding = false,
-                raiseElevator = false
+                raiseElevator = false,
+                endConditionTimeout = 0.5
             )
                 .withTimeout(3.5.seconds)
         )
@@ -200,7 +201,8 @@ object Robot : LoggedRobot() {
             Drivetrain.alignToClosestPOI(
                 sideOverride = ReefBranchSide.Right,
                 usePathfinding = false,
-                raiseElevator = false
+                raiseElevator = false,
+                endConditionTimeout = 0.5
             )
                 .withTimeout(3.5.seconds)
         )
@@ -211,7 +213,7 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "alignToReefAlgae",
             Drivetrain.alignToReefAlgae(usePathfinding = false)
-                .withTimeout(2.seconds)
+                .withTimeout(1.seconds)
         )
         NamedCommands.registerCommand(
             "alignToBarge",
