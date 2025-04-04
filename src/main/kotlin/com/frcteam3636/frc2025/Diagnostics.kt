@@ -1,10 +1,13 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.CANBus
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
 import com.frcteam3636.frc2025.utils.cachedStatus
 import com.frcteam3636.frc2025.utils.math.hasElapsed
+import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
+import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.GenericHID
@@ -25,11 +28,16 @@ object Diagnostics {
 
         object GyroDisconnected : Fault("Failed to connect to gyro, vision and odometry will likely not function.")
         object LimelightDisconnected : Fault("Failed to connect to one or more LimeLights, vision will be impaired.")
-        object DubiousAutoChoice :
+        object NoAutoChoice :
             Fault(
                 "There is no auto selected. Are you absolutely sure you **do not** want to run an auto?",
                 AlertType.kWarning
             )
+
+        object DubiousAutoChoice : Fault(
+            "The robot is very far away from this auto's start position. Did you select the correct auto?",
+            AlertType.kWarning,
+        )
 
         object JoystickDisconnected :
             Fault("One or more Joysticks have disconnected, driver controls will not work.")
@@ -127,6 +135,22 @@ object Diagnostics {
         }
     }
 
+    private var nearAutoStartingPose = false
+
+    /** Reports a fault if the robot is far away from the auto's starting pose */
+    fun checkAutoStartPosition(auto: PathPlannerAuto) {
+        val startPose = auto.startingPose
+        val estimatedPose = Drivetrain.inaccurateGyrolessEstimatedPose
+        if (estimatedPose != null) {
+            val distanceFromStart = estimatedPose.relativeTo(startPose).translation.norm.meters
+            nearAutoStartingPose = distanceFromStart < 1.5.meters
+        }
+
+        if (!nearAutoStartingPose) {
+            reportFault(Fault.DubiousAutoChoice)
+        }
+    }
+
     private val limelightsSync = Any()
     private var limelightsConnected = false
     fun reportLimelightsInBackground(names: Array<String>) {
@@ -152,9 +176,16 @@ object Diagnostics {
     fun periodic() {
         reset()
 
-        val selectedAuto = Dashboard.autoChooser.selected
-        if (selectedAuto is InstantCommand) {
-            reportFault(Fault.DubiousAutoChoice)
+        if (Robot.isDisabled) {
+            val selectedAuto = Dashboard.autoChooser.selected
+
+            if (selectedAuto is InstantCommand) {
+                reportFault(Fault.NoAutoChoice)
+            }
+
+            if (selectedAuto is PathPlannerAuto) {
+                checkAutoStartPosition(selectedAuto)
+            }
         }
 
         synchronized(limelightsSync) {

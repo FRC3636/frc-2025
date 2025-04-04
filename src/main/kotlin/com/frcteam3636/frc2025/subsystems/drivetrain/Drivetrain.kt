@@ -290,6 +290,32 @@ object Drivetrain : Subsystem, Sendable {
         }
 
     /**
+     * A pose estimation of the Drivetrain that is very course but doesn't require a correctly zeroed gyro.
+     *
+     * Uses the MegaTag algorithm, and doesn't perform any filtering.
+     * Do not use this for odometry.
+     * This value may sometimes be unavailable.
+     */
+    val inaccurateGyrolessEstimatedPose: Pose2d?
+        get() {
+            if (Robot.model == Robot.Model.SIMULATION) {
+                return estimatedPose
+            }
+
+            for ((io, _) in this.absolutePoseIOs.values) {
+                if (io is LimelightPoseProvider) {
+                    val measurement = io.measurements.megaTag.poseMeasurement
+                    if (measurement == null) continue
+
+                    return measurement.pose
+                }
+
+            }
+
+            return null
+        }
+
+    /**
      * Update the QuestNav pose to keep its origin correct.
      */
 //    private fun updateQuestNavOrigin() {
@@ -409,12 +435,13 @@ object Drivetrain : Subsystem, Sendable {
         ).pose
     }
 
-    fun alignToReefAlgae(usePathfinding: Boolean = true) = alignToTarget(usePathfinding, disableEndConditionOverride = true) {
-        AprilTagTarget.currentAllianceReefAlgaeTargets
-            .asIterable()
-            .closestToPose(estimatedPose)
-            .pose
-    }
+    fun alignToReefAlgae(usePathfinding: Boolean = true) =
+        alignToTarget(usePathfinding, disableEndConditionOverride = true) {
+            AprilTagTarget.currentAllianceReefAlgaeTargets
+                .asIterable()
+                .closestToPose(estimatedPose)
+                .pose
+        }
 
     /** Use PID only to drive to left human player station */
     fun alignToLeftStation() = alignToTarget(usePathfinding = false) {
