@@ -439,6 +439,7 @@ object Drivetrain : Subsystem, Sendable {
     fun isAtTarget(relativePose: Pose2d): Boolean =
         relativePose.translation.norm < 2.centimeters.inMeters() // Translation
                 && Elevator.isAtTarget
+                && measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond < 0.2.metersPerSecond
 
     private fun updateRGBToNoState(): Command = Commands.waitSeconds(1.5)
         .finallyDo { ->
