@@ -213,7 +213,7 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "alignToReefAlgae",
             Drivetrain.alignToReefAlgae(usePathfinding = false)
-                .withTimeout(2.seconds)
+                .withTimeout(1.seconds)
         )
         NamedCommands.registerCommand(
             "alignToBarge",

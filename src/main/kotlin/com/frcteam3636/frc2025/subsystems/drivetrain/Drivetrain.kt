@@ -459,10 +459,10 @@ object Drivetrain : Subsystem, Sendable {
         endConditionTimeout: Double = 0.75,
         target: () -> Pose2d
     ): Command {
-        Logger.recordOutput(
-            "/Drivetrain/Auto Align/Distance To Target",
-            0
-        )
+//        Logger.recordOutput(
+//            "/Drivetrain/Auto Align/Distance To Target",
+//            0
+//        )
         Logger.recordOutput(
             "/Drivetrain/Auto Align/Has Reached Target",
             false
