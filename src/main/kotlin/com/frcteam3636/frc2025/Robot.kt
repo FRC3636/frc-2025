@@ -213,12 +213,12 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "alignToReefAlgae",
             Drivetrain.alignToReefAlgae(usePathfinding = false)
-                .withTimeout(1.seconds)
+                .withTimeout(0.75.seconds)
         )
         NamedCommands.registerCommand(
             "alignToBarge",
             Drivetrain.alignToBarge(usePathfinding = false)
-                .withTimeout(1.seconds)
+                .withTimeout(0.9.seconds)
         )
         NamedCommands.registerCommand(
             "intakeAlgae",
