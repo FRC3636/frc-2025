@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.CANBus
+import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
@@ -18,6 +19,7 @@ import com.pathplanner.lib.auto.NamedCommands
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
@@ -70,6 +72,8 @@ object Robot : LoggedRobot() {
             tResourceType.kResourceType_Language, tInstances.kLanguage_Kotlin, 0, WPILibVersion.Version
         )
 
+        SignalLogger.enableAutoLogging(false)
+
         // Joysticks are likely to be missing in simulation, which usually isn't a problem.
         DriverStation.silenceJoystickConnectionWarning(model != Model.COMPETITION)
 
@@ -80,6 +84,7 @@ object Robot : LoggedRobot() {
         configureDashboard()
 
         Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
+
     }
 
     /** Start logging or pull replay logs from a file */
@@ -186,18 +191,20 @@ object Robot : LoggedRobot() {
             Drivetrain.alignToClosestPOI(
                 sideOverride = ReefBranchSide.Left,
                 usePathfinding = false,
-                raiseElevator = false
+                raiseElevator = false,
+                endConditionTimeout = 0.5
             )
-//                .withTimeout(1.25.seconds)
+                .withTimeout(3.5.seconds)
         )
         NamedCommands.registerCommand(
             "alignToTargetRight",
             Drivetrain.alignToClosestPOI(
                 sideOverride = ReefBranchSide.Right,
                 usePathfinding = false,
-                raiseElevator = false
+                raiseElevator = false,
+                endConditionTimeout = 0.5
             )
-//                .withTimeout(1.25.seconds)
+                .withTimeout(3.5.seconds)
         )
         NamedCommands.registerCommand(
             "raiseElevatorAlgae",
@@ -206,12 +213,12 @@ object Robot : LoggedRobot() {
         NamedCommands.registerCommand(
             "alignToReefAlgae",
             Drivetrain.alignToReefAlgae(usePathfinding = false)
-                .withTimeout(2.seconds)
+                .withTimeout(0.75.seconds)
         )
         NamedCommands.registerCommand(
             "alignToBarge",
             Drivetrain.alignToBarge(usePathfinding = false)
-                .withTimeout(1.seconds)
+                .withTimeout(0.9.seconds)
         )
         NamedCommands.registerCommand(
             "intakeAlgae",
@@ -280,7 +287,7 @@ object Robot : LoggedRobot() {
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.25))
+        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.5))
         joystickRight.povUp().whileTrue(
             Drivetrain.alignToReefAlgae()
         )
@@ -310,6 +317,13 @@ object Robot : LoggedRobot() {
             println("Zeroing gyro.")
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
+
+        joystickLeft.button(16).onTrue(Commands.runOnce({
+            println("Zeroing gyro.")
+            Drivetrain.zeroGyro(offset = Rotation2d.fromDegrees(-60.0))
+        }).ignoringDisable(true))
+
+
 
         // Left close middle
         joystickLeft.button(9)

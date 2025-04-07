@@ -439,6 +439,7 @@ object Drivetrain : Subsystem, Sendable {
     fun isAtTarget(relativePose: Pose2d): Boolean =
         relativePose.translation.norm < 2.centimeters.inMeters() // Translation
                 && Elevator.isAtTarget
+                && measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond < 0.2.metersPerSecond
 
     private fun updateRGBToNoState(): Command = Commands.waitSeconds(1.5)
         .finallyDo { ->
@@ -458,10 +459,10 @@ object Drivetrain : Subsystem, Sendable {
         endConditionTimeout: Double = 0.75,
         target: () -> Pose2d
     ): Command {
-        Logger.recordOutput(
-            "/Drivetrain/Auto Align/Distance To Target",
-            0
-        )
+//        Logger.recordOutput(
+//            "/Drivetrain/Auto Align/Distance To Target",
+//            0
+//        )
         Logger.recordOutput(
             "/Drivetrain/Auto Align/Has Reached Target",
             false
@@ -599,7 +600,7 @@ object Drivetrain : Subsystem, Sendable {
         }
     }
 
-    fun zeroGyro(isReversed: Boolean = false) {
+    fun zeroGyro(isReversed: Boolean = false, offset: Rotation2d = Rotation2d.kZero) {
         // Tell the gyro that the robot is facing the other alliance.
         var zeroPos = when (DriverStation.getAlliance().getOrNull()) {
             DriverStation.Alliance.Red -> Rotation2d.k180deg
@@ -610,7 +611,7 @@ object Drivetrain : Subsystem, Sendable {
             zeroPos += Rotation2d.k180deg
         }
 
-        estimatedPose = Pose2d(estimatedPose.translation, zeroPos)
+        estimatedPose = Pose2d(estimatedPose.translation, zeroPos + offset)
 //        io.setGyro(zeroPos)
     }
 
