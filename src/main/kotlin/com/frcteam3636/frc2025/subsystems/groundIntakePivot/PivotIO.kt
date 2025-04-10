@@ -92,11 +92,20 @@ class PivotIOReal: PivotIO{
     }
 
     override fun setTargetPostion(postion: Rotation2d) {
-        TODO("Not yet implemented")
+
+        val controlRequest = MotionMagicTorqueCurrentFOC(0.0).apply {
+            Slot = 0
+            Position = position.rotations
+        }
+
+        leftMotor.setControl(controlRequest)
+        rightMotor.setControl(controlRequest)
     }
 
     override fun setMotorVoltage(voltage: Voltage) {
-        TODO("Not yet implemented")
+        assert(voltage.inVolts() in -12.0..12.0)
+        leftMotor.setVoltage(voltage,inVolts())
+        rightMotor.setVoltage(voltage,inVolts())
     }
 
     internal companion object Constants {
