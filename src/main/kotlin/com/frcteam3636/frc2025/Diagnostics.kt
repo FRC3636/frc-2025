@@ -5,6 +5,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
 import com.frcteam3636.frc2025.utils.cachedStatus
 import com.frcteam3636.frc2025.utils.math.hasElapsed
 import com.frcteam3636.frc2025.utils.math.seconds
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.GenericHID
@@ -20,6 +21,8 @@ import kotlin.concurrent.thread
  * becomes problematic. The alerts are sent to the driver dashboard and logged to the console.
  */
 object Diagnostics {
+    private var rgbFaultPublisher = NetworkTableInstance.getDefault().getIntegerTopic("RGB/Errors").publish()
+
     sealed class Fault(message: String, alertType: AlertType = AlertType.kError) {
         val alert = Alert(message, alertType)
 
@@ -35,12 +38,11 @@ object Diagnostics {
             Fault("One or more Joysticks have disconnected, driver controls will not work.")
 
         object ControllerDisconnected :
-            Fault("An Xbox Controller has disconnected, operator controls will not work.")
+            Fault("An Xbox Controller has disconnected, operator controls will not work.", AlertType.kWarning)
 
         object HIDDeviceIsWrongType :
             Fault(
-                "Check USB device order in Driver Station! The connected devices are likely in the wrong order.",
-                AlertType.kWarning
+                "Check USB device order in Driver Station! The connected devices are likely in the wrong order."
             )
 
         class CAN private constructor(bus: CANBus) {
@@ -162,6 +164,18 @@ object Diagnostics {
                 reportFault(Fault.LimelightDisconnected)
             }
         }
+
+        for (f in faults) {
+            if (f.alert.type == AlertType.kError) {
+                rgbFaultPublisher.set(2)
+                break
+            } else {
+                rgbFaultPublisher.set(1)
+            }
+        }
+
+        if (faults.isEmpty())
+            rgbFaultPublisher.set(0)
     }
 
     private var previousFaults = HashSet<Fault>()
