@@ -5,18 +5,13 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.alignStatePublisher
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
-import com.frcteam3636.frc2025.utils.math.inDegreesPerSecond
 import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.util.Color
-import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
-import org.littletonrobotics.junction.mechanism.LoggedMechanism2d
-import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d
 
 object Manipulator : Subsystem {
     private val io: ManipulatorIO = when (Robot.model) {
@@ -35,24 +30,24 @@ object Manipulator : Subsystem {
 
     private var rgbPublisher = NetworkTableInstance.getDefault().getIntegerTopic("RGB/Coral State").publish()
 
-    private var mechanism = LoggedMechanism2d(100.0, 100.0)
-    private var motorAngleVisualizer =
-        LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
+//    private var mechanism = LoggedMechanism2d(100.0, 100.0)
+//    private var motorAngleVisualizer =
+//        LoggedMechanismLigament2d("Manipulator Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
     var isIntakeRunning = false
 
     init {
-        mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
-            append(motorAngleVisualizer)
-        }
+//        mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
+//            append(motorAngleVisualizer)
+//        }
     }
 
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Manipulator", inputs)
 
-        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
-        Logger.recordOutput("/Manipulator/Mechanism", mechanism)
+//        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
+//        Logger.recordOutput("/Manipulator/Mechanism", mechanism)
         Logger.recordOutput("/Manipulator/Is Intake Running", isIntakeRunning)
     }
 

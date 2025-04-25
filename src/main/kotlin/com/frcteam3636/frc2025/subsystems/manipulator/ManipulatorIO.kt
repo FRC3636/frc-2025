@@ -13,7 +13,10 @@ import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
-import com.frcteam3636.frc2025.utils.math.*
+import com.frcteam3636.frc2025.utils.math.inAmps
+import com.frcteam3636.frc2025.utils.math.inVolts
+import com.frcteam3636.frc2025.utils.math.meters
+import com.frcteam3636.frc2025.utils.math.millimeters
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Current
@@ -23,10 +26,9 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class ManipulatorInputs {
-    var position = 0.rotations
-    var velocity = 0.rotationsPerSecond
-    var current = 0.amps
-
+    //    var position = 0.rotations
+//    var velocity = 0.rotationsPerSecond
+//    var current = 0.amps
     var laserCanDistance = Double.POSITIVE_INFINITY.meters
 }
 
@@ -78,9 +80,9 @@ class ManipulatorIOReal : ManipulatorIO {
     }
 
     override fun updateInputs(inputs: ManipulatorInputs) {
-        inputs.velocity = manipulatorMotor.velocity.value
-        inputs.current = manipulatorMotor.supplyCurrent.value
-        inputs.position = manipulatorMotor.position.value
+//        inputs.velocity = manipulatorMotor.velocity.value
+//        inputs.current = manipulatorMotor.supplyCurrent.value
+//        inputs.position = manipulatorMotor.position.value
 
         val measurement = laserCan.measurement
         if (measurement != null && measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
@@ -111,9 +113,9 @@ class ManipulatorIOSim : ManipulatorIO {
 
     override fun updateInputs(inputs: ManipulatorInputs) {
         simMotor.update(Robot.period)
-        inputs.velocity = simMotor.angularVelocity
+//        inputs.velocity = simMotor.angularVelocity
         simMotor.setAngularVelocity(simMotor.angularVelocityRadPerSec * 0.95)
-        inputs.current = simMotor.currentDrawAmps.amps
+//        inputs.current = simMotor.currentDrawAmps.amps
     }
 
 }

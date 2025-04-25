@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":deploy" />
+          <option value="deploy" />
         </list>
       </option>
       <option name="vmOptions" />

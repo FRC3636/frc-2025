@@ -9,7 +9,6 @@ import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.inAmps
 import com.frcteam3636.frc2025.utils.math.inVolts
-import com.frcteam3636.frc2025.utils.math.rotationsPerSecond
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Voltage
@@ -18,8 +17,8 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class FunnelInputs {
-    var rollerVelocity = 0.rotationsPerSecond
-    var rollerCurrent = 0.amps
+//    var rollerVelocity = 0.rotationsPerSecond
+//    var rollerCurrent = 0.amps
 }
 
 interface FunnelIO {
@@ -56,8 +55,8 @@ class FunnelIOReal : FunnelIO {
     }
 
     override fun updateInputs(inputs: FunnelInputs) {
-        inputs.rollerVelocity = rampMotor.velocity.value
-        inputs.rollerCurrent = rampMotor.supplyCurrent.value
+//        inputs.rollerVelocity = rampMotor.velocity.value
+//        inputs.rollerCurrent = rampMotor.supplyCurrent.value
     }
 
     internal companion object Constants {
@@ -80,9 +79,9 @@ class FunnelIOSim : FunnelIO {
 
     override fun updateInputs(inputs: FunnelInputs) {
         simMotor.update(Robot.period)
-        inputs.rollerVelocity = simMotor.angularVelocity
+//        inputs.rollerVelocity = simMotor.angularVelocity
         simMotor.setAngularVelocity(simMotor.angularVelocityRadPerSec * 0.95)
-        inputs.rollerCurrent = simMotor.currentDrawAmps.amps
+//        inputs.rollerCurrent = simMotor.currentDrawAmps.amps
     }
 
 }
