@@ -165,17 +165,21 @@ object Diagnostics {
             }
         }
 
-        for (f in faults) {
-            if (f.alert.type == AlertType.kError) {
-                rgbFaultPublisher.set(2)
-                break
-            } else {
-                rgbFaultPublisher.set(1)
+
+        var value = 0
+
+        synchronized(previousFaults) {
+            for (f in previousFaults) {
+                if (f.alert.type == AlertType.kError) {
+                    value = 2
+                    break
+                } else {
+                    value = 1
+                }
             }
         }
 
-        if (faults.isEmpty())
-            rgbFaultPublisher.set(0)
+        rgbFaultPublisher.set(value.toLong())
     }
 
     private var previousFaults = HashSet<Fault>()
