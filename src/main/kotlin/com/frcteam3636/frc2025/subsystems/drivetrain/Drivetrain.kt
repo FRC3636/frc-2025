@@ -10,6 +10,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
 import com.frcteam3636.frc2025.utils.ElasticWidgets
+import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.PIDController
 import com.frcteam3636.frc2025.utils.math.PIDGains
@@ -352,6 +353,30 @@ object Drivetrain : Subsystem, Sendable {
 //        io.setGyro(zeroPos)
     }
 
+    //align to center coral pieces
+    fun autoAlign() {
+
+        LimelightHelpers.setPipelineIndex("",0)
+
+        val detections= LimelightHelpers.getRawDetections("")
+        val kP: Double = -0.1
+        val min_command: Double = 0.05
+
+        for (detection: LimelightHelpers.RawDetection? in detections) {
+            var classID: Int? = detection?.classId
+            var txnc: Double? = detection?.txnc
+            var tync: Double? = detection?.tync
+            var ta: Double? = detection?.ta
+
+            var heading_error: Double = -txnc
+            if (abs(txnc) > 1.0) {
+                if (txnc > 1.0) {
+                    var steeringAdjust =
+                }
+            }
+        }
+    }
+
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
@@ -364,7 +389,7 @@ object Drivetrain : Subsystem, Sendable {
         val TRACK_WIDTH = Inches.of(28.0)
 
         val BUMPER_WIDTH = Inches.of(33.5)
-        val BUMPER_LENGTH = Inches.of(35.5)
+        val BUMPER_LENGTH = Inches.of(36.0)
 
         const val JOYSTICK_DEADBAND = 0.15
 
@@ -403,8 +428,8 @@ object Drivetrain : Subsystem, Sendable {
 //            PathConstraints(FREE_SPEED.baseUnitMagnitude(), 3.879, ROTATION_SPEED.baseUnitMagnitude(), 24.961)
         // FIXME: Update for 2025
         val PP_ROBOT_CONFIG_COMP = RobotConfig(
-            Pounds.of(120.0), // FIXME: Placeholder
-            KilogramSquareMeters.of(0.0), // FIXME: Placeholder
+            Pounds.of(68.2516456), // FIXME: Placeholder
+            KilogramSquareMeters.of(0.06653406048), // FIXME: Placeholder
             ModuleConfig(
                 WHEEL_RADIUS,
                 FREE_SPEED,
