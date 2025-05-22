@@ -358,7 +358,7 @@ object Drivetrain : Subsystem, Sendable {
 
         LimelightHelpers.setPipelineIndex("",0)
 
-        val detections= LimelightHelpers.getRawDetections("")
+        val detections = LimelightHelpers.getRawDetections("")
         val kP: Double = -0.1
         val min_command: Double = 0.05
 
@@ -367,11 +367,13 @@ object Drivetrain : Subsystem, Sendable {
             var txnc: Double? = detection?.txnc
             var tync: Double? = detection?.tync
             var ta: Double? = detection?.ta
+            var maxConfidence = 0.0
+            if (detection.confidence )
 
-            var heading_error: Double = -txnc
+            var heading_error: Double = -txnc!!
             if (abs(txnc) > 1.0) {
                 if (txnc > 1.0) {
-                    var steeringAdjust =
+                    var steeringAdjust = heading_error * kP
                 }
             }
         }
