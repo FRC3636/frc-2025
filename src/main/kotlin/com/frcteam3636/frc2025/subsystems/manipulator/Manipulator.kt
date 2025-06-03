@@ -3,6 +3,7 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.alignStatePublisher
+import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
 import com.frcteam3636.frc2025.utils.math.meters
@@ -100,7 +101,13 @@ object Manipulator : Subsystem {
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
     fun outtake(): Command = runEnd(
-        { io.setCurrent(50.amps) },
+        {
+            if (Elevator.position == Elevator.Position.MidBar || Elevator.position == Elevator.Position.LowBar || Elevator.position == Elevator.Position.Stowed) {
+                io.setCurrent(40.amps)
+            } else {
+                io.setCurrent(50.amps)
+            }
+        },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE

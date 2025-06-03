@@ -25,6 +25,8 @@ object Elevator : Subsystem {
     private var desiredHeight = 0.meters
     val isAtTarget get() = (inputs.height - desiredHeight) < 0.5.inches
 
+    var position = Position.Stowed
+
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
             0.5.voltsPerSecond,
@@ -48,6 +50,7 @@ object Elevator : Subsystem {
 
     fun setTargetHeight(position: Position): Command =
         startEnd({
+            this.position = position
             io.runToHeight(position.height)
             desiredHeight = position.height
         }, {})
@@ -55,6 +58,7 @@ object Elevator : Subsystem {
 
     fun setTargetHeightAlgae(position: Position): Command =
         startEnd({
+            this.position = position
             io.runToHeightWithOverride(position.height, 200.0.rotationsPerSecond, 20.0.rotationsPerSecondPerSecond)
             desiredHeight = position.height
         }, {})
@@ -89,10 +93,9 @@ object Elevator : Subsystem {
         Stowed(0.meters),
         LowBar(0.79.rotations.toLinear(SPOOL_RADIUS)),
         AlgaeMidBar(1.5.rotations.toLinear(SPOOL_RADIUS)),
-        MidBar(2.27.rotations.toLinear(SPOOL_RADIUS)),
+        MidBar(2.25.rotations.toLinear(SPOOL_RADIUS)),
 
-        // FIXME: this may be too high after we tune elevator
-        HighBar(4.54.rotations.toLinear(SPOOL_RADIUS)),
+        HighBar(4.5.rotations.toLinear(SPOOL_RADIUS)),
 //        LowAlgae(Meters.of(0.0)),
 //        HighAlgae(Meters.of(0.0)),
     }

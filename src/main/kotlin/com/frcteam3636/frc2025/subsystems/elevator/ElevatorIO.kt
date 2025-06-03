@@ -1,8 +1,8 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.DynamicMotionMagicTorqueCurrentFOC
-import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC
+import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage
+import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
@@ -76,8 +76,8 @@ class ElevatorIOReal : ElevatorIO {
 
             Slot0.apply {
                 pidGains = PID_GAINS
-                motorFFGains = FF_GAINS
-                kG = GRAVITY_GAIN
+//                motorFFGains = FF_GAINS
+//                kG = GRAVITY_GAIN
             }
 
             Feedback.apply {
@@ -89,14 +89,14 @@ class ElevatorIOReal : ElevatorIO {
                 MotionMagicAcceleration = PROFILE_ACCELERATION
                 MotionMagicJerk = PROFILE_JERK
             }
-
-            CurrentLimits.apply {
-                StatorCurrentLimitEnable = true
-                StatorCurrentLimit = 37.0
-
-                SupplyCurrentLimitEnable = true
-                SupplyCurrentLimit = 20.0
-            }
+//
+//            CurrentLimits.apply {
+//                StatorCurrentLimitEnable = true
+//                StatorCurrentLimit = 37.0
+//
+//                SupplyCurrentLimitEnable = true
+//                SupplyCurrentLimit = 20.0
+//            }
         }
     }
 
@@ -118,7 +118,7 @@ class ElevatorIOReal : ElevatorIO {
     override fun runToHeight(height: Distance) {
         Logger.recordOutput("Elevator/Height Setpoint", height)
         val desiredMotorAngle = height.toAngular(SPOOL_RADIUS)
-        val controlRequest = MotionMagicTorqueCurrentFOC(desiredMotorAngle)
+        val controlRequest = MotionMagicVoltage(desiredMotorAngle)
         rightElevatorMotor.setControl(controlRequest)
         leftElevatorMotor.setControl(controlRequest)
     }
@@ -130,7 +130,7 @@ class ElevatorIOReal : ElevatorIO {
     ) {
         Logger.recordOutput("Elevator/Height Setpoint", height)
         val desiredMotorAngle = height.toAngular(SPOOL_RADIUS)
-        val controlRequest = DynamicMotionMagicTorqueCurrentFOC(
+        val controlRequest = DynamicMotionMagicVoltage(
             desiredMotorAngle.inRotations(),
             velocity.inRotationsPerSecond(),
             acceleration.baseUnitMagnitude(),
@@ -166,12 +166,12 @@ class ElevatorIOReal : ElevatorIO {
         val SPOOL_RADIUS = 0.77.inches
 
         //        private val DISTANCE_PER_TURN = Meters.per(Radian).of(SPOOL_RADIUS.meters)
-        private val PID_GAINS = PIDGains(160.92, 0.0, 5.3624)
+        private val PID_GAINS = PIDGains(30.0, 0.0, 0.0)
         private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
         private const val GRAVITY_GAIN = 0.27592
-        private val PROFILE_ACCELERATION = 16.0
+        private const val PROFILE_ACCELERATION = 50.0 // TODO: Increase to good setting
         private const val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = 200.inchesPerSecond.toAngular(SPOOL_RADIUS)
+        private val PROFILE_VELOCITY = 350.inchesPerSecond.toAngular(SPOOL_RADIUS)
     }
 
 }
