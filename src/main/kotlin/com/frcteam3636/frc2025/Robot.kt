@@ -261,7 +261,7 @@ object Robot : LoggedRobot() {
                 }),
                 Commands.race(
                     Manipulator.intakeAlgae(),
-                    Commands.waitSeconds(0.5),
+                    Commands.waitSeconds(0.4),
                 ),
                 Commands.runOnce({
                     Manipulator.isIntakeRunning = false
