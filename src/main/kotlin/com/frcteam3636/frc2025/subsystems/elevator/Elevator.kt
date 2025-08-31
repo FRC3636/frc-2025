@@ -48,6 +48,15 @@ object Elevator : Subsystem {
         Logger.processInputs("Elevator", inputs)
     }
 
+    // setTargetHeightToggle won't require the subsystem
+    // but setTargetHeight will.
+    fun setTargetHeightToggle(position: Position): Command =
+        Commands.startEnd({
+            setTargetHeight(position)
+        }, {
+            setTargetHeight(Position.Stowed)
+        })
+
     fun setTargetHeight(position: Position): Command =
         startEnd({
             this.position = position

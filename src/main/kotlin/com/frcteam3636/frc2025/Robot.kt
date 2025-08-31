@@ -4,6 +4,7 @@ import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.startEnd
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
@@ -63,6 +64,8 @@ object Robot : LoggedRobot() {
     private val rioCANBus = CANBus("rio")
     private val canivore = CANBus("*")
 
+    private var requestedElevatorHeight: Elevator.Position = Elevator.Position.Stowed
+
     /** Status signals used to check the health of the robot's hardware */
     val statusSignals = mutableMapOf<String, StatusSignal<*>>()
 
@@ -91,7 +94,6 @@ object Robot : LoggedRobot() {
     private fun configureAdvantageKit() {
         Logger.recordMetadata("Git SHA", GIT_SHA)
         Logger.recordMetadata("Build Date", BUILD_DATE)
-        @Suppress("KotlinConstantConditions")
         Logger.recordMetadata("Git Tree Dirty", (DIRTY == 1).toString())
         Logger.recordMetadata("Git Branch", GIT_BRANCH)
         Logger.recordMetadata("Model", model.name)
@@ -272,6 +274,11 @@ object Robot : LoggedRobot() {
         Elevator.setTargetHeight(Elevator.Position.Stowed)
     )
 
+    private fun setRequestedElevatorHeight(position: Elevator.Position): Command =
+        startEnd({
+            requestedElevatorHeight = position
+        }, {})
+
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
@@ -332,11 +339,11 @@ object Robot : LoggedRobot() {
 
         joystickLeft.button(14).onTrue(Elevator.runHoming())
 
-        controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
-        controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
-        controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
-        controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
-        controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
+        controller.a().onTrue(setRequestedElevatorHeight(Elevator.Position.Stowed))
+        controller.b().onTrue(setRequestedElevatorHeight(Elevator.Position.MidBar))
+        controller.x().onTrue(setRequestedElevatorHeight(Elevator.Position.LowBar))
+        controller.y().onTrue(setRequestedElevatorHeight(Elevator.Position.HighBar))
+        controller.pov(0).onTrue(setRequestedElevatorHeight(Elevator.Position.AlgaeMidBar))
         joystickLeft.button(2).onTrue(
             tossAlgae()
         )
@@ -384,7 +391,7 @@ object Robot : LoggedRobot() {
 //                Funnel.intake()
 //            )
 //        )
-        joystickRight.button(2).whileTrue(Drivetrain.alignToBarge())
+        joystickRight.button(2).toggleOnTrue(Elevator.setTargetHeightToggle(requestedElevatorHeight))
 
 //            Manipulator.intake()
 
