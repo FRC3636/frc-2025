@@ -102,7 +102,7 @@ object Manipulator : Subsystem {
 
     fun outtake(): Command = runEnd(
         {
-            if (Elevator.position == Elevator.Position.MidBar || Elevator.position == Elevator.Position.LowBar || Elevator.position == Elevator.Position.Stowed) {
+            if (Elevator.position != Elevator.Position.HighBar) {
                 io.setCurrent(40.amps)
             } else {
                 io.setCurrent(50.amps)
