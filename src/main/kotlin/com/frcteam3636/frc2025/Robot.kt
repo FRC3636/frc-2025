@@ -275,7 +275,7 @@ object Robot : LoggedRobot() {
     )
 
     private fun setRequestedElevatorHeight(position: Elevator.Position): Command =
-        startEnd({
+        Commands.startEnd({
             requestedElevatorHeight = position
         }, {})
 
