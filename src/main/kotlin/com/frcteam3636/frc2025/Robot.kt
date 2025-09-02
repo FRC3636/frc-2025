@@ -330,7 +330,7 @@ object Robot : LoggedRobot() {
             .and { Robot.isDisabled }
             .toggleOnTrue(Elevator.coast().ignoringDisable(true))
 
-        joystickLeft.button(14).onTrue(Elevator.runHoming())
+//        joystickLeft.button(14).onTrue(Elevator.runHoming())
 
         controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
@@ -385,6 +385,7 @@ object Robot : LoggedRobot() {
 //            )
 //        )
         joystickRight.button(2).whileTrue(Drivetrain.alignToBarge())
+        joystickRight.button(14).toggleOnTrue(Drivetrain.calculateWheelRadius())
 
 //            Manipulator.intake()
 

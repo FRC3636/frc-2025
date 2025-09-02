@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.Units.Volts
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Voltage
@@ -43,7 +44,7 @@ interface SwerveModule {
     // This is a vector with direction equal to the current angle of the module,
     // and magnitude equal to the total signed distance traveled by the wheel.
     val position: SwerveModulePosition
-
+    val positionRad: Angle
     fun periodic() {}
     fun characterize(voltage: Voltage)
 }
@@ -89,6 +90,10 @@ class MAXSwerveModule(
             drivingMotor.position, Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
         )
 
+    override val positionRad: Angle
+        get() = drivingMotor.positionRad
+
+
     override fun characterize(voltage: Voltage) {
         drivingMotor.setVoltage(voltage)
         turningPIDController.setReference(-chassisAngle.radians, SparkBase.ControlType.kPosition)
@@ -117,6 +122,7 @@ class MAXSwerveModule(
 interface DrivingMotor {
     val position: Distance
     var velocity: LinearVelocity
+    var positionRad: Angle
     fun setVoltage(voltage: Voltage)
 }
 
@@ -153,6 +159,10 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
             inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
         }
 
+    override var positionRad: Angle
+        get() = (inner.position.valueAsDouble * DRIVING_GEAR_RATIO_TALON).rotations.inRadians().radians
+        set(value) {}
+
     private val voltageControl = VoltageOut(0.0).apply {
         EnableFOC = true
     }
@@ -185,6 +195,10 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
 
     override val position: Distance
         get() = inner.encoder.position.meters
+
+    override var positionRad: Angle
+        get() = inner.encoder.position.radians
+        set(value) {}
 
     override var velocity: LinearVelocity
         get() = inner.encoder.velocity.metersPerSecond
@@ -219,6 +233,9 @@ class SimSwerveModule(val sim: SwerveModuleSimulation) : SwerveModule {
             sim.driveWheelFinalSpeed.inRadiansPerSecond() * WHEEL_RADIUS.inMeters(),
             sim.steerAbsoluteFacing
         )
+
+    override val positionRad: Angle
+        get() = TODO("Not yet implemented")
 
     override var desiredState: SwerveModuleState = SwerveModuleState(0.0, Rotation2d())
         set(value) {
@@ -271,6 +288,6 @@ internal val DRIVING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(0.22852, 0.1256
 internal val DRIVING_FF_GAINS_NEO: MotorFFGains =
     MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED.inMetersPerSecond(), 0.0) // TODO: ensure this is right
 
-internal val TURNING_PID_GAINS: PIDGains = PIDGains(1.7, 0.0, 0.125)
+internal val TURNING_PID_GAINS: PIDGains = PIDGains(1.0, 0.0, 0.05)
 internal val DRIVING_CURRENT_LIMIT = 37.amps
 internal val TURNING_CURRENT_LIMIT = 20.amps

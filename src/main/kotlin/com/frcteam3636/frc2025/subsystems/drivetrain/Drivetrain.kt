@@ -6,6 +6,7 @@ import com.frcteam3636.frc2025.REVMotorControllerId
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.DEFAULT_PATHING_CONSTRAINTS
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.DRIVE_BASE_RADIUS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTICK_DEADBAND
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
@@ -27,6 +28,7 @@ import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.pathfinding.Pathfinding
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
+import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
@@ -53,6 +55,8 @@ import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
 import kotlin.math.absoluteValue
+import kotlin.math.hypot
+import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.withSign
 
@@ -95,6 +99,56 @@ object Drivetrain : Subsystem, Sendable {
     }, {
         inputs.gyroVelocity
     })
+
+    // https://github.com/errorcodexero/Reefscape2025/blob/main/src/main/java/frc/robot/commands/drive/DriveCommands.java#L303
+    private val limiter = SlewRateLimiter(0.05)
+    private var wheelRadiusModuleStates = DoubleArray(4)
+    private var wheelRadiusLastAngle = Rotation2d()
+    private var wheelRadiusGyroDelta = 0.0
+    fun calculateWheelRadius(): Command = Commands.parallel(
+        Commands.sequence(
+            Commands.runOnce({
+                Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Running", true)
+                limiter.reset(0.0)
+            }),
+            Commands.run({
+                var speed = limiter.calculate(0.5)
+                desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(0.0, 0.0, speed, estimatedPose.rotation)
+            })
+        ),
+        Commands.sequence(
+            // Wait for modules to orient
+            Commands.waitSeconds(1.0),
+            Commands.runOnce({
+                for (i in 0..3) {
+                    wheelRadiusModuleStates[i] = io.modules.toTypedArray()[i].positionRad.inRadians()
+                }
+                wheelRadiusLastAngle = inputs.gyroRotation
+                wheelRadiusGyroDelta = 0.0
+            }),
+            Commands.run({
+                var rotation = inputs.gyroRotation
+                wheelRadiusGyroDelta += abs(rotation.minus(wheelRadiusLastAngle).radians)
+                wheelRadiusLastAngle = rotation
+                Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Gyro Delta", wheelRadiusGyroDelta)
+            })
+                .finallyDo { ->
+                    var wheelDelta = 0.0
+                    // Someone give me a better way to do this
+                    for (i in 0..3) {
+                        wheelDelta += abs(io.modules.toTypedArray()[i].positionRad.inRadians() - wheelRadiusModuleStates[i]) / 4.0
+                        Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Initial Wheel Position Rad/$i", wheelRadiusModuleStates[i])
+                        Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Final Wheel Position Rad/$i", io.modules.toTypedArray()[i].positionRad.inRadians())
+                    }
+                    val wheelRadius = ((wheelRadiusGyroDelta * DRIVE_BASE_RADIUS) / wheelDelta)
+                    Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Drive Base Radius", DRIVE_BASE_RADIUS)
+                    Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Wheel Delta", wheelDelta)
+                    Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Meters", wheelRadius)
+                    Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Inches", wheelRadius.meters.inInches())
+                    Logger.recordOutput("/Drivetrain/Wheel Radius Calculated/Running", false)
+                }
+        )
+    )
 
     private val absolutePoseIOs = when (Robot.model) {
         Robot.Model.SIMULATION -> mapOf(
@@ -663,6 +717,18 @@ object Drivetrain : Subsystem, Sendable {
             backRight = Pose2d(
                 Translation2d(-WHEEL_BASE, -TRACK_WIDTH) / 2.0, Rotation2d.fromDegrees(180.0)
             ),
+        )
+
+        // https://github.com/errorcodexero/Reefscape2025/blob/main/src/main/java/frc/robot/subsystems/drive/Drive.java#L133
+        val DRIVE_BASE_RADIUS = max(
+            max(
+                hypot(MODULE_POSITIONS.frontLeft.x, MODULE_POSITIONS.frontLeft.y),
+                hypot(MODULE_POSITIONS.frontRight.x, MODULE_POSITIONS.frontRight.y)
+            ),
+            max(
+                hypot(MODULE_POSITIONS.backLeft.x, MODULE_POSITIONS.backLeft.y),
+                hypot(MODULE_POSITIONS.backRight.x, MODULE_POSITIONS.backRight.y)
+            )
         )
 
         // Chassis Control
