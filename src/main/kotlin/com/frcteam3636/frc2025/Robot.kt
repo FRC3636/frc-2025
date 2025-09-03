@@ -91,7 +91,7 @@ object Robot : LoggedRobot() {
     private fun configureAdvantageKit() {
         Logger.recordMetadata("Git SHA", GIT_SHA)
         Logger.recordMetadata("Build Date", BUILD_DATE)
-        @Suppress("KotlinConstantConditions")
+        @Suppress("SimplifyBooleanWithConstants")
         Logger.recordMetadata("Git Tree Dirty", (DIRTY == 1).toString())
         Logger.recordMetadata("Git Branch", GIT_BRANCH)
         Logger.recordMetadata("Model", model.name)
