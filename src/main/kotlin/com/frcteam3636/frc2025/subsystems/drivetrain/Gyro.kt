@@ -57,7 +57,7 @@ class GyroNavX(private val ahrs: AHRS) : Gyro {
 
 class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
     init {
-        BaseStatusSignal.setUpdateFrequencyForAll(100.0, pigeon.yaw, pigeon.pitch, pigeon.roll)
+        BaseStatusSignal.setUpdateFrequencyForAll(250.0, pigeon.yaw, pigeon.pitch, pigeon.roll)
     }
 
     override var rotation: Rotation2d
