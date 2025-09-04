@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.controls.VoltageOut
@@ -122,7 +123,7 @@ class MAXSwerveModule(
 interface DrivingMotor {
     val position: Distance
     var velocity: LinearVelocity
-    var positionRad: Angle
+    val positionRad: Angle
     fun setVoltage(voltage: Voltage)
 }
 
@@ -144,6 +145,7 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     init {
         Robot.statusSignals[id.name] = inner.version
+        BaseStatusSignal.setUpdateFrequencyForAll(250.0, inner.position, inner.velocity)
     }
 
     override val position: Distance
@@ -159,9 +161,8 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
             inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
         }
 
-    override var positionRad: Angle
+    override val positionRad: Angle
         get() = (inner.position.valueAsDouble * DRIVING_GEAR_RATIO_TALON).rotations.inRadians().radians
-        set(value) {}
 
     private val voltageControl = VoltageOut(0.0).apply {
         EnableFOC = true

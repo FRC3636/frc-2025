@@ -112,9 +112,9 @@ object Drivetrain : Subsystem, Sendable {
                 limiter.reset(0.0)
             }),
             Commands.run({
-                var speed = limiter.calculate(0.5)
-                desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(0.0, 0.0, speed, estimatedPose.rotation)
-            })
+                var speed = limiter.calculate(0.1)
+                drive(Translation2d(), Translation2d(0.0, speed), false)
+            }, Drivetrain)
         ),
         Commands.sequence(
             // Wait for modules to orient
@@ -375,8 +375,8 @@ object Drivetrain : Subsystem, Sendable {
     private fun isInDeadband(translation: Translation2d) =
         abs(translation.x) < JOYSTICK_DEADBAND && abs(translation.y) < JOYSTICK_DEADBAND
 
-    private fun drive(translationInput: Translation2d, rotationInput: Translation2d) {
-        if (isInDeadband(translationInput) && isInDeadband(rotationInput)) {
+    private fun drive(translationInput: Translation2d, rotationInput: Translation2d, useDeadband: Boolean = true) {
+        if (isInDeadband(translationInput) && isInDeadband(rotationInput) && useDeadband) {
             // No joystick input - stop moving!
             desiredModuleStates = BRAKE_POSITION
         } else {
