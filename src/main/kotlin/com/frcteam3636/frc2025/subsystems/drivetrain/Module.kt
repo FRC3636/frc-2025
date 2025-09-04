@@ -45,12 +45,13 @@ interface SwerveModule {
     // and magnitude equal to the total signed distance traveled by the wheel.
     val position: SwerveModulePosition
 
+    fun getSignals(): Array<BaseStatusSignal> { return arrayOf() }
     fun periodic() {}
     fun characterize(voltage: Voltage)
 }
 
 class MAXSwerveModule(
-    private val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
+    val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
 ) : SwerveModule {
     private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless).apply {
         configure(SparkMaxConfig().apply {
@@ -113,12 +114,19 @@ class MAXSwerveModule(
 
             field = corrected
         }
+
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return drivingMotor.getSignals()
+    }
 }
 
 interface DrivingMotor {
     val position: Distance
     var velocity: LinearVelocity
     fun setVoltage(voltage: Voltage)
+    fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
@@ -139,7 +147,6 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     init {
         Robot.statusSignals[id.name] = inner.version
-        BaseStatusSignal.setUpdateFrequencyForAll(250.0, inner.position, inner.velocity)
     }
 
     override val position: Distance
@@ -161,6 +168,10 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     override fun setVoltage(voltage: Voltage) {
         inner.setControl(voltageControl.withOutput(voltage.inVolts()))
+    }
+
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf(inner.position, inner.velocity)
     }
 }
 
