@@ -33,15 +33,15 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 11.0,
-    "maxAcceleration": 11.637,
-    "maxAngularVelocity": 836.747564,
-    "maxAngularAcceleration": 1430.16,
+    "maxVelocity": 6.0,
+    "maxAcceleration": 4.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 1.0,
+    "velocity": 0.6,
     "rotation": -119.17607906797849
   },
   "reversed": false,
