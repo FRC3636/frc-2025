@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.controls.VoltageOut
@@ -138,6 +139,7 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     init {
         Robot.statusSignals[id.name] = inner.version
+        BaseStatusSignal.setUpdateFrequencyForAll(250.0, inner.position, inner.velocity)
     }
 
     override val position: Distance
