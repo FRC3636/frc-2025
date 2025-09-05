@@ -100,7 +100,7 @@ object Robot : LoggedRobot() {
         Logger.recordMetadata("Model", model.name)
 
         if (isReal()) {
-//            Logger.addDataReceiver(WPILOGWriter()) // Log to a USB stick
+            Logger.addDataReceiver(WPILOGWriter()) // Log to a USB stick
             if (!Path("/U").exists()) {
                 Alert(
                     "The Log USB drive is not connected to the roboRIO, so a match replay will not be saved. (If convenient, insert it and restart robot code.)",
