@@ -32,6 +32,7 @@ import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
 import org.littletonrobotics.junction.Logger
 import org.photonvision.simulation.VisionSystemSim
 import org.team9432.annotation.Logged
+import kotlin.collections.mutableListOf
 
 @Logged
 open class DrivetrainInputs {
@@ -48,16 +49,8 @@ abstract class DrivetrainIO {
     abstract val modules: PerCorner<out SwerveModule>
 
     open fun updateInputs(inputs: DrivetrainInputs) {
-        var signals = mutableListOf<BaseStatusSignal>()
         gyro.periodic()
         modules.forEach(SwerveModule::periodic)
-        modules.forEach { module ->
-            module.getSignals().forEach { signal ->
-                signals.add(signal)
-            }
-        }
-
-        BaseStatusSignal.refreshAll(*signals.toTypedArray())
 
         inputs.gyroRotation = gyro.rotation
         inputs.gyroVelocity = gyro.velocity
@@ -76,6 +69,18 @@ abstract class DrivetrainIO {
         for (module in modules) {
             module.characterize(voltage)
         }
+    }
+
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        var signals = mutableListOf<BaseStatusSignal>()
+
+        modules.forEach { module ->
+            module.getSignals().forEach { signal ->
+                signals.add(signal)
+            }
+        }
+        gyro.getStatusSignals().forEach { signals.add(it) }
+        return signals
     }
 }
 

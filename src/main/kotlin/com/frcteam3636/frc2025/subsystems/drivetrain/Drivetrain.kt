@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
@@ -184,6 +185,10 @@ object Drivetrain : Subsystem, Sendable {
 
         BargeTargetZone.RED.log("Drivetrain/BargeTargetZone/Red")
         BargeTargetZone.BLUE.log("Drivetrain/BargeTargetZone/Blue")
+    }
+
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return io.getStatusSignals()
     }
 
     override fun periodic() {

@@ -146,18 +146,20 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     init {
-        Robot.statusSignals[id.name] = inner.version
+        Robot.diagnosticsStatusSignals[id.name] = inner.version
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, inner.position, inner.velocity)
+        inner.optimizeBusUtilization()
     }
 
     override val position: Distance
-        get() = inner.position.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.getPosition(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
 
     private var velocityControl = VelocityVoltage(0.0).apply {
         EnableFOC = true
     }
 
     override var velocity: LinearVelocity
-        get() = inner.velocity.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.getVelocity(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
         set(value) {
             inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
         }
@@ -171,7 +173,7 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     override fun getSignals(): Array<BaseStatusSignal> {
-        return arrayOf(inner.position, inner.velocity)
+        return arrayOf(inner.getPosition(false), inner.getVelocity(false))
     }
 }
 

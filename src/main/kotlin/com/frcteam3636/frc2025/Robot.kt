@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
@@ -55,6 +56,8 @@ object Robot : LoggedRobot() {
     private val joystickLeft = CommandJoystick(0)
     private val joystickRight = CommandJoystick(1)
 
+    private val statusSignals = mutableListOf<BaseStatusSignal>()
+
     @Suppress("unused")
     private val joystickDev = Joystick(3)
 
@@ -64,7 +67,7 @@ object Robot : LoggedRobot() {
     private val canivore = CANBus("*")
 
     /** Status signals used to check the health of the robot's hardware */
-    val statusSignals = mutableMapOf<String, StatusSignal<*>>()
+    val diagnosticsStatusSignals = mutableMapOf<String, StatusSignal<*>>()
 
     override fun robotInit() {
         // Report the use of the Kotlin Language for "FRC Usage Report" statistics
@@ -97,7 +100,7 @@ object Robot : LoggedRobot() {
         Logger.recordMetadata("Model", model.name)
 
         if (isReal()) {
-            Logger.addDataReceiver(WPILOGWriter()) // Log to a USB stick
+//            Logger.addDataReceiver(WPILOGWriter()) // Log to a USB stick
             if (!Path("/U").exists()) {
                 Alert(
                     "The Log USB drive is not connected to the roboRIO, so a match replay will not be saved. (If convenient, insert it and restart robot code.)",
@@ -433,6 +436,16 @@ object Robot : LoggedRobot() {
     }
 
     override fun robotPeriodic() {
+        Drivetrain.getStatusSignals().forEach { signal ->
+            statusSignals.add(signal)
+        }
+        Elevator.getStatusSignals().forEach { signal ->
+            statusSignals.add(signal)
+        }
+
+        BaseStatusSignal.refreshAll(*statusSignals.toTypedArray())
+        statusSignals.clear()
+
         Dashboard.update()
         reportDiagnostics()
 

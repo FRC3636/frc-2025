@@ -51,6 +51,10 @@ class ManipulatorIOReal : ManipulatorIO {
         )
     }
 
+    init {
+        manipulatorMotor.optimizeBusUtilization()
+    }
+
     private var laserCan = LaserCan(REVMotorControllerId.ManipulatorLaserCAN.num).apply {
         try {
             CanBridge.runTCP()

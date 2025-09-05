@@ -45,20 +45,20 @@ object Dashboard {
 //            .withSize(3, 3)
 //            .withPosition(0, 0)
 
-        tab.addNumber("Match Time") { DriverStation.getMatchTime() }
-            .withWidget(ElasticWidgets.MatchTime.widgetName)
-            .withSize(6, 4)
-            .withPosition(0, 4)
-
-        tab.add("Field", field)
-            .withWidget(BuiltInWidgets.kField)
-            .withSize(12, 6)
-            .withPosition(12, 0)
-
-        tab.add("Auto Chooser", autoChooser)
-            .withWidget(BuiltInWidgets.kComboBoxChooser)
-            .withSize(4, 2)
-            .withPosition(10, 6)
+//        tab.addNumber("Match Time") { DriverStation.getMatchTime() }
+//            .withWidget(ElasticWidgets.MatchTime.widgetName)
+//            .withSize(6, 4)
+//            .withPosition(0, 4)
+//
+//        tab.add("Field", field)
+//            .withWidget(BuiltInWidgets.kField)
+//            .withSize(12, 6)
+//            .withPosition(12, 0)
+//
+//        tab.add("Auto Chooser", autoChooser)
+//            .withWidget(BuiltInWidgets.kComboBoxChooser)
+//            .withSize(4, 2)
+//            .withPosition(10, 6)
 
 
         // Status Indicators
