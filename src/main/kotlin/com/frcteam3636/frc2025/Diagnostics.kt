@@ -64,16 +64,12 @@ object Diagnostics {
     private var faults = HashSet<Fault>()
 
     fun reset() {
-        synchronized(faults) {
-            faults.clear()
-        }
+        faults.clear()
         timer.reset()
     }
 
     fun reportFault(fault: Fault) {
-        synchronized(faults) {
-            faults += fault
-        }
+        faults += fault
     }
 
     private val errorResetTimer = Timer().apply { start() }
@@ -174,13 +170,11 @@ object Diagnostics {
         }
         previousFaults.clear()
 
-        synchronized(faults) {
-            for (fault in faults) {
-                fault.alert.set(true)
-            }
-
-            previousFaults.addAll(faults)
+        for (fault in faults) {
+            fault.alert.set(true)
         }
+
+        previousFaults.addAll(faults)
     }
 }
 

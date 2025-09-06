@@ -57,7 +57,6 @@ class ManipulatorIOReal : ManipulatorIO {
 
     private var laserCan = LaserCan(REVMotorControllerId.ManipulatorLaserCAN.num).apply {
         try {
-            CanBridge.runTCP()
             setRangingMode(LaserCanInterface.RangingMode.SHORT)
             setRegionOfInterest(LaserCanInterface.RegionOfInterest(2, 8, 4, 8))
             setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_20MS)
