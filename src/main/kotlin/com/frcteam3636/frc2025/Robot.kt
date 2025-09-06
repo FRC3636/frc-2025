@@ -86,6 +86,7 @@ object Robot : LoggedRobot() {
         configureBindings()
         configureDashboard()
 
+        Diagnostics.timer.start()
         Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
 
     }
@@ -443,11 +444,14 @@ object Robot : LoggedRobot() {
         statusSignals.clear()
 
         Dashboard.update()
-        reportDiagnostics()
+
+        if (Diagnostics.timer.hasElapsed(1.0)) {
+            reportDiagnostics()
+            Diagnostics.send()
+        }
 
         CommandScheduler.getInstance().run()
 
-        Diagnostics.send()
     }
 
     override fun autonomousInit() {

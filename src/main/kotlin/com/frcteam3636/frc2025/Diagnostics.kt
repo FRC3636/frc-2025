@@ -20,6 +20,8 @@ import kotlin.concurrent.thread
  * becomes problematic. The alerts are sent to the driver dashboard and logged to the console.
  */
 object Diagnostics {
+    val timer = Timer()
+
     sealed class Fault(message: String, alertType: AlertType = AlertType.kError) {
         val alert = Alert(message, alertType)
 
@@ -64,6 +66,7 @@ object Diagnostics {
         synchronized(faults) {
             faults.clear()
         }
+        timer.reset()
     }
 
     fun reportFault(fault: Fault) {
