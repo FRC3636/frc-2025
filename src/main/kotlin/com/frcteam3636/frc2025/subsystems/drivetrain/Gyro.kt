@@ -66,7 +66,8 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
     }
 
     override var rotation: Rotation2d
-        get() = pigeon.rotation2d
+        // Basically just pigeon.rotation2d but bypasses the refresh
+        get() = Rotation2d.fromDegrees(pigeon.getYaw(false).valueAsDouble)
         set(goal) {
             pigeon.setYaw(goal.measure)
         }
