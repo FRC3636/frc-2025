@@ -72,14 +72,12 @@ abstract class DrivetrainIO {
     }
 
     fun getStatusSignals(): MutableList<BaseStatusSignal> {
-        var signals = mutableListOf<BaseStatusSignal>()
+        val signals = mutableListOf<BaseStatusSignal>()
 
         modules.forEach { module ->
-            module.getSignals().forEach { signal ->
-                signals.add(signal)
-            }
+            signals += module.getSignals()
         }
-        gyro.getStatusSignals().forEach { signals.add(it) }
+        signals += gyro.getStatusSignals()
         return signals
     }
 }

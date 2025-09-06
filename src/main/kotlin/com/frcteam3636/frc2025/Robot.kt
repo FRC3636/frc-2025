@@ -436,12 +436,8 @@ object Robot : LoggedRobot() {
     }
 
     override fun robotPeriodic() {
-        Drivetrain.getStatusSignals().forEach { signal ->
-            statusSignals.add(signal)
-        }
-        Elevator.getStatusSignals().forEach { signal ->
-            statusSignals.add(signal)
-        }
+        statusSignals += Drivetrain.getStatusSignals()
+        statusSignals += Elevator.getStatusSignals()
 
         BaseStatusSignal.refreshAll(*statusSignals.toTypedArray())
         statusSignals.clear()
