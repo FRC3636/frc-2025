@@ -118,10 +118,8 @@ object Drivetrain : Subsystem, Sendable {
         )
     }.mapValues { Triple(it.value, AbsolutePoseProviderInputs(), it.key) }
 
-    val absolutePoseConnections: Map<String, Boolean>
-        get() = absolutePoseIOs.mapValues { (_, triple) ->
-            triple.second.connected
-        }
+    val limelightsConnected: Boolean
+        get() = absolutePoseIOs.values.all { it.second.connected }
 
     /** Helper for converting a desired drivetrain velocity into the speeds and angles for each swerve module */
     private val kinematics =

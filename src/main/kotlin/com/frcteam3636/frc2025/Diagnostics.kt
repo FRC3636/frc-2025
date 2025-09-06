@@ -161,10 +161,8 @@ object Diagnostics {
             reportFault(Fault.DubiousAutoChoice)
         }
 
-        for (limelight in Drivetrain.absolutePoseConnections) {
-            if (!limelight.value)
-                reportFault(Fault.LimelightDisconnected)
-        }
+        if (!Drivetrain.limelightsConnected)
+            reportFault(Fault.LimelightDisconnected)
     }
 
     private var previousFaults = HashSet<Fault>()
