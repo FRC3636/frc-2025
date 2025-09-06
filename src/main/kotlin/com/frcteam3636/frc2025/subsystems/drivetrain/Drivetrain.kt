@@ -116,7 +116,7 @@ object Drivetrain : Subsystem, Sendable {
 //                algorithm = mt2Algo
 //            ),
         )
-    }.mapValues { Triple(it.value, AbsolutePoseProviderInputs(), it.key) }
+    }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
     val limelightsConnected: Boolean
         get() = absolutePoseIOs.values.all { it.second.connected }
