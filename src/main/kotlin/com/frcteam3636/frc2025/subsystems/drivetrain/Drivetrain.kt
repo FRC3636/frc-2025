@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
@@ -117,6 +118,9 @@ object Drivetrain : Subsystem, Sendable {
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
+    val limelightsConnected: Boolean
+        get() = absolutePoseIOs.values.all { it.second.connected }
+
     /** Helper for converting a desired drivetrain velocity into the speeds and angles for each swerve module */
     private val kinematics =
         SwerveDriveKinematics(
@@ -135,18 +139,6 @@ object Drivetrain : Subsystem, Sendable {
             VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5.0)),
             VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10.0))
         )
-
-    /** Whether every sensor used for pose estimation is connected. */
-    val allPoseProvidersConnected
-        get() = absolutePoseIOs.values.all { it.second.connected }
-
-    val isMoving: Boolean
-        get() {
-            val speeds = measuredChassisSpeeds
-            val translationalSpeed = speeds.translation2dPerSecond.norm.metersPerSecond
-            return translationalSpeed < 0.5.metersPerSecond
-                    && speeds.angularVelocity < 0.5.rotationsPerSecond
-        }
 
 
     init {
@@ -184,6 +176,10 @@ object Drivetrain : Subsystem, Sendable {
 
         BargeTargetZone.RED.log("Drivetrain/BargeTargetZone/Red")
         BargeTargetZone.BLUE.log("Drivetrain/BargeTargetZone/Blue")
+    }
+
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return io.getStatusSignals()
     }
 
     override fun periodic() {

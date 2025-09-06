@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.elevator.ElevatorIOReal.Constants.SPOOL_RADIUS
@@ -46,6 +47,10 @@ object Elevator : Subsystem {
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Elevator", inputs)
+    }
+
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return io.getStatusSignals()
     }
 
     fun setTargetHeight(position: Position): Command =

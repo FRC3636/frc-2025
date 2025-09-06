@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage
 import com.ctre.phoenix6.controls.MotionMagicVoltage
@@ -44,6 +45,10 @@ interface ElevatorIO {
     fun setEncoderPosition(position: Distance)
 
     fun setBrakeMode(enabled: Boolean) {}
+
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return mutableListOf()
+    }
 }
 
 class ElevatorIOReal : ElevatorIO {
@@ -98,6 +103,13 @@ class ElevatorIOReal : ElevatorIO {
 //                SupplyCurrentLimit = 20.0
 //            }
         }
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, leftElevatorMotor.position, leftElevatorMotor.velocity, rightElevatorMotor.supplyCurrent, leftElevatorMotor.supplyCurrent)
+        leftElevatorMotor.optimizeBusUtilization()
+        rightElevatorMotor.optimizeBusUtilization()
+    }
+
+    override fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return mutableListOf(leftElevatorMotor.getPosition(false), leftElevatorMotor.getSupplyCurrent(false), leftElevatorMotor.getVelocity(false), rightElevatorMotor.getSupplyCurrent(false))
     }
 
     private inline fun configure(config: TalonFXConfiguration.() -> Unit) {
@@ -109,10 +121,10 @@ class ElevatorIOReal : ElevatorIO {
     }
 
     override fun updateInputs(inputs: ElevatorInputs) {
-        inputs.height = leftElevatorMotor.position.value.toLinear(SPOOL_RADIUS)
-        inputs.velocity = leftElevatorMotor.velocity.value.toLinear(SPOOL_RADIUS)
-        inputs.rightCurrent = rightElevatorMotor.supplyCurrent.value
-        inputs.leftCurrent = leftElevatorMotor.supplyCurrent.value
+        inputs.height = leftElevatorMotor.getPosition(false).value.toLinear(SPOOL_RADIUS)
+        inputs.velocity = leftElevatorMotor.getVelocity(false).value.toLinear(SPOOL_RADIUS)
+        inputs.rightCurrent = rightElevatorMotor.getSupplyCurrent(false).value
+        inputs.leftCurrent = leftElevatorMotor.getSupplyCurrent(false).value
     }
 
     override fun runToHeight(height: Distance) {

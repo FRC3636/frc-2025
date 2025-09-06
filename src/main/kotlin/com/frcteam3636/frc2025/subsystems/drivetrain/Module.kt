@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.controls.VoltageOut
@@ -44,12 +45,13 @@ interface SwerveModule {
     // and magnitude equal to the total signed distance traveled by the wheel.
     val position: SwerveModulePosition
 
+    fun getSignals(): Array<BaseStatusSignal> { return arrayOf() }
     fun periodic() {}
     fun characterize(voltage: Voltage)
 }
 
 class MAXSwerveModule(
-    private val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
+    val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
 ) : SwerveModule {
     private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless).apply {
         configure(SparkMaxConfig().apply {
@@ -112,12 +114,19 @@ class MAXSwerveModule(
 
             field = corrected
         }
+
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return drivingMotor.getSignals()
+    }
 }
 
 interface DrivingMotor {
     val position: Distance
     var velocity: LinearVelocity
     fun setVoltage(voltage: Voltage)
+    fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
@@ -137,18 +146,20 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     init {
-        Robot.statusSignals[id.name] = inner.version
+        Robot.diagnosticsStatusSignals[id.name] = inner.version
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, inner.position, inner.velocity)
+        inner.optimizeBusUtilization()
     }
 
     override val position: Distance
-        get() = inner.position.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.getPosition(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
 
     private var velocityControl = VelocityVoltage(0.0).apply {
         EnableFOC = true
     }
 
     override var velocity: LinearVelocity
-        get() = inner.velocity.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.getVelocity(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
         set(value) {
             inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
         }
@@ -159,6 +170,10 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     override fun setVoltage(voltage: Voltage) {
         inner.setControl(voltageControl.withOutput(voltage.inVolts()))
+    }
+
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf(inner.getPosition(false), inner.getVelocity(false))
     }
 }
 

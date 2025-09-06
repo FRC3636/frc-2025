@@ -173,7 +173,6 @@ class LimelightPoseProvider(
     }
 
     override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
-//        val measurement = this.updateCurrentMeasurement()
         synchronized(mutex) {
             inputs.measurement = measurement
             inputs.observedTags = observedTags
