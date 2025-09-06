@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.CANBus
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
 import com.frcteam3636.frc2025.utils.cachedStatus
 import com.frcteam3636.frc2025.utils.math.hasElapsed
@@ -160,10 +161,9 @@ object Diagnostics {
             reportFault(Fault.DubiousAutoChoice)
         }
 
-        synchronized(limelightsSync) {
-            if (!limelightsConnected) {
+        for (limelight in Drivetrain.absolutePoseConnections) {
+            if (!limelight.value)
                 reportFault(Fault.LimelightDisconnected)
-            }
         }
     }
 

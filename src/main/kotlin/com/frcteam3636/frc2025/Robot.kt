@@ -84,10 +84,10 @@ object Robot : LoggedRobot() {
         configureSubsystems()
         configureAutos()
         configureBindings()
-        configureDashboard()
+        Dashboard.initialize()
 
         Diagnostics.timer.start()
-        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
+//        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
 
     }
 
@@ -402,10 +402,6 @@ object Robot : LoggedRobot() {
 //        controller.x().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     }
 
-    /** Add data to the driver station dashboard. */
-    private fun configureDashboard() {
-        Dashboard.showTeleopTab(Shuffleboard.getTab("Teleoperated"))
-    }
 
     override fun disabledInit() {
         if (model == Model.SIMULATION) {

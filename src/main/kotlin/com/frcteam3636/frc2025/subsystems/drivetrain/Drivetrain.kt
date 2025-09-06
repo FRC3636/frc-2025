@@ -116,7 +116,12 @@ object Drivetrain : Subsystem, Sendable {
 //                algorithm = mt2Algo
 //            ),
         )
-    }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
+    }.mapValues { Triple(it.value, AbsolutePoseProviderInputs(), it.key) }
+
+    val absolutePoseConnections: Map<String, Boolean>
+        get() = absolutePoseIOs.mapValues { (_, triple) ->
+            triple.second.connected
+        }
 
     /** Helper for converting a desired drivetrain velocity into the speeds and angles for each swerve module */
     private val kinematics =
@@ -136,18 +141,6 @@ object Drivetrain : Subsystem, Sendable {
             VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5.0)),
             VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10.0))
         )
-
-    /** Whether every sensor used for pose estimation is connected. */
-    val allPoseProvidersConnected
-        get() = absolutePoseIOs.values.all { it.second.connected }
-
-    val isMoving: Boolean
-        get() {
-            val speeds = measuredChassisSpeeds
-            val translationalSpeed = speeds.translation2dPerSecond.norm.metersPerSecond
-            return translationalSpeed < 0.5.metersPerSecond
-                    && speeds.angularVelocity < 0.5.rotationsPerSecond
-        }
 
 
     init {
