@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 
-import au.grapplerobotics.CanBridge
 import au.grapplerobotics.ConfigurationFailedException
 import au.grapplerobotics.LaserCan
 import au.grapplerobotics.interfaces.LaserCanInterface
@@ -10,7 +9,8 @@ import com.ctre.phoenix6.controls.TorqueCurrentFOC
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2025.CTREDeviceId
-import com.frcteam3636.frc2025.REVMotorControllerId
+import com.frcteam3636.frc2025.GrappleRoboticsDeviceId
+import com.frcteam3636.frc2025.Lasercan
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.inAmps
@@ -55,7 +55,7 @@ class ManipulatorIOReal : ManipulatorIO {
         manipulatorMotor.optimizeBusUtilization()
     }
 
-    private var laserCan = LaserCan(REVMotorControllerId.ManipulatorLaserCAN.num).apply {
+    private var laserCan = Lasercan(GrappleRoboticsDeviceId.ManipulatorLaserCAN).apply {
         try {
             setRangingMode(LaserCanInterface.RangingMode.SHORT)
             setRegionOfInterest(LaserCanInterface.RegionOfInterest(2, 8, 4, 8))
