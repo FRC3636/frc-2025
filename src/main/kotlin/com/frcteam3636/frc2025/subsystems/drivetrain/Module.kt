@@ -74,21 +74,23 @@ class MAXSwerveModule(
         }, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
     }
 
+
     // whereas the turning encoder must be absolute so that
     // we know where the wheel is pointing
     private val turningEncoder = turningSpark.getAbsoluteEncoder()
 
+    private var turningEncoderPosition: Double = turningEncoder.position
 
     private val turningPIDController = turningSpark.closedLoopController
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            drivingMotor.velocity.inMetersPerSecond(), Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.velocity.inMetersPerSecond(), Rotation2d.fromRadians(turningEncoderPosition) + chassisAngle
         )
 
     override val position: SwerveModulePosition
         get() = SwerveModulePosition(
-            drivingMotor.position, Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.position, Rotation2d.fromRadians(turningEncoderPosition) + chassisAngle
         )
 
     override fun characterize(voltage: Voltage) {
@@ -102,7 +104,7 @@ class MAXSwerveModule(
             val corrected = SwerveModuleState(value.speedMetersPerSecond, value.angle - chassisAngle)
             // optimize the state to avoid rotating more than 90 degrees
             corrected.optimize(
-                Rotation2d.fromRadians(turningEncoder.position)
+                Rotation2d.fromRadians(turningEncoderPosition)
             )
 
             drivingMotor.velocity = corrected.speed
@@ -117,6 +119,10 @@ class MAXSwerveModule(
 
     override fun getSignals(): Array<BaseStatusSignal> {
         return drivingMotor.getSignals()
+    }
+
+    override fun periodic() {
+        turningEncoderPosition = turningEncoder.position
     }
 }
 
@@ -161,7 +167,7 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     override var velocity: LinearVelocity
         get() = inner.getVelocity(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
         set(value) {
-            inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
+            inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS).inRotationsPerSecond() / DRIVING_GEAR_RATIO_TALON))
         }
 
     private val voltageControl = VoltageOut(0.0).apply {
