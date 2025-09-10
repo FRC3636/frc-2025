@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.CANBus
+import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
 import com.frcteam3636.frc2025.utils.cachedStatus
 import com.frcteam3636.frc2025.utils.math.hasElapsed
@@ -20,6 +21,8 @@ import kotlin.concurrent.thread
  * becomes problematic. The alerts are sent to the driver dashboard and logged to the console.
  */
 object Diagnostics {
+    val timer = Timer()
+
     sealed class Fault(message: String, alertType: AlertType = AlertType.kError) {
         val alert = Alert(message, alertType)
 
@@ -61,15 +64,12 @@ object Diagnostics {
     private var faults = HashSet<Fault>()
 
     fun reset() {
-        synchronized(faults) {
-            faults.clear()
-        }
+        faults.clear()
+        timer.reset()
     }
 
     fun reportFault(fault: Fault) {
-        synchronized(faults) {
-            faults += fault
-        }
+        faults += fault
     }
 
     private val errorResetTimer = Timer().apply { start() }
@@ -157,11 +157,8 @@ object Diagnostics {
             reportFault(Fault.DubiousAutoChoice)
         }
 
-        synchronized(limelightsSync) {
-            if (!limelightsConnected) {
-                reportFault(Fault.LimelightDisconnected)
-            }
-        }
+        if (!Drivetrain.limelightsConnected)
+            reportFault(Fault.LimelightDisconnected)
     }
 
     private var previousFaults = HashSet<Fault>()
@@ -173,13 +170,11 @@ object Diagnostics {
         }
         previousFaults.clear()
 
-        synchronized(faults) {
-            for (fault in faults) {
-                fault.alert.set(true)
-            }
-
-            previousFaults.addAll(faults)
+        for (fault in faults) {
+            fault.alert.set(true)
         }
+
+        previousFaults.addAll(faults)
     }
 }
 

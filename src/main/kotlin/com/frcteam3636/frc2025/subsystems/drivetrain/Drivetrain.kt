@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.REVMotorControllerId
@@ -35,8 +36,6 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.util.sendable.Sendable
-import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
@@ -57,7 +56,7 @@ import kotlin.math.pow
 import kotlin.math.withSign
 
 /** A singleton object representing the drivetrain. */
-object Drivetrain : Subsystem, Sendable {
+object Drivetrain : Subsystem {
     private val io = when (Robot.model) {
         Robot.Model.SIMULATION -> DrivetrainIOSim()
         Robot.Model.COMPETITION -> DrivetrainIOReal.fromKrakenSwerve()
@@ -117,6 +116,9 @@ object Drivetrain : Subsystem, Sendable {
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
+    val limelightsConnected: Boolean
+        get() = absolutePoseIOs.values.all { it.second.connected }
+
     /** Helper for converting a desired drivetrain velocity into the speeds and angles for each swerve module */
     private val kinematics =
         SwerveDriveKinematics(
@@ -135,18 +137,6 @@ object Drivetrain : Subsystem, Sendable {
             VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5.0)),
             VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10.0))
         )
-
-    /** Whether every sensor used for pose estimation is connected. */
-    val allPoseProvidersConnected
-        get() = absolutePoseIOs.values.all { it.second.connected }
-
-    val isMoving: Boolean
-        get() {
-            val speeds = measuredChassisSpeeds
-            val translationalSpeed = speeds.translation2dPerSecond.norm.metersPerSecond
-            return translationalSpeed < 0.5.metersPerSecond
-                    && speeds.angularVelocity < 0.5.rotationsPerSecond
-        }
 
 
     init {
@@ -186,6 +176,10 @@ object Drivetrain : Subsystem, Sendable {
         BargeTargetZone.BLUE.log("Drivetrain/BargeTargetZone/Blue")
     }
 
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return io.getStatusSignals()
+    }
+
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Drivetrain", inputs)
@@ -200,9 +194,9 @@ object Drivetrain : Subsystem, Sendable {
             Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
-                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
-                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
-                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
+//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
+//                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
+//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
         }
 
@@ -218,7 +212,7 @@ object Drivetrain : Subsystem, Sendable {
 
 //        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
-        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
+//        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
         Logger.recordOutput("Drivetrain/Localizer", localizer.name)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
@@ -301,22 +295,22 @@ object Drivetrain : Subsystem, Sendable {
 //        questNavCalibrated = true
 //    }
 
-    override fun initSendable(builder: SendableBuilder) {
-        builder.setSmartDashboardType(ElasticWidgets.SwerveDrive.widgetName)
-        builder.addDoubleProperty("Robot Angle", { estimatedPose.rotation.radians }, null)
-
-        builder.addDoubleProperty("Front Left Angle", { io.modules.frontLeft.state.angle.radians }, null)
-        builder.addDoubleProperty("Front Left Velocity", { io.modules.frontLeft.state.speedMetersPerSecond }, null)
-
-        builder.addDoubleProperty("Front Right Angle", { io.modules.frontRight.state.angle.radians }, null)
-        builder.addDoubleProperty("Front Right Velocity", { io.modules.frontRight.state.speedMetersPerSecond }, null)
-
-        builder.addDoubleProperty("Back Left Angle", { io.modules.backLeft.state.angle.radians }, null)
-        builder.addDoubleProperty("Back Left Velocity", { io.modules.backLeft.state.speedMetersPerSecond }, null)
-
-        builder.addDoubleProperty("Back Right Angle", { io.modules.backLeft.state.angle.radians }, null)
-        builder.addDoubleProperty("Back Right Velocity", { io.modules.backLeft.state.speedMetersPerSecond }, null)
-    }
+//    override fun initSendable(builder: SendableBuilder) {
+//        builder.setSmartDashboardType(ElasticWidgets.SwerveDrive.widgetName)
+//        builder.addDoubleProperty("Robot Angle", { estimatedPose.rotation.radians }, null)
+//
+//        builder.addDoubleProperty("Front Left Angle", { io.modules.frontLeft.state.angle.radians }, null)
+//        builder.addDoubleProperty("Front Left Velocity", { io.modules.frontLeft.state.speedMetersPerSecond }, null)
+//
+//        builder.addDoubleProperty("Front Right Angle", { io.modules.frontRight.state.angle.radians }, null)
+//        builder.addDoubleProperty("Front Right Velocity", { io.modules.frontRight.state.speedMetersPerSecond }, null)
+//
+//        builder.addDoubleProperty("Back Left Angle", { io.modules.backLeft.state.angle.radians }, null)
+//        builder.addDoubleProperty("Back Left Velocity", { io.modules.backLeft.state.speedMetersPerSecond }, null)
+//
+//        builder.addDoubleProperty("Back Right Angle", { io.modules.backLeft.state.angle.radians }, null)
+//        builder.addDoubleProperty("Back Right Velocity", { io.modules.backLeft.state.speedMetersPerSecond }, null)
+//    }
 
     private fun isInDeadband(translation: Translation2d) =
         abs(translation.x) < JOYSTICK_DEADBAND && abs(translation.y) < JOYSTICK_DEADBAND
