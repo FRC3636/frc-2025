@@ -4,10 +4,14 @@ package com.frcteam3636.frc2025.subsystems.manipulator
 import au.grapplerobotics.ConfigurationFailedException
 import au.grapplerobotics.LaserCan
 import au.grapplerobotics.interfaces.LaserCanInterface
+import com.ctre.phoenix6.BaseStatusSignal
+import com.ctre.phoenix6.configs.CANrangeConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.TorqueCurrentFOC
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import com.ctre.phoenix6.signals.UpdateModeValue
+import com.frcteam3636.frc2025.CANrange
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.GrappleRoboticsDeviceId
 import com.frcteam3636.frc2025.Lasercan
@@ -23,13 +27,14 @@ import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
+import kotlin.collections.mutableListOf
 
 @Logged
 open class ManipulatorInputs {
     //    var position = 0.rotations
 //    var velocity = 0.rotationsPerSecond
 //    var current = 0.amps
-    var laserCanDistance = Double.POSITIVE_INFINITY.meters
+    var isCoralDetected: Boolean = false
 }
 
 interface ManipulatorIO {
@@ -37,6 +42,9 @@ interface ManipulatorIO {
     fun setCurrent(current: Current)
     fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: ManipulatorInputs)
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return mutableListOf()
+    }
 }
 
 class ManipulatorIOReal : ManipulatorIO {
@@ -51,19 +59,33 @@ class ManipulatorIOReal : ManipulatorIO {
         )
     }
 
-    init {
-        manipulatorMotor.optimizeBusUtilization()
+    private var canRange = CANrange(CTREDeviceId.CANRange).apply {
+        configurator.apply(
+            CANrangeConfiguration().apply {
+                ProximityParams.ProximityThreshold = 0.35
+                FovParams.FOVCenterY = 10.0
+                FovParams.FOVRangeY = 7.0
+                ToFParams.UpdateMode = UpdateModeValue.LongRangeUserFreq
+                ToFParams.UpdateFrequency = 50.0
+            }
+        )
     }
 
-    private var laserCan = Lasercan(GrappleRoboticsDeviceId.ManipulatorLaserCAN).apply {
-        try {
-            setRangingMode(LaserCanInterface.RangingMode.SHORT)
-            setRegionOfInterest(LaserCanInterface.RegionOfInterest(2, 8, 4, 8))
-            setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_20MS)
-        } catch (e: ConfigurationFailedException) {
-            println(e)
-        }
+    init {
+        manipulatorMotor.optimizeBusUtilization()
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, canRange.isDetected)
+        canRange.optimizeBusUtilization()
     }
+
+//    private var laserCan = Lasercan(GrappleRoboticsDeviceId.ManipulatorLaserCAN).apply {
+//        try {
+//            setRangingMode(LaserCanInterface.RangingMode.SHORT)
+//            setRegionOfInterest(LaserCanInterface.RegionOfInterest(2, 8, 4, 8))
+//            setTimingBudget(LaserCanInterface.TimingBudget.TIMING_BUDGET_20MS)
+//        } catch (e: ConfigurationFailedException) {
+//            println(e)
+//        }
+//    }
 
     override fun setSpeed(percent: Double) {
         assert(percent in -1.0..1.0)
@@ -86,15 +108,12 @@ class ManipulatorIOReal : ManipulatorIO {
 //        inputs.velocity = manipulatorMotor.velocity.value
 //        inputs.current = manipulatorMotor.supplyCurrent.value
 //        inputs.position = manipulatorMotor.position.value
-
-        val measurement = laserCan.measurement
-        if (measurement != null && measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
-            inputs.laserCanDistance = measurement.distance_mm.millimeters
-        } else {
-            inputs.laserCanDistance = Double.POSITIVE_INFINITY.meters
-        }
+        inputs.isCoralDetected = canRange.getIsDetected(false).value
     }
 
+    override fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return mutableListOf(canRange.getIsDetected(false))
+    }
 }
 
 class ManipulatorIOSim : ManipulatorIO {

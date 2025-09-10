@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.alignStatePublisher
@@ -67,14 +68,19 @@ object Manipulator : Subsystem {
         io.setSpeed(0.0)
     })
 
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return io.getStatusSignals()
+    }
+
     fun intake(driverFeedback: Command = Commands.none()): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
-        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
-        runOnce { io.setVoltage(0.6.volts) },
+        Commands.waitUntil { inputs.isCoralDetected },
+        runOnce { io.setVoltage(1.2.volts) },
         Commands.runOnce({
             coralState = CoralState.TRANSIT
         }),
-        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        Commands.waitUntil { !inputs.isCoralDetected },
+        runOnce { io.setSpeed(-0.02) },
         Commands.runOnce({
             coralState = CoralState.HELD
             driverFeedback.schedule()
@@ -87,12 +93,12 @@ object Manipulator : Subsystem {
 
     fun intakeAuto(): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
-        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
+        Commands.waitUntil { inputs.isCoralDetected },
         runOnce { io.setVoltage(0.6.volts) },
         Commands.runOnce({
             coralState = CoralState.TRANSIT
         }),
-        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        Commands.waitUntil { !inputs.isCoralDetected },
         runOnce { io.setSpeed(-0.02) },
         Commands.runOnce({
             coralState = CoralState.HELD

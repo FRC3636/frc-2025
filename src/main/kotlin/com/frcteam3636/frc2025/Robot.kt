@@ -437,6 +437,7 @@ object Robot : LoggedRobot() {
         statusSignals += Elevator.getStatusSignals()
 
         BaseStatusSignal.refreshAll(*statusSignals.toTypedArray())
+        BaseStatusSignal.refreshAll(*Manipulator.getStatusSignals().toTypedArray())
         statusSignals.clear()
 
         Dashboard.update()
