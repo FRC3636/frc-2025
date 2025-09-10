@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
@@ -55,6 +56,8 @@ object Robot : LoggedRobot() {
     private val joystickLeft = CommandJoystick(0)
     private val joystickRight = CommandJoystick(1)
 
+    private val statusSignals = mutableListOf<BaseStatusSignal>()
+
     @Suppress("unused")
     private val joystickDev = Joystick(3)
 
@@ -64,7 +67,7 @@ object Robot : LoggedRobot() {
     private val canivore = CANBus("*")
 
     /** Status signals used to check the health of the robot's hardware */
-    val statusSignals = mutableMapOf<String, StatusSignal<*>>()
+    val diagnosticsStatusSignals = mutableMapOf<String, StatusSignal<*>>()
 
     override fun robotInit() {
         // Report the use of the Kotlin Language for "FRC Usage Report" statistics
@@ -81,9 +84,10 @@ object Robot : LoggedRobot() {
         configureSubsystems()
         configureAutos()
         configureBindings()
-        configureDashboard()
+        Dashboard.initialize()
 
-        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
+        Diagnostics.timer.start()
+//        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
 
     }
 
@@ -398,10 +402,6 @@ object Robot : LoggedRobot() {
 //        controller.x().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     }
 
-    /** Add data to the driver station dashboard. */
-    private fun configureDashboard() {
-        Dashboard.showTeleopTab(Shuffleboard.getTab("Teleoperated"))
-    }
 
     override fun disabledInit() {
         if (model == Model.SIMULATION) {
@@ -433,12 +433,22 @@ object Robot : LoggedRobot() {
     }
 
     override fun robotPeriodic() {
+        statusSignals += Drivetrain.getStatusSignals()
+        statusSignals += Elevator.getStatusSignals()
+
+        BaseStatusSignal.refreshAll(*statusSignals.toTypedArray())
+        BaseStatusSignal.refreshAll(*Manipulator.getStatusSignals().toTypedArray())
+        statusSignals.clear()
+
         Dashboard.update()
-        reportDiagnostics()
+
+        if (Diagnostics.timer.hasElapsed(1.0)) {
+            reportDiagnostics()
+            Diagnostics.send()
+        }
 
         CommandScheduler.getInstance().run()
 
-        Diagnostics.send()
     }
 
     override fun autonomousInit() {

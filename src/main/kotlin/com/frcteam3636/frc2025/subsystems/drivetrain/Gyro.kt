@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.ctre.phoenix6.BaseStatusSignal
+import com.ctre.phoenix6.StatusSignal
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
@@ -30,6 +31,10 @@ interface Gyro {
     /** Whether the gyro is connected. */
     val connected: Boolean
 
+    fun getStatusSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
+
     fun periodic() {}
 }
 
@@ -57,20 +62,25 @@ class GyroNavX(private val ahrs: AHRS) : Gyro {
 
 class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
     init {
-        BaseStatusSignal.setUpdateFrequencyForAll(250.0, pigeon.yaw, pigeon.pitch, pigeon.roll)
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, pigeon.yaw, pigeon.pitch, pigeon.roll, pigeon.angularVelocityZWorld)
     }
 
     override var rotation: Rotation2d
-        get() = pigeon.rotation2d
+        // Basically just pigeon.rotation2d but bypasses the refresh
+        get() = Rotation2d.fromDegrees(pigeon.getYaw(false).valueAsDouble)
         set(goal) {
             pigeon.setYaw(goal.measure)
         }
 
     override val velocity: AngularVelocity
-        get() = pigeon.angularVelocityZWorld.value
+        get() = pigeon.getAngularVelocityZWorld(false).value
 
     override val connected
-        get() = pigeon.yaw.status.isOK
+        get() = pigeon.getYaw(false).status.isOK
+
+    override fun getStatusSignals(): Array<BaseStatusSignal> {
+        return arrayOf(pigeon.getYaw(false), pigeon.getPitch(false), pigeon.getRoll(false), pigeon.getAngularVelocityZWorld(false))
+    }
 }
 
 class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {

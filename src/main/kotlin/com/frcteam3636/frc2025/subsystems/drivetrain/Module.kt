@@ -45,12 +45,13 @@ interface SwerveModule {
     // and magnitude equal to the total signed distance traveled by the wheel.
     val position: SwerveModulePosition
 
+    fun getSignals(): Array<BaseStatusSignal> { return arrayOf() }
     fun periodic() {}
     fun characterize(voltage: Voltage)
 }
 
 class MAXSwerveModule(
-    private val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
+    val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
 ) : SwerveModule {
     private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless).apply {
         configure(SparkMaxConfig().apply {
@@ -73,21 +74,23 @@ class MAXSwerveModule(
         }, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
     }
 
+
     // whereas the turning encoder must be absolute so that
     // we know where the wheel is pointing
     private val turningEncoder = turningSpark.getAbsoluteEncoder()
 
+    private var turningEncoderPosition: Double = turningEncoder.position
 
     private val turningPIDController = turningSpark.closedLoopController
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            drivingMotor.velocity.inMetersPerSecond(), Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.velocity.inMetersPerSecond(), Rotation2d.fromRadians(turningEncoderPosition) + chassisAngle
         )
 
     override val position: SwerveModulePosition
         get() = SwerveModulePosition(
-            drivingMotor.position, Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.position, Rotation2d.fromRadians(turningEncoderPosition) + chassisAngle
         )
 
     override fun characterize(voltage: Voltage) {
@@ -101,7 +104,7 @@ class MAXSwerveModule(
             val corrected = SwerveModuleState(value.speedMetersPerSecond, value.angle - chassisAngle)
             // optimize the state to avoid rotating more than 90 degrees
             corrected.optimize(
-                Rotation2d.fromRadians(turningEncoder.position)
+                Rotation2d.fromRadians(turningEncoderPosition)
             )
 
             drivingMotor.velocity = corrected.speed
@@ -113,12 +116,23 @@ class MAXSwerveModule(
 
             field = corrected
         }
+
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return drivingMotor.getSignals()
+    }
+
+    override fun periodic() {
+        turningEncoderPosition = turningEncoder.position
+    }
 }
 
 interface DrivingMotor {
     val position: Distance
     var velocity: LinearVelocity
     fun setVoltage(voltage: Voltage)
+    fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
@@ -138,21 +152,22 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     init {
-        Robot.statusSignals[id.name] = inner.version
-        BaseStatusSignal.setUpdateFrequencyForAll(250.0, inner.position, inner.velocity)
+        Robot.diagnosticsStatusSignals[id.name] = inner.version
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, inner.position, inner.velocity)
+        inner.optimizeBusUtilization()
     }
 
     override val position: Distance
-        get() = inner.position.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.getPosition(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
 
     private var velocityControl = VelocityVoltage(0.0).apply {
         EnableFOC = true
     }
 
     override var velocity: LinearVelocity
-        get() = inner.velocity.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.getVelocity(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
         set(value) {
-            inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
+            inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS).inRotationsPerSecond() / DRIVING_GEAR_RATIO_TALON))
         }
 
     private val voltageControl = VoltageOut(0.0).apply {
@@ -161,6 +176,10 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     override fun setVoltage(voltage: Voltage) {
         inner.setControl(voltageControl.withOutput(voltage.inVolts()))
+    }
+
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf(inner.getPosition(false), inner.getVelocity(false))
     }
 }
 

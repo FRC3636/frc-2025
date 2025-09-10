@@ -44,6 +44,10 @@ class FunnelIOReal : FunnelIO {
         )
     }
 
+    init {
+        rampMotor.optimizeBusUtilization()
+    }
+
     override fun setSpeed(percent: Double) {
         assert(percent in -1.0..1.0)
         rampMotor.set(percent)
