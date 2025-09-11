@@ -182,6 +182,7 @@ class LimelightPoseProvider(
             // We assume the camera has disconnected if there are no new updates for several ticks.
             val hb = LimelightHelpers.getHB(name)
             inputs.connected = hb != lastSeenHb && hb - lastSeenHb >= CONNECTED_TIMEOUT
+            lastSeenHb = hb
         }
     }
 
@@ -202,7 +203,7 @@ class LimelightPoseProvider(
         /**
          * The amount of time (in frames) an update before considering the camera to be disconnected.
          */
-        private val CONNECTED_TIMEOUT = 5000.0
+        private const val CONNECTED_TIMEOUT = 5000.0
     }
 }
 
