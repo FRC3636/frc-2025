@@ -433,6 +433,15 @@ object LimelightHelpers {
     }
 
     /**
+     * Gets the heartbeat as a number that increases once per frame (Resets at 2 billion).
+     * @param limelightName Name of the Limelight camera ("" for default)
+     * @return Target area percentage (0-100)
+     */
+    fun getHB(limelightName: String?): Double {
+        return getLimelightNTDouble(limelightName, "hb")
+    }
+
+    /**
      * T2D is an array that contains several targeting metrcis
      * @param limelightName Name of the Limelight camera
      * @return Array containing  [targetValid, targetCount, targetLatency, captureLatency, tx, ty, txnc, tync, ta, tid, targetClassIndexDetector,

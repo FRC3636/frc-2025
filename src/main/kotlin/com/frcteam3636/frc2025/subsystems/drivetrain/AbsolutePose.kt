@@ -105,6 +105,8 @@ class LimelightPoseProvider(
     private var measurement: AbsolutePoseMeasurement? = null
     private var mutex = Any()
 
+    private var lastSeenHb: Double = 0.0
+
     init {
         thread(isDaemon = true) {
             while (true) {
@@ -178,10 +180,8 @@ class LimelightPoseProvider(
             inputs.observedTags = observedTags
 
             // We assume the camera has disconnected if there are no new updates for several ticks.
-            inputs.connected = if (measurement != null) {
-                val timeSinceLastUpdate = Timer.getTimestamp().seconds - measurement!!.timestamp
-                timeSinceLastUpdate > CONNECTED_TIMEOUT
-            } else false
+            val hb = LimelightHelpers.getHB(name)
+            inputs.connected = hb != lastSeenHb && hb - lastSeenHb >= CONNECTED_TIMEOUT
         }
     }
 
@@ -200,9 +200,9 @@ class LimelightPoseProvider(
         private const val AMBIGUITY_THRESHOLD = 0.7
 
         /**
-         * The amount of time without an update before considering the camera to be disconnected.
+         * The amount of time (in frames) an update before considering the camera to be disconnected.
          */
-        private val CONNECTED_TIMEOUT = Robot.period.seconds * 5.0
+        private val CONNECTED_TIMEOUT = 5000.0
     }
 }
 
