@@ -33,6 +33,7 @@ import org.photonvision.simulation.SimCameraProperties
 import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
 import kotlin.concurrent.thread
+import kotlin.math.pow
 
 class AbsolutePoseProviderInputs : LoggableInputs {
     /**
@@ -159,12 +160,12 @@ class LimelightPoseProvider(
                     val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
                     if (estimate.tagCount == 0 || highSpeed) return measurement
 
+                    val stdDevs = LimelightHelpers.getStdDevs(name)
 
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
-                        // This value is also pulled directly from the Limelight docs
-                        VecBuilder.fill(.7, .7, 9999999.0)
+                        VecBuilder.fill(stdDevs[6], stdDevs[6], stdDevs[11]),
                     )
                 }
             }
@@ -332,13 +333,13 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 
 
 //internal const val APRIL_TAG_AMBIGUITY_FILTER = 0.3
-//internal val APRIL_TAG_STD_DEV = { distance: Double, count: Int ->
-//    val distanceMultiplier = (distance - (count - 1) * 3).pow(2.0)
-//    val translationalStdDev = (0.05 / count) * distanceMultiplier + 0.0
-//    val rotationalStdDev = 0.2 * distanceMultiplier + 0.1
-//    VecBuilder.fill(
-//        translationalStdDev, translationalStdDev, rotationalStdDev
-//    )
-//}
+internal val APRIL_TAG_STD_DEV = { distance: Double, count: Int ->
+    val distanceMultiplier = (distance - (count - 1) * 3).pow(2.0)
+    val translationalStdDev = (0.05 / count) * distanceMultiplier + 0.0
+    val rotationalStdDev = 0.2 * distanceMultiplier + 0.1
+    VecBuilder.fill(
+        translationalStdDev, translationalStdDev, rotationalStdDev
+    )
+}
 
 val LIMELIGHT_FOV = 75.76079874010732.degrees

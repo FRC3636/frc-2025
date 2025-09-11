@@ -451,6 +451,10 @@ object LimelightHelpers {
         return getLimelightNTDoubleArray(limelightName, "t2d")
     }
 
+    fun getStdDevs(limelightName: String?): DoubleArray {
+        return getLimelightNTDoubleArray(limelightName, "stddevs")
+    }
+
     /**
      * Gets the number of targets currently detected.
      * @param limelightName Name of the Limelight camera
