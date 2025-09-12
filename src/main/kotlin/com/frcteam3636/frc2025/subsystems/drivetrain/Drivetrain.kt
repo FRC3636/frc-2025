@@ -463,11 +463,11 @@ object Drivetrain : Subsystem {
         )
         Logger.recordOutput(
             "/Drivetrain/Auto Align/Distance To Target X",
-            0
+            0.0
         )
         Logger.recordOutput(
             "/Drivetrain/Auto Align/Distance To Target Y",
-            0
+            0.0
         )
         return defer {
             // If true, controls rotation with PID

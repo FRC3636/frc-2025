@@ -274,7 +274,7 @@ private enum class FieldOffset(val distance: Distance) {
     DCMP(0.375.inches);
 
     companion object {
-        val current = DCMP
+        val current = Stemnasium
     }
 }
 
