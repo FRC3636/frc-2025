@@ -203,7 +203,7 @@ class LimelightPoseProvider(
         /**
          * The amount of time (in frames) an update before considering the camera to be disconnected.
          */
-        private const val CONNECTED_TIMEOUT = 5000.0
+        private const val CONNECTED_TIMEOUT = 50.0
     }
 }
 
