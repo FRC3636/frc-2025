@@ -161,12 +161,13 @@ class LimelightPoseProvider(
                     val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
                     if (estimate.tagCount == 0 || highSpeed) return measurement
 
-                    val stdDevs = LimelightHelpers.getStdDevs(name)
+                    val distance = LimelightHelpers.getCameraPose3d_TargetSpace(name).x
 
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
-                        VecBuilder.fill(stdDevs[6], stdDevs[6], stdDevs[11]),
+//                        VecBuilder.fill(stdDevs[6], stdDevs[6], stdDevs[11]),
+                        APRIL_TAG_STD_DEV(distance, measurement.observedTags.size)
                     )
                 }
             }

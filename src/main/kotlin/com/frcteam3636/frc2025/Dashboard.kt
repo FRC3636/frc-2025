@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025
 
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.util.PathPlannerLogging
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import org.littletonrobotics.junction.Logger
 
 object Dashboard {
@@ -21,5 +22,6 @@ object Dashboard {
 //            field.getObject("path").poses = it
             Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
         }
+        SmartDashboard.putData(autoChooser)
     }
 }
