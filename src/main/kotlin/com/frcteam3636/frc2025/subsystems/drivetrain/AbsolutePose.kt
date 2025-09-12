@@ -6,6 +6,7 @@ import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.QuestNav
 import com.frcteam3636.frc2025.utils.math.degrees
+import com.frcteam3636.frc2025.utils.math.inMeters
 import com.frcteam3636.frc2025.utils.math.inSeconds
 import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
@@ -33,6 +34,7 @@ import org.photonvision.simulation.SimCameraProperties
 import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
 import kotlin.concurrent.thread
+import kotlin.math.pow
 
 class AbsolutePoseProviderInputs : LoggableInputs {
     /**
@@ -106,6 +108,7 @@ class LimelightPoseProvider(
     private var mutex = Any()
 
     private var lastSeenHb: Double = 0.0
+    private var loopsSinceLastSeen: Int = 0
 
     init {
         thread(isDaemon = true) {
@@ -159,12 +162,11 @@ class LimelightPoseProvider(
                     val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
                     if (estimate.tagCount == 0 || highSpeed) return measurement
 
-
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
-                        // This value is also pulled directly from the Limelight docs
-                        VecBuilder.fill(.7, .7, 9999999.0)
+//                        VecBuilder.fill(stdDevs[6], stdDevs[6], stdDevs[11]),
+                        APRIL_TAG_STD_DEV(estimate.rawFiducials[0]!!.distToCamera.inMeters(), measurement.observedTags.size)
                     )
                 }
             }
@@ -181,8 +183,12 @@ class LimelightPoseProvider(
 
             // We assume the camera has disconnected if there are no new updates for several ticks.
             val hb = LimelightHelpers.getHB(name)
-            inputs.connected = hb != lastSeenHb && hb - lastSeenHb >= CONNECTED_TIMEOUT
+            inputs.connected = hb >= lastSeenHb && loopsSinceLastSeen < CONNECTED_TIMEOUT
             lastSeenHb = hb
+            if (!inputs.connected)
+                loopsSinceLastSeen++
+            else
+                loopsSinceLastSeen = 0
         }
     }
 
@@ -201,7 +207,7 @@ class LimelightPoseProvider(
         private const val AMBIGUITY_THRESHOLD = 0.7
 
         /**
-         * The amount of time (in frames) an update before considering the camera to be disconnected.
+         * The amount of time (in robot ticks) an update before considering the camera to be disconnected.
          */
         private const val CONNECTED_TIMEOUT = 50.0
     }
@@ -332,13 +338,13 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 
 
 //internal const val APRIL_TAG_AMBIGUITY_FILTER = 0.3
-//internal val APRIL_TAG_STD_DEV = { distance: Double, count: Int ->
-//    val distanceMultiplier = (distance - (count - 1) * 3).pow(2.0)
-//    val translationalStdDev = (0.05 / count) * distanceMultiplier + 0.0
-//    val rotationalStdDev = 0.2 * distanceMultiplier + 0.1
-//    VecBuilder.fill(
-//        translationalStdDev, translationalStdDev, rotationalStdDev
-//    )
-//}
+internal val APRIL_TAG_STD_DEV = { distance: Double, count: Int ->
+    val distanceMultiplier = (distance - (count - 1) * 3).pow(2.0)
+    val translationalStdDev = (0.05 / count) * distanceMultiplier
+    val rotationalStdDev = 0.2 * distanceMultiplier + 0.1
+    VecBuilder.fill(
+        translationalStdDev, translationalStdDev, rotationalStdDev
+    )
+}
 
 val LIMELIGHT_FOV = 75.76079874010732.degrees
