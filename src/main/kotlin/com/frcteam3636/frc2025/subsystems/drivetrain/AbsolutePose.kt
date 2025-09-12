@@ -6,6 +6,7 @@ import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.QuestNav
 import com.frcteam3636.frc2025.utils.math.degrees
+import com.frcteam3636.frc2025.utils.math.inMeters
 import com.frcteam3636.frc2025.utils.math.inSeconds
 import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
@@ -161,13 +162,11 @@ class LimelightPoseProvider(
                     val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
                     if (estimate.tagCount == 0 || highSpeed) return measurement
 
-                    val distance = LimelightHelpers.getCameraPose3d_TargetSpace(name).x
-
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
 //                        VecBuilder.fill(stdDevs[6], stdDevs[6], stdDevs[11]),
-                        APRIL_TAG_STD_DEV(distance, measurement.observedTags.size)
+                        APRIL_TAG_STD_DEV(estimate.rawFiducials[0]!!.distToCamera.inMeters(), measurement.observedTags.size)
                     )
                 }
             }
