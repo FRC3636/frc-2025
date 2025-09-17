@@ -4,7 +4,6 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 //import org.photonvision.PhotonPoseEstimator
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
-import com.frcteam3636.frc2025.utils.QuestNav
 import com.frcteam3636.frc2025.utils.math.degrees
 import com.frcteam3636.frc2025.utils.math.inMeters
 import com.frcteam3636.frc2025.utils.math.inSeconds
@@ -262,29 +261,6 @@ open class QuestNavInputs {
      * Whether the provider is connected.
      */
     var connected = false
-}
-
-class QuestNavLocalizer(
-    /**
-     * The location of the QuestNav device relative to the robot chassis.
-     */
-    deviceOffset: Transform2d,
-) {
-    private val questNav = QuestNav()
-    private val lowBatteryAlert = Alert("The Meta Quest battery is below 40%!", AlertType.kWarning)
-    private val deviceToChassis = deviceOffset.inverse()
-
-    fun resetPose(pose: Pose2d) {
-        questNav.resetPosition(pose)
-    }
-
-    fun updateInputs(inputs: QuestNavInputs) {
-        questNav.finalizeCommands()
-        lowBatteryAlert.set(questNav.batteryPercent < 40.0)
-
-        inputs.connected = questNav.connected
-        inputs.pose = questNav.pose.transformBy(deviceToChassis)
-    }
 }
 
 data class AbsolutePoseMeasurement(

@@ -64,12 +64,6 @@ object Drivetrain : Subsystem {
     }
     val inputs = LoggedDrivetrainInputs()
 
-    private val questNavInactiveAlert = Alert("QuestNav localizer is not active.", Alert.AlertType.kInfo)
-
-    //    private val questNavLocalizer = QuestNavLocalizer(Constants.QUESTNAV_DEVICE_OFFSET)
-    private val questNavInputs = LoggedQuestNavInputs()
-    private var questNavCalibrated = false
-
     var currentTargetSelection: ReefBranchSide = ReefBranchSide.Right
 
     private val alignPositionPublisher = NetworkTableInstance.getDefault()
@@ -206,17 +200,10 @@ object Drivetrain : Subsystem {
             inputs.measuredPositions.toTypedArray()
         )
 
-//        questNavLocalizer.updateInputs(questNavInputs)
-//        Logger.processInputs("Drivetrain/QuestNav", questNavInputs)
-//        updateQuestNavOrigin()
-
-//        Logger.recordOutput("Drivetrain/QuestNav/Calibrated", questNavCalibrated)
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
 //        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
-        Logger.recordOutput("Drivetrain/Localizer", localizer.name)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
-//        questNavInactiveAlert.set(localizer != Localizer.QuestNav)
 
         Logger.recordOutput(
             "Drivetrain/TagPoses", *FIELD_LAYOUT.tags
@@ -258,22 +245,11 @@ object Drivetrain : Subsystem {
             desiredModuleStates = kinematics.toCornerSwerveModuleStates(discretized)
         }
 
-    val localizer: Localizer
-        get() = if (questNavCalibrated && questNavInputs.connected) {
-            Localizer.QuestNav
-        } else {
-            Localizer.PoseEstimator
-        }
 
     /** The estimated pose of the robot on the field, using the yaw value measured by the gyro. */
     var estimatedPose: Pose2d
         get() {
-            val estimated = when (localizer) {
-                Localizer.QuestNav -> questNavInputs.pose
-                Localizer.PoseEstimator -> poseEstimator.estimatedPosition
-            }
-
-            return estimated
+            return poseEstimator.estimatedPosition
         }
         private set(value) {
             poseEstimator.resetPosition(
@@ -283,34 +259,6 @@ object Drivetrain : Subsystem {
             )
         }
 
-    /**
-     * Update the QuestNav pose to keep its origin correct.
-     */
-//    private fun updateQuestNavOrigin() {
-//        val hasHighQualityData = absolutePoseIOs.values.any {
-//            it.second.measurement != null
-//        }
-//        if (!hasHighQualityData || isMoving) return
-//        questNavLocalizer.resetPose(poseEstimator.estimatedPosition)
-//        questNavCalibrated = true
-//    }
-
-//    override fun initSendable(builder: SendableBuilder) {
-//        builder.setSmartDashboardType(ElasticWidgets.SwerveDrive.widgetName)
-//        builder.addDoubleProperty("Robot Angle", { estimatedPose.rotation.radians }, null)
-//
-//        builder.addDoubleProperty("Front Left Angle", { io.modules.frontLeft.state.angle.radians }, null)
-//        builder.addDoubleProperty("Front Left Velocity", { io.modules.frontLeft.state.speedMetersPerSecond }, null)
-//
-//        builder.addDoubleProperty("Front Right Angle", { io.modules.frontRight.state.angle.radians }, null)
-//        builder.addDoubleProperty("Front Right Velocity", { io.modules.frontRight.state.speedMetersPerSecond }, null)
-//
-//        builder.addDoubleProperty("Back Left Angle", { io.modules.backLeft.state.angle.radians }, null)
-//        builder.addDoubleProperty("Back Left Velocity", { io.modules.backLeft.state.speedMetersPerSecond }, null)
-//
-//        builder.addDoubleProperty("Back Right Angle", { io.modules.backLeft.state.angle.radians }, null)
-//        builder.addDoubleProperty("Back Right Velocity", { io.modules.backLeft.state.speedMetersPerSecond }, null)
-//    }
 
     private fun isInDeadband(translation: Translation2d) =
         abs(translation.x) < JOYSTICK_DEADBAND && abs(translation.y) < JOYSTICK_DEADBAND
@@ -766,19 +714,8 @@ object Drivetrain : Subsystem {
         /** A position with the modules radiating outwards from the center of the robot, preventing movement. */
         val BRAKE_POSITION = MODULE_POSITIONS.map { position -> SwerveModuleState(0.0, position.translation.angle) }
 
-        val QUESTNAV_DEVICE_OFFSET = Transform2d(
-            // TODO: find these constants
-            0.inches,
-            0.inches,
-            Rotation2d(0.degrees)
-        )
 
         val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.0)
         val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
-    }
-
-    enum class Localizer {
-        QuestNav,
-        PoseEstimator,
     }
 }
