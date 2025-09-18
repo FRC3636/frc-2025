@@ -25,7 +25,10 @@ import com.pathplanner.lib.commands.PathfindingCommand
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.path.GoalEndState
 import com.pathplanner.lib.path.PathConstraints
+import com.pathplanner.lib.path.PathPlannerPath
+import com.pathplanner.lib.path.Waypoint
 import com.pathplanner.lib.pathfinding.Pathfinding
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
@@ -147,10 +150,10 @@ object Drivetrain : Subsystem {
             PPHolonomicDriveController(
                 when (Robot.model) {
                     Robot.Model.SIMULATION -> DRIVING_PID_GAINS_TALON
-                    Robot.Model.COMPETITION -> DRIVING_PID_GAINS_TALON
+                    Robot.Model.COMPETITION -> Constants.ALIGN_TRANSLATION_PID_GAINS
                     Robot.Model.PROTOTYPE -> DRIVING_PID_GAINS_NEO
                 }.toPPLib(),
-                ROTATION_PID_GAINS.toPPLib()
+                Constants.ALIGN_TRANSLATION_PID_GAINS.toPPLib()
             ),
             RobotConfig.fromGUISettings(),
             // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
@@ -421,7 +424,7 @@ object Drivetrain : Subsystem {
         )
         return defer {
             // If true, controls rotation with PID
-            val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
+//            val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
 
             // If true, ends the command when in place
             val useEndCondition = Preferences.getBoolean("AlignUseEndCondition", true) && !disableEndConditionOverride
@@ -449,66 +452,23 @@ object Drivetrain : Subsystem {
                 )
             }
 
-            commands.addAll(
-                arrayOf(
-                    runOnce {
-                        val relativePose = estimatedPose.relativeTo(target)
-                        Translation2d(1.0, relativePose.translation.angle)
-                        alignTranslationXController.reset(0.0)
-                        alignTranslationYController.reset(0.0)
-                        alignRotationController.reset()
-                        Logger.recordOutput("/Drivetrain/Align-Running", true)
-                    },
-                    runEnd({
-                        val relativePose = estimatedPose.relativeTo(target)
-                        val distanceToTarget = relativePose.translation.norm
-                        Logger.recordOutput(
-                            "/Drivetrain/Auto Align/Distance To Target",
-                            distanceToTarget
-                        )
-                        Logger.recordOutput(
-                            "/Drivetrain/Auto Align/Has Reached Target",
-                            distanceToTarget.meters < 1.centimeters
-                        )
-                        Logger.recordOutput(
-                            "/Drivetrain/Auto Align/Distance To Target X",
-                            relativePose.translation.x
-                        )
-                        Logger.recordOutput(
-                            "/Drivetrain/Auto Align/Distance To Target Y",
-                            relativePose.translation.y
-                        )
-                        val outputX = alignTranslationXController.calculate(relativePose.translation.x, 0.0)
-                        val outputY = alignTranslationYController.calculate(relativePose.translation.y, 0.0)
-                        val desiredSpeed = Translation2d(outputX, outputY)
-
-                        val rotation = if (enableRotationControl) {
-                            alignRotationController
-                                .calculate(
-                                    relativePose.rotation.degrees,
-                                    0.0
-                                )
-                                .degreesPerSecond
-                        } else {
-                            0.degreesPerSecond
-                        }
-
-                        val chassisSpeeds = ChassisSpeeds(
-                            desiredSpeed.x.metersPerSecond,
-                            desiredSpeed.y.metersPerSecond,
-                            rotation,
-                        )
-                        Logger.recordOutput("/Drivetrain/Auto-align Chassis Speeds", chassisSpeeds)
-                        desiredChassisSpeeds = chassisSpeeds
-
-                        alignStatePublisher.set(AlignState.Aligning.raw)
-                    }, {
-                        desiredModuleStates = BRAKE_POSITION
-                        Logger.recordOutput("/Drivetrain/Align-Running", false)
-                        alignStatePublisher.set(AlignState.NotRunning.raw)
-                    })
-                )
+            var waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                estimatedPose,
+                target
             )
+
+            val constraints = PathConstraints(2.0, 3.0, 2 * Math.PI, 4 * Math.PI)
+
+            val path = PathPlannerPath(
+                waypoints,
+                constraints,
+                null,
+                GoalEndState(0.0, target.rotation)
+            )
+
+            path.preventFlipping = true
+
+            commands.add(AutoBuilder.followPath(path))
 
             val endCondition = Trigger {
                 val relativePose = estimatedPose.relativeTo(target)
@@ -618,10 +578,7 @@ object Drivetrain : Subsystem {
         //        // Pathing
         val DEFAULT_PATHING_CONSTRAINTS =
             PathConstraints(
-                FREE_SPEED.baseUnitMagnitude() * 2,
-                (3.879 * 1.5) * 2.0,
-                ROTATION_SPEED.baseUnitMagnitude(),
-                24.961
+                3.0, 3.0, 2 * Math.PI, 4 * Math.PI
             )
 
         // FIXME: Update for 2025
