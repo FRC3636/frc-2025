@@ -14,7 +14,6 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
-import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.*
 import com.frcteam3636.frc2025.utils.swerve.*
@@ -39,7 +38,6 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.Preferences
@@ -51,6 +49,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import java.util.*
+import kotlin.collections.List
 import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
@@ -390,6 +389,26 @@ object Drivetrain : Subsystem {
         .finallyDo { ->
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
+
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS): Command {
+        // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
+        // IF YOU USE THIS PLEASE PASS IN POSES RELATIVE TO THE BLUE DRIVER STATION
+        return defer {
+            var waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                estimatedPose,
+                target
+            )
+
+            val path = PathPlannerPath(
+                waypoints,
+                constraints,
+                null,
+                GoalEndState(0.0, target.rotation)
+            )
+
+            AutoBuilder.followPath(path)
+        }
+    }
 
     /**
      * Drive to a pose on the field.
