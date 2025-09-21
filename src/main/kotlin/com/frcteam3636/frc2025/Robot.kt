@@ -453,7 +453,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        if (!gyroOffsetManually)
+        if (!gyroOffsetManually || !Drivetrain.tagsVisible)
             Drivetrain.zeroGyro(true)
         autoCommand = Dashboard.autoChooser.selected
         autoCommand?.schedule()
