@@ -393,11 +393,14 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, heading: Rotation2d = (target.translation - estimatedPose.translation).angle): Command {
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS,
+                                     heading: Rotation2d = (target.translation - estimatedPose.translation).angle,
+                                     startingPose: Pose2d = estimatedPose,
+    ): Command {
         // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
         // IF YOU USE THIS PLEASE PASS IN POSES RELATIVE TO THE BLUE DRIVER STATION
         return defer {
-            val startingPose = Pose2d(estimatedPose.translation, heading)
+            val startingPose = Pose2d(startingPose.translation, heading)
             val targetWaypoint = Pose2d(target.translation, heading)
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 startingPose,
