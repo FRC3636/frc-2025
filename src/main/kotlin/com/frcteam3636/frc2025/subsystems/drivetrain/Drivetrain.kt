@@ -38,6 +38,7 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.Preferences
@@ -390,12 +391,13 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS): Command {
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, heading: Rotation2d = (target.translation - estimatedPose.translation).angle): Command {
         // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
         // IF YOU USE THIS PLEASE PASS IN POSES RELATIVE TO THE BLUE DRIVER STATION
         return defer {
-            var waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
-                estimatedPose,
+            val startingPose = Pose2d(estimatedPose.translation, heading)
+            val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                startingPose,
                 target
             )
 

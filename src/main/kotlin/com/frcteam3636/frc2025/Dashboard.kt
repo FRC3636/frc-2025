@@ -2,6 +2,7 @@ package com.frcteam3636.frc2025
 
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.AutoMode
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.OnePieceLeft
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TwoPieceLeft
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
@@ -29,6 +30,7 @@ object Dashboard {
         }
         autoChooser.setDefaultOption("None", Commands.none())
         autoChooser.addOption(OnePieceLeft.name, OnePieceLeft.autoSequence())
+        autoChooser.addOption(TwoPieceLeft.name, TwoPieceLeft.autoSequence())
         SmartDashboard.putData(autoChooser)
     }
 }

@@ -17,17 +17,17 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
 object OnePieceLeft : AutoMode("1 Piece Left") {
-    override fun autoSequence(): Command {
+    override fun autoSequence(shouldAutoStow: Boolean): Command {
         return Commands.sequence(
             Commands.parallel(
-                Drivetrain.driveToPointAllianceRelative(AprilTagTarget(20, ReefBranchSide.Left).pose, PathConstraints(6.0, 4.0, 540.0.degreesPerSecond.inRadiansPerSecond(), 720.degrees.inRadians())),
+                Drivetrain.driveToPointAllianceRelative(AprilTagTarget(20, ReefBranchSide.Right).pose, DEFAULT_AUTO_CONSTRAINTS),
                 Commands.sequence(
-                    Commands.waitSeconds(1.0),
+                    Commands.waitSeconds(3.0),
                     Elevator.setTargetHeight(Elevator.Position.HighBar)
                 )
             ),
             Manipulator.outtake().withTimeout(0.3),
-            Elevator.setTargetHeight(Elevator.Position.Stowed),
+            Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
         )
     }
 }
