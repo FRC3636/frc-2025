@@ -15,6 +15,7 @@ import org.littletonrobotics.junction.Logger
 object Dashboard {
 //    private val field = Field2d()
     val autoChooser = SendableChooser<Command>()
+    val defaultCommand: Command? = Commands.none()
 
     fun update() {
 //        field.robotPose = Drivetrain.estimatedPose
@@ -29,7 +30,7 @@ object Dashboard {
 //            field.getObject("path").poses = it
             Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
         }
-        autoChooser.setDefaultOption("None", Commands.none())
+        autoChooser.setDefaultOption("None", defaultCommand)
         autoChooser.addOption(OnePieceLeft.name, OnePieceLeft.autoSequence())
         autoChooser.addOption(TwoPieceLeft.name, TwoPieceLeft.autoSequence())
         autoChooser.addOption(ThreePieceLeft.name, ThreePieceLeft.autoSequence())

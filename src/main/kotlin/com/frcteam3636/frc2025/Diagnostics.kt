@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2025
 
 import com.ctre.phoenix6.CANBus
+import com.frcteam3636.frc2025.Dashboard.defaultCommand
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
 import com.frcteam3636.frc2025.utils.cachedStatus
@@ -10,6 +11,7 @@ import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.Timer
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import java.net.InetAddress
 import kotlin.concurrent.thread
@@ -152,9 +154,12 @@ object Diagnostics {
     fun periodic() {
         reset()
 
-        val selectedAuto = Dashboard.autoChooser.selected
-        if (selectedAuto is InstantCommand) {
-            reportFault(Fault.DubiousAutoChoice)
+        // To save loop times, don't query the auto chooser if enabled
+        if (Robot.isDisabled) {
+            val selectedAuto = Dashboard.autoChooser.selected
+            if (selectedAuto == defaultCommand) {
+                reportFault(Fault.DubiousAutoChoice)
+            }
         }
 
         if (!Drivetrain.limelightsConnected)
