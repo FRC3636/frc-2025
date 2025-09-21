@@ -11,13 +11,16 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
-object ThreePieceLeft : AutoMode("3 Piece Left") {
+class TwoPieceCoral(val side: StartingPosition) : AutoMode("2 Piece ${side.name}") {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
+        val reefPose = if (side == StartingPosition.Left) LEFT_PIECE_TWO else RIGHT_PIECE_TWO
+        val pickupPose = if (side == StartingPosition.Left) LEFT_PICKUP else RIGHT_PICKUP
+
         return Commands.sequence(
-            TwoPieceLeft.autoSequence(false),
+            OnePieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
-                Drivetrain.driveToPointAllianceRelative(AprilTagTarget(13, Translation2d.kZero).pose, DEFAULT_AUTO_CONSTRAINTS)
+                Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS)
             ),
             Commands.parallel(
                 Commands.sequence(
@@ -25,12 +28,12 @@ object ThreePieceLeft : AutoMode("3 Piece Left") {
                         Commands.waitUntil {
                             Manipulator.coralState != CoralState.NONE
                         },
-                        Commands.waitSeconds(1.0)
+                        Commands.waitSeconds(CORAL_INTAKE_LEAVE_TIMEOUT)
                     ),
                     Commands.parallel(
-                        Drivetrain.driveToPointAllianceRelative(AprilTagTarget(19, ReefBranchSide.Right).pose, DEFAULT_AUTO_CONSTRAINTS),
+                        Drivetrain.driveToPointAllianceRelative(reefPose, DEFAULT_AUTO_CONSTRAINTS),
                         Commands.sequence(
-                            Commands.waitSeconds(3.0),
+                            Commands.waitSeconds(ELEVATOR_DEPLOYMENT_TIME),
                             Elevator.setTargetHeight(Elevator.Position.HighBar)
                         )
                     ),
@@ -38,9 +41,9 @@ object ThreePieceLeft : AutoMode("3 Piece Left") {
                 Commands.race(
                     Manipulator.intakeAuto(),
                     Funnel.intake()
-                ).withTimeout(3.0),
+                ).withTimeout(INTAKE_TIMEOUT),
             ),
-            Manipulator.outtake().withTimeout(0.3),
+            Manipulator.outtake().withTimeout(OUTTAKE_TIMEOUT),
             Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
         )
     }
