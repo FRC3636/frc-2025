@@ -79,6 +79,8 @@ object Drivetrain : Subsystem {
             setDefault(AlignState.NotRunning.raw)
         }
 
+    var tagsVisible = false
+
     enum class AlignState(val raw: Long) {
         NotRunning(0),
         AlignPathfinding(1),
@@ -86,7 +88,7 @@ object Drivetrain : Subsystem {
         Success(3),
     }
 
-    private val mt2Algo = LimelightAlgorithm.MegaTag2({
+    val mt2Algo = LimelightAlgorithm.MegaTag2({
         poseEstimator.estimatedPosition.rotation
     }, {
         inputs.gyroVelocity
@@ -100,16 +102,12 @@ object Drivetrain : Subsystem {
         else -> mapOf(
             "Limelight Right" to LimelightPoseProvider(
                 "limelight-right",
-                algorithm = mt2Algo
+                algorithm = LimelightAlgorithm.MegaTag
             ),
             "Limelight Left" to LimelightPoseProvider(
                 "limelight-left",
-                algorithm = mt2Algo
-            ),
-//            "Limelight Rear" to LimelightPoseProvider(
-//                "limelight-rear",
-//                algorithm = mt2Algo
-//            ),
+                algorithm = LimelightAlgorithm.MegaTag
+            )
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
@@ -180,6 +178,7 @@ object Drivetrain : Subsystem {
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Drivetrain", inputs)
+        tagsVisible = false
 
         // Update absolute pose sensors and add their measurements to the pose estimator
         for ((name, ioPair) in absolutePoseIOs) {
@@ -189,6 +188,9 @@ object Drivetrain : Subsystem {
             Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
 
             Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
+            if (inputs.observedTags.isNotEmpty())
+                tagsVisible = true
+
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
 //                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)

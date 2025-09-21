@@ -33,6 +33,10 @@ object Diagnostics {
                 "There is no auto selected. Are you absolutely sure you **do not** want to run an auto?",
                 AlertType.kWarning
             )
+        object NoAutoTags : Fault("There are no visible Apriltags. Auto will assume a starting position, please ensure Apriltag visibility to have accurate auto routines.", alertType = AlertType.kWarning)
+        object GyroNotZeroedManually : Fault("The gyro has not been zeroed manually. Gyro will be zeroed automagically by vision <3.",
+            AlertType.kInfo
+        )
 
         object JoystickDisconnected :
             Fault("One or more Joysticks have disconnected, driver controls will not work.")
@@ -152,11 +156,17 @@ object Diagnostics {
     fun periodic() {
         reset()
 
-        // To save loop times, don't query the auto chooser if enabled
+        // To save loop times, don't bother checking these if enabled
         if (Robot.isDisabled) {
             val selectedAuto = Dashboard.autoChooser.selected
             if (selectedAuto == defaultAuto) {
                 reportFault(Fault.DubiousAutoChoice)
+            }
+            if (!Robot.gyroOffsetManually) {
+                reportFault(Fault.GyroNotZeroedManually)
+            }
+            if (!Drivetrain.tagsVisible) {
+                reportFault(Fault.NoAutoTags)
             }
         }
 

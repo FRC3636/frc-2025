@@ -91,7 +91,25 @@ sealed class LimelightAlgorithm {
 data class LimelightMeasurement(
     var poseMeasurement: AbsolutePoseMeasurement? = null,
     var observedTags: IntArray = intArrayOf(),
-)
+) /* --- BEGIN KOTLIN COMPILER GENERATED CODE ---- */ {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LimelightMeasurement
+
+        if (poseMeasurement != other.poseMeasurement) return false
+        if (!observedTags.contentEquals(other.observedTags)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = poseMeasurement?.hashCode() ?: 0
+        result = 31 * result + observedTags.contentHashCode()
+        return result
+    }
+} /* --- END KOTLIN COMPILER GENERATED CODE ---- */
 
 class LimelightPoseProvider(
     private val name: String,
@@ -248,19 +266,6 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
             }.toIntArray()
         }
     }
-}
-
-@Logged
-open class QuestNavInputs {
-    /**
-     * The most recent measurement from the Quest.
-     */
-    var pose = Pose2d()
-
-    /**
-     * Whether the provider is connected.
-     */
-    var connected = false
 }
 
 data class AbsolutePoseMeasurement(

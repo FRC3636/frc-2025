@@ -66,6 +66,8 @@ object Robot : LoggedRobot() {
     private val rioCANBus = CANBus("rio")
     private val canivore = CANBus("*")
 
+    var gyroOffsetManually = false
+
     /** Status signals used to check the health of the robot's hardware */
     val diagnosticsStatusSignals = mutableMapOf<String, StatusSignal<*>>()
 
@@ -319,6 +321,7 @@ object Robot : LoggedRobot() {
         // (The button with the yellow tape on it)
         joystickLeft.button(8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
+            gyroOffsetManually = true
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
@@ -450,7 +453,8 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        Drivetrain.zeroGyro(true)
+        if (!gyroOffsetManually)
+            Drivetrain.zeroGyro(true)
         autoCommand = Dashboard.autoChooser.selected
         autoCommand?.schedule()
     }
