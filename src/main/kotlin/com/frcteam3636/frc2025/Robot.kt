@@ -440,8 +440,6 @@ object Robot : LoggedRobot() {
         BaseStatusSignal.refreshAll(*Manipulator.getStatusSignals().toTypedArray())
         statusSignals.clear()
 
-        Dashboard.update()
-
         if (Diagnostics.timer.hasElapsed(1.0)) {
             reportDiagnostics()
             Diagnostics.send()

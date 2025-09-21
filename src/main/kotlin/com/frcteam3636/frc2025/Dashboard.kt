@@ -17,10 +17,6 @@ object Dashboard {
     val autoChooser = SendableChooser<Command>()
     val defaultCommand: Command? = Commands.none()
 
-    fun update() {
-//        field.robotPose = Drivetrain.estimatedPose
-    }
-
     fun initialize() {
         PathPlannerLogging.setLogTargetPoseCallback {
 //            field.getObject("target pose").pose = it
