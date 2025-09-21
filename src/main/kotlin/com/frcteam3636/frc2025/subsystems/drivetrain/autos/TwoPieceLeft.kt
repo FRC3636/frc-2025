@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 object TwoPieceLeft : AutoMode("2 Piece Left") {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
         return Commands.sequence(
-            OnePieceLeft.autoSequence(),
+            OnePieceLeft.autoSequence(false),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Drivetrain.driveToPointAllianceRelative(AprilTagTarget(13, Translation2d.kZero).pose, DEFAULT_AUTO_CONSTRAINTS)

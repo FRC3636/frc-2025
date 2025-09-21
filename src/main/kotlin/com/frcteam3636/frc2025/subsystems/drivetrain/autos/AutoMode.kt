@@ -13,7 +13,7 @@ open class AutoMode(val name: String) {
         return Commands.none()
     }
 
-    open fun autoSequence(shouldAutoStow: Boolean = false): Command {
+    open fun autoSequence(shouldAutoStow: Boolean = true): Command {
         return Commands.none()
     }
 
