@@ -396,10 +396,10 @@ object Drivetrain : Subsystem {
         // IF YOU USE THIS PLEASE PASS IN POSES RELATIVE TO THE BLUE DRIVER STATION
         return defer {
             val startingPose = Pose2d(estimatedPose.translation, heading)
-            val target = Pose2d(target.translation, heading)
+            val targetWaypoint = Pose2d(target.translation, heading)
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 startingPose,
-                target
+                targetWaypoint
             )
 
             val path = PathPlannerPath(
