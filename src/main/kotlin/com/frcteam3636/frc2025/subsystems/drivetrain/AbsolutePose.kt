@@ -183,7 +183,7 @@ class LimelightPoseProvider(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
 //                        VecBuilder.fill(stdDevs[6], stdDevs[6], stdDevs[11]),
-                        APRIL_TAG_STD_DEV(estimate.rawFiducials[0]!!.distToCamera.inMeters(), measurement.observedTags.size)
+                        VecBuilder.fill(.5, .5, 9999999.0)
                     )
                 }
             }

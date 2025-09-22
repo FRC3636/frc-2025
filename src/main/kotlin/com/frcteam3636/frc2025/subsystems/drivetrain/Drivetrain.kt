@@ -19,6 +19,7 @@ import com.frcteam3636.frc2025.utils.math.*
 import com.frcteam3636.frc2025.utils.swerve.*
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.commands.FollowPathCommand
 import com.pathplanner.lib.commands.PathfindingCommand
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
@@ -162,6 +163,7 @@ object Drivetrain : Subsystem {
 
         if (Robot.model != Robot.Model.SIMULATION) {
             PathfindingCommand.warmupCommand().schedule()
+            FollowPathCommand.warmupCommand().schedule()
         }
 
         if (io is DrivetrainIOSim) {
