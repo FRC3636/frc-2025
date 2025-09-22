@@ -129,8 +129,10 @@ object Drivetrain : Subsystem {
             inputs.gyroRotation, // initial gyro rotation
             inputs.measuredPositions.toTypedArray(), // initial module positions
             Pose2d(), // initial pose
-            VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5.0)),
-            VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10.0))
+            VecBuilder.fill(0.02, 0.02, 0.005),
+//            VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10.0))
+            // Overwrite each measurement
+            VecBuilder.fill(0.0, 0.0, 0.0)
         )
 
 

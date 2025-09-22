@@ -12,18 +12,10 @@ import edu.wpi.first.wpilibj2.command.Commands
 import org.littletonrobotics.junction.Logger
 
 object Dashboard {
-//    private val field = Field2d()
-    val autos = listOf(
-        OnePieceCoral(StartingPosition.Left),
-        OnePieceCoral(StartingPosition.Right),
-        TwoPieceCoral(StartingPosition.Left),
-        TwoPieceCoral(StartingPosition.Right),
-        ThreePieceCoral(StartingPosition.Left),
-        ThreePieceCoral(StartingPosition.Right)
-    )
-    val autoChooser = SendableChooser<Command>().apply {
-        setDefaultOption("None", Commands.none())
-        autos.forEach { addOption(it.name, it.autoSequence()) }
+    val autoChooser = SendableChooser<AutoModes>().apply {
+        for (autoMode in AutoModes.entries) {
+            addOption(autoMode.name, autoMode)
+        }
     }
     val defaultAuto: Command? = Commands.none()
 
@@ -35,10 +27,13 @@ object Dashboard {
         PathPlannerLogging.setLogActivePathCallback {
             Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
         }
-        autoChooser.setDefaultOption("None", defaultAuto)
-        for (auto in autos) {
-            autoChooser.addOption(auto.name, auto.autoSequence())
-        }
         SmartDashboard.putData(autoChooser)
     }
+}
+
+enum class AutoModes(name: String) {
+    None("None"),
+    OnePieceCoral("One Piece Coral"),
+    TwoPieceCoral("Two Piece Coral"),
+    ThreePieceCoral("Three Piece Coral"),
 }
