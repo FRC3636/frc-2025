@@ -479,7 +479,9 @@ object Drivetrain : Subsystem {
                 )
             }
 
-            var waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+            var startingPose = Pose2d(estimatedPose.translation, (target.translation - estimatedPose.translation).angle)
+
+            val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 estimatedPose,
                 target
             )
