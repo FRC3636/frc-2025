@@ -35,7 +35,7 @@ object Diagnostics {
                 "There is no auto selected. Are you absolutely sure you **do not** want to run an auto?",
                 AlertType.kWarning
             )
-        object NoAutoTags : RobotAlert("There are no visible Apriltags. Auto will assume a default starting position, please ensure Apriltag visibility to have accurate auto routines.", alertType = AlertType.kWarning)
+        object NoAutoTags : RobotAlert("There are no visible Apriltags. Auto will assume a starting position based on older vision data (if available), please ensure Apriltag visibility to have accurate auto routines.", alertType = AlertType.kWarning)
         object GyroNotZeroedManually : RobotAlert("The gyro has not been zeroed manually. Gyro will be homed to the correct rotation automagically by vision <3.",
             AlertType.kInfo
         )
