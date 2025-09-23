@@ -5,7 +5,6 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.degrees
-import com.frcteam3636.frc2025.utils.math.inMeters
 import com.frcteam3636.frc2025.utils.math.inSeconds
 import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
@@ -20,17 +19,12 @@ import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.util.struct.Struct
 import edu.wpi.first.util.struct.StructSerializable
-import edu.wpi.first.wpilibj.Alert
-import edu.wpi.first.wpilibj.Alert.AlertType
-import edu.wpi.first.wpilibj.Timer
 import org.littletonrobotics.junction.LogTable
-import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.inputs.LoggableInputs
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
-import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
 import kotlin.concurrent.thread
 import kotlin.math.pow
@@ -162,7 +156,7 @@ class LimelightPoseProvider(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
                         // This value is pulled directly from the Limelight docs (linked at the top of this class)
-                        VecBuilder.fill(.5, .5, 9999999.0)
+                        VecBuilder.fill(.5, .5, .25)
                     )
                 }
 
@@ -200,12 +194,12 @@ class LimelightPoseProvider(
 
             // We assume the camera has disconnected if there are no new updates for several ticks.
             val hb = LimelightHelpers.getHB(name)
-            inputs.connected = hb > lastSeenHb && loopsSinceLastSeen < CONNECTED_TIMEOUT
-            lastSeenHb = hb
+            inputs.connected = hb > lastSeenHb || loopsSinceLastSeen < CONNECTED_TIMEOUT
             if (hb == lastSeenHb)
                 loopsSinceLastSeen++
             else
                 loopsSinceLastSeen = 0
+            lastSeenHb = hb
         }
     }
 
@@ -226,7 +220,7 @@ class LimelightPoseProvider(
         /**
          * The amount of time (in robot ticks) an update before considering the camera to be disconnected.
          */
-        private const val CONNECTED_TIMEOUT = 50.0
+        private const val CONNECTED_TIMEOUT = 1000.0
     }
 }
 

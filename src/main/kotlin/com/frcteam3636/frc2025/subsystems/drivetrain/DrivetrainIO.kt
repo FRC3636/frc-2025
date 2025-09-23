@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.ctre.phoenix6.BaseStatusSignal
-import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.CTREDeviceId
 import com.frcteam3636.frc2025.Diagnostics
 import com.frcteam3636.frc2025.Pigeon2

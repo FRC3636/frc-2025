@@ -29,6 +29,7 @@ import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.path.PathPlannerPath
 import com.pathplanner.lib.path.Waypoint
 import com.pathplanner.lib.pathfinding.Pathfinding
+import com.pathplanner.lib.util.FlippingUtil
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.*
@@ -37,9 +38,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
-import edu.wpi.first.math.util.Units
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.Preferences
@@ -397,26 +396,36 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS,
-                                     heading: Rotation2d = (target.translation - estimatedPose.translation).angle,
-                                     startingPose: Pose2d = estimatedPose,
-    ): Command {
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, ): Command {
         // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
-        // IF YOU USE THIS PLEASE PASS IN POSES RELATIVE TO THE BLUE DRIVER STATION
+        // IF YOU USE THIS PLEASE PASS IN A TARGET POSE ON THE BLUE SIDE
+        // IT WILL BE MIRRORED TO THE RED SIDE IF YOU ARE ON THE RED ALLIANCE
         return defer {
-            val startingPose = Pose2d(startingPose.translation, heading)
-            val targetWaypoint = Pose2d(target.translation, heading)
+            var startingPose = estimatedPose
+            var heading = (target.translation - estimatedPose.translation).angle
+            var updatedTargetPose = target
+            if (DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red) {
+                updatedTargetPose = FlippingUtil.flipFieldPose(target)
+                heading = (updatedTargetPose.translation - startingPose.translation).angle
+            }
+
+            startingPose = Pose2d(startingPose.translation, heading)
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 startingPose,
-                targetWaypoint
+                updatedTargetPose
             )
+
+            Logger.recordOutput("/Drivetrain/Updated Target Pose", updatedTargetPose)
+            Logger.recordOutput("/Drivetrain/Updated Starting Pose", startingPose)
 
             val path = PathPlannerPath(
                 waypoints,
                 constraints,
                 null,
-                GoalEndState(0.0, target.rotation)
+                GoalEndState(0.0, updatedTargetPose.rotation)
             )
+
+            path.preventFlipping = true
 
             AutoBuilder.followPath(path)
         }

@@ -1,14 +1,16 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain.autos
 
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
-class OnePieceCoral(val side: StartingPosition) : AutoMode() {
+class TestAuto() : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
-        val reefPose = if (side == StartingPosition.Left) LEFT_PIECE_ONE else RIGHT_PIECE_ONE
+        val reefPose = AprilTagTarget(18, ReefBranchSide.Right).pose
 
         return Commands.sequence(
             Commands.parallel(

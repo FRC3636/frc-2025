@@ -1,9 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 
-import au.grapplerobotics.ConfigurationFailedException
-import au.grapplerobotics.LaserCan
-import au.grapplerobotics.interfaces.LaserCanInterface
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANrangeConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
@@ -13,14 +10,10 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.UpdateModeValue
 import com.frcteam3636.frc2025.CANrange
 import com.frcteam3636.frc2025.CTREDeviceId
-import com.frcteam3636.frc2025.GrappleRoboticsDeviceId
-import com.frcteam3636.frc2025.Lasercan
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.inAmps
 import com.frcteam3636.frc2025.utils.math.inVolts
-import com.frcteam3636.frc2025.utils.math.meters
-import com.frcteam3636.frc2025.utils.math.millimeters
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Current

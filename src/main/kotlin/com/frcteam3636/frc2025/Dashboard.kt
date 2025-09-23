@@ -1,24 +1,19 @@
 package com.frcteam3636.frc2025
 
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.OnePieceCoral
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.StartingPosition
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.ThreePieceCoral
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TwoPieceCoral
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import org.littletonrobotics.junction.Logger
 
 object Dashboard {
     val autoChooser = SendableChooser<AutoModes>().apply {
         for (autoMode in AutoModes.entries) {
-            addOption(autoMode.name, autoMode)
+            if (autoMode == AutoModes.None)
+                setDefaultOption(autoMode.autoName, autoMode)
+            else
+                addOption(autoMode.autoName, autoMode)
         }
     }
-    val defaultAuto: Command? = Commands.none()
-
 
     fun initialize() {
         PathPlannerLogging.setLogTargetPoseCallback {
@@ -31,9 +26,11 @@ object Dashboard {
     }
 }
 
-enum class AutoModes(name: String) {
+enum class AutoModes(val autoName: String) {
     None("None"),
     OnePieceCoral("One Piece Coral"),
     TwoPieceCoral("Two Piece Coral"),
     ThreePieceCoral("Three Piece Coral"),
+    TestAuto("Test Auto"),
+    TestAutoPickup("Test Auto w/ HP Pickup")
 }

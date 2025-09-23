@@ -8,6 +8,8 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.FIELD_LAYOUT
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.OnePieceCoral
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.StartingPosition
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TestAuto
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TestAutoPickup
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.ThreePieceCoral
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TwoPieceCoral
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
@@ -27,7 +29,6 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.*
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
@@ -44,7 +45,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.jvm.optionals.getOrDefault
-import kotlin.jvm.optionals.getOrNull
 
 
 /**
@@ -460,7 +460,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        if (!gyroOffsetManually || !Drivetrain.tagsVisible)
+        if (!Drivetrain.tagsVisible)
             Drivetrain.zeroGyro(true)
         val alliance = DriverStation.getAlliance()
             // 50/50 chance of being right lol.
@@ -478,6 +478,8 @@ object Robot : LoggedRobot() {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
             AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
+            AutoModes.TestAuto -> TestAuto().autoSequence()
+            AutoModes.TestAutoPickup -> TestAutoPickup().autoSequence()
             AutoModes.None -> Commands.none()
         }
         autoCommand?.schedule()

@@ -7,7 +7,6 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.alignStatePublis
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
-import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj2.command.Command

@@ -1,20 +1,25 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain.autos
 
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
+import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
+import com.frcteam3636.frc2025.utils.math.meters
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
-class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
+class TestAutoPickup() : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
-        val reefPose = if (side == StartingPosition.Left) LEFT_PIECE_TWO else RIGHT_PIECE_TWO
-        val pickupPose = if (side == StartingPosition.Left) LEFT_PICKUP else RIGHT_PICKUP
+        val reefPose = AprilTagTarget(18, ReefBranchSide.Left).pose
+        val pickupPose = Pose2d(1.251.meters, 4.034.meters, Rotation2d.kZero)
 
         return Commands.sequence(
-            OnePieceCoral(side).autoSequence(false),
+            TestAuto().autoSequence(false),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS)
@@ -25,7 +30,7 @@ class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
                         Commands.waitUntil {
                             Manipulator.coralState != CoralState.NONE
                         },
-                        Commands.waitSeconds(CORAL_INTAKE_LEAVE_TIMEOUT)
+                        Commands.waitSeconds(5.0)
                     ),
                     Commands.parallel(
                         Drivetrain.driveToPointAllianceRelative(reefPose, DEFAULT_AUTO_CONSTRAINTS),
@@ -38,7 +43,7 @@ class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
                 Commands.race(
                     Manipulator.intakeAuto(),
                     Funnel.intake()
-                ).withTimeout(INTAKE_TIMEOUT),
+                ).withTimeout(5.0),
             ),
             Manipulator.outtake().withTimeout(OUTTAKE_TIMEOUT),
             Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
