@@ -5,14 +5,7 @@ import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2025.subsystems.drivetrain.FIELD_LAYOUT
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.OnePieceCoral
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.StartingPosition
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TestAuto
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TestAutoPickup
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.ThreePieceCoral
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TwoPieceCoral
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.determineStartingPosition
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.*
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
@@ -45,7 +38,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import kotlin.io.path.Path
 import kotlin.io.path.exists
-import kotlin.jvm.optionals.getOrDefault
 
 
 /**

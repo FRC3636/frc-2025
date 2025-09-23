@@ -20,7 +20,6 @@ import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
-import kotlin.collections.mutableListOf
 
 @Logged
 open class ManipulatorInputs {

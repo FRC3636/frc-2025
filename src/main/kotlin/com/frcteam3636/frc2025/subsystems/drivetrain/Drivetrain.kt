@@ -16,7 +16,10 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.*
-import com.frcteam3636.frc2025.utils.swerve.*
+import com.frcteam3636.frc2025.utils.swerve.PerCorner
+import com.frcteam3636.frc2025.utils.swerve.cornerStatesToChassisSpeeds
+import com.frcteam3636.frc2025.utils.swerve.toCornerSwerveModuleStates
+import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.commands.FollowPathCommand
@@ -32,7 +35,10 @@ import com.pathplanner.lib.pathfinding.Pathfinding
 import com.pathplanner.lib.util.FlippingUtil
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform3d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
@@ -50,7 +56,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import java.util.*
-import kotlin.collections.List
 import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs

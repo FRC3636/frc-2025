@@ -31,7 +31,6 @@ import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig
 import org.littletonrobotics.junction.Logger
 import org.photonvision.simulation.VisionSystemSim
 import org.team9432.annotation.Logged
-import kotlin.collections.mutableListOf
 
 @Logged
 open class DrivetrainInputs {
