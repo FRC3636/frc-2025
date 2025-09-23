@@ -468,8 +468,13 @@ object Robot : LoggedRobot() {
             // we get a null value back we likely have bigger problems
             .getOrDefault(DriverStation.Alliance.Blue)
         var startingPosition: StartingPosition = StartingPosition.Right
-        if (Drivetrain.estimatedPose.y > FIELD_LAYOUT.fieldWidth / 2) {
-            startingPosition = if (alliance == DriverStation.Alliance.Blue)
+        startingPosition = if (Drivetrain.estimatedPose.y > FIELD_LAYOUT.fieldWidth / 2) {
+            if (alliance == DriverStation.Alliance.Blue)
+                StartingPosition.Left
+            else
+                StartingPosition.Right
+        } else {
+            if (alliance == DriverStation.Alliance.Blue)
                 StartingPosition.Right
             else
                 StartingPosition.Left
