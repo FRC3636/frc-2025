@@ -3,6 +3,8 @@ package com.frcteam3636.frc2025
 import com.ctre.phoenix6.CANBus
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.StartingPosition
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.determineStartingPosition
 import com.frcteam3636.frc2025.utils.cachedStatus
 import com.frcteam3636.frc2025.utils.math.hasElapsed
 import com.frcteam3636.frc2025.utils.math.seconds
@@ -17,45 +19,48 @@ import kotlin.concurrent.thread
  * Reports diagnostics and sends notifications to the driver station.
  *
  * Each diagnostic condition is stored as a boolean value, and alerts are generated when one
- * becomes problematic. The alerts are sent to the driver dashboard and logged to the console.
+ * becomes problematic or info should be provided.
+ * The alerts are sent to the driver dashboard and logged to the console.
  */
 object Diagnostics {
     val timer = Timer()
 
-    sealed class Fault(message: String, alertType: AlertType = AlertType.kError) {
+    sealed class RobotAlert(message: String, alertType: AlertType = AlertType.kError) {
         val alert = Alert(message, alertType)
 
-        object GyroDisconnected : Fault("Failed to connect to gyro, vision and odometry will likely not function.")
-        object LimelightDisconnected : Fault("Failed to connect to one or more LimeLights, vision will be impaired.")
+        object GyroDisconnected : RobotAlert("Failed to connect to gyro, vision and odometry will likely not function.")
+        object LimelightDisconnected : RobotAlert("Failed to connect to one or more LimeLights, vision will be impaired.")
         object DubiousAutoChoice :
-            Fault(
+            RobotAlert(
                 "There is no auto selected. Are you absolutely sure you **do not** want to run an auto?",
                 AlertType.kWarning
             )
-        object NoAutoTags : Fault("There are no visible Apriltags. Auto will assume a starting position, please ensure Apriltag visibility to have accurate auto routines.", alertType = AlertType.kWarning)
-        object GyroNotZeroedManually : Fault("The gyro has not been zeroed manually. Gyro will be zeroed automagically by vision <3.",
+        object NoAutoTags : RobotAlert("There are no visible Apriltags. Auto will assume a starting position, please ensure Apriltag visibility to have accurate auto routines.", alertType = AlertType.kWarning)
+        object GyroNotZeroedManually : RobotAlert("The gyro has not been zeroed manually. Gyro will be zeroed automagically by vision <3.",
             AlertType.kInfo
         )
+        object SelectedAutoLeft : RobotAlert("The robot has determined it is starting on the LEFT side. If this is wrong please ensure Apriltag visibility.", AlertType.kInfo)
+        object SelectedAutoRight : RobotAlert("The robot has determined it is starting on the RIGHT side. If this is wrong please ensure Apriltag visibility.", AlertType.kInfo)
 
         object JoystickDisconnected :
-            Fault("One or more Joysticks have disconnected, driver controls will not work.")
+            RobotAlert("One or more Joysticks have disconnected, driver controls will not work.")
 
         object ControllerDisconnected :
-            Fault("An Xbox Controller has disconnected, operator controls will not work.")
+            RobotAlert("An Xbox Controller has disconnected, operator controls will not work.")
 
         object HIDDeviceIsWrongType :
-            Fault(
+            RobotAlert(
                 "Check USB device order in Driver Station! The connected devices are likely in the wrong order.",
                 AlertType.kWarning
             )
 
         class CAN private constructor(bus: CANBus) {
-            private class BusFailure(bus: CANBus) : Fault("The \"${bus.humanReadableName}\" CAN bus has FAILED!")
+            private class BusFailure(bus: CANBus) : RobotAlert("The \"${bus.humanReadableName}\" CAN bus has FAILED!")
             private class BusError(bus: CANBus) :
-                Fault("Devices on the \"${bus.humanReadableName}\" CAN bus are experiencing errors.")
+                RobotAlert("Devices on the \"${bus.humanReadableName}\" CAN bus are experiencing errors.")
 
-            val failure: Fault = BusFailure(bus)
-            val error: Fault = BusError(bus)
+            val failure: RobotAlert = BusFailure(bus)
+            val error: RobotAlert = BusError(bus)
 
             companion object {
                 private val knownBuses = HashMap<CANBus, CAN>()
@@ -64,15 +69,15 @@ object Diagnostics {
         }
     }
 
-    private var faults = HashSet<Fault>()
+    private var robotAlerts = HashSet<RobotAlert>()
 
     fun reset() {
-        faults.clear()
+        robotAlerts.clear()
         timer.reset()
     }
 
-    fun reportFault(fault: Fault) {
-        faults += fault
+    fun reportAlert(robotAlert: RobotAlert) {
+        robotAlerts += robotAlert
     }
 
     private val errorResetTimer = Timer().apply { start() }
@@ -84,14 +89,14 @@ object Diagnostics {
 
         // Can't connect to the CAN Bus at all? It's probably unplugged or might have even failed.
         if (status.Status.isError) {
-            reportFault(Fault.CAN.bus(canBus).failure)
+            reportAlert(RobotAlert.CAN.bus(canBus).failure)
             return
         }
 
         // If there are errors, the wiring probably disconnected or a motor isn't working.
         val knownErrors = knownCANBusErrors[canBus.name] ?: 0
         if (status.REC + status.TEC > knownErrors) {
-            reportFault(Fault.CAN.bus(canBus).error)
+            reportAlert(RobotAlert.CAN.bus(canBus).error)
         }
 
         // Every second we record an "acceptable" number of errors so that if a
@@ -104,16 +109,16 @@ object Diagnostics {
 
     fun report(gyro: Gyro) {
         if (!gyro.connected) {
-            reportFault(Fault.GyroDisconnected)
+            reportAlert(RobotAlert.GyroDisconnected)
         }
     }
 
     fun reportDSPeripheral(controller: GenericHID, isController: Boolean) {
         if (!controller.isConnected) {
             if (isController) {
-                reportFault(Fault.ControllerDisconnected)
+                reportAlert(RobotAlert.ControllerDisconnected)
             } else {
-                reportFault(Fault.JoystickDisconnected)
+                reportAlert(RobotAlert.JoystickDisconnected)
             }
             return
         }
@@ -126,7 +131,7 @@ object Diagnostics {
         }
 
         if (!isExpectedType) {
-            reportFault(Fault.HIDDeviceIsWrongType)
+            reportAlert(RobotAlert.HIDDeviceIsWrongType)
         }
     }
 
@@ -159,34 +164,38 @@ object Diagnostics {
         if (Robot.isDisabled) {
             val selectedAuto = Dashboard.autoChooser.selected
             if (selectedAuto == AutoModes.None) {
-                reportFault(Fault.DubiousAutoChoice)
+                reportAlert(RobotAlert.DubiousAutoChoice)
             }
             if (!Robot.gyroOffsetManually) {
-                reportFault(Fault.GyroNotZeroedManually)
+                reportAlert(RobotAlert.GyroNotZeroedManually)
             }
             if (!Drivetrain.tagsVisible) {
-                reportFault(Fault.NoAutoTags)
+                reportAlert(RobotAlert.NoAutoTags)
             }
+            if (determineStartingPosition() == StartingPosition.Left)
+                reportAlert(RobotAlert.SelectedAutoLeft)
+            else
+                reportAlert(RobotAlert.SelectedAutoRight)
         }
 
         if (!Drivetrain.limelightsConnected)
-            reportFault(Fault.LimelightDisconnected)
+            reportAlert(RobotAlert.LimelightDisconnected)
     }
 
-    private var previousFaults = HashSet<Fault>()
+    private var previousRobotAlerts = HashSet<RobotAlert>()
 
     /** Show pending faults. */
     fun send() {
-        for (fault in previousFaults) {
+        for (fault in previousRobotAlerts) {
             fault.alert.set(false)
         }
-        previousFaults.clear()
+        previousRobotAlerts.clear()
 
-        for (fault in faults) {
+        for (fault in robotAlerts) {
             fault.alert.set(true)
         }
 
-        previousFaults.addAll(faults)
+        previousRobotAlerts.addAll(robotAlerts)
     }
 }
 

@@ -12,6 +12,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TestAuto
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TestAutoPickup
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.ThreePieceCoral
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TwoPieceCoral
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.determineStartingPosition
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
@@ -462,23 +463,7 @@ object Robot : LoggedRobot() {
     override fun autonomousInit() {
         if (!Drivetrain.tagsVisible)
             Drivetrain.zeroGyro(true)
-        val alliance = DriverStation.getAlliance()
-            // 50/50 chance of being right lol.
-            // unsure how of how else to handle this because if this function is called, and
-            // we get a null value back we likely have bigger problems
-            .getOrDefault(DriverStation.Alliance.Blue)
-        var startingPosition: StartingPosition = StartingPosition.Right
-        startingPosition = if (Drivetrain.estimatedPose.y > FIELD_LAYOUT.fieldWidth / 2) {
-            if (alliance == DriverStation.Alliance.Blue)
-                StartingPosition.Left
-            else
-                StartingPosition.Right
-        } else {
-            if (alliance == DriverStation.Alliance.Blue)
-                StartingPosition.Right
-            else
-                StartingPosition.Left
-        }
+        val startingPosition = determineStartingPosition()
         autoCommand = when (Dashboard.autoChooser.selected) {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
