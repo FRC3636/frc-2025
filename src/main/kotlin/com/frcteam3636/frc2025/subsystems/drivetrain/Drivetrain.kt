@@ -396,7 +396,7 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, ): Command {
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS): Command {
         // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
         // IF YOU USE THIS PLEASE PASS IN A TARGET POSE ON THE BLUE SIDE
         // IT WILL BE MIRRORED TO THE RED SIDE IF YOU ARE ON THE RED ALLIANCE
