@@ -36,6 +36,6 @@ open class AutoMode {
 
 enum class StartingPosition {
     Left,
-    Middle,
+//    Middle,
     Right
 }

@@ -52,14 +52,6 @@ object Manipulator : Subsystem {
         Logger.recordOutput("/Manipulator/Is Intake Running", isIntakeRunning)
     }
 
-    private fun blinkLimelight(): Command = Commands.runOnce({
-        LimelightHelpers.setLEDMode_ForceBlink("limelight-left")
-    })
-        .andThen(Commands.waitSeconds(0.3))
-        .finallyDo { ->
-            LimelightHelpers.setLEDMode_PipelineControl("limelight-left")
-        }
-
 
     fun idle(): Command = startEnd({
         io.setSpeed(-0.02)
