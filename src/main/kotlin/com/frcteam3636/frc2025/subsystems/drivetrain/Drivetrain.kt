@@ -130,7 +130,6 @@ object Drivetrain : Subsystem {
             inputs.measuredPositions.toTypedArray(), // initial module positions
             Pose2d(), // initial pose
             VecBuilder.fill(0.02, 0.02, 0.005),
-//            VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10.0))
             // Overwrite each measurement
             VecBuilder.fill(0.0, 0.0, 0.0)
         )
@@ -152,7 +151,7 @@ object Drivetrain : Subsystem {
                     Robot.Model.COMPETITION -> Constants.ALIGN_TRANSLATION_PID_GAINS
                     Robot.Model.PROTOTYPE -> DRIVING_PID_GAINS_NEO
                 }.toPPLib(),
-                Constants.ALIGN_TRANSLATION_PID_GAINS.toPPLib()
+                Constants.ALIGN_ROTATION_PID_GAINS.toPPLib() // FIXME: Revert to translation if shit breaks
             ),
             RobotConfig.fromGUISettings(),
             // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
@@ -396,7 +395,7 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, ): Command {
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS): Command {
         // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
         // IF YOU USE THIS PLEASE PASS IN A TARGET POSE ON THE BLUE SIDE
         // IT WILL BE MIRRORED TO THE RED SIDE IF YOU ARE ON THE RED ALLIANCE
