@@ -507,6 +507,9 @@ object Drivetrain : Subsystem {
 
             path.preventFlipping = true
 
+            commands.add(Commands.runOnce({
+                alignStatePublisher.set(AlignState.Aligning.raw)
+            }))
             commands.add(AutoBuilder.followPath(path))
 
             val endCondition = Trigger {
