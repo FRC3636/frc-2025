@@ -399,7 +399,7 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, ): Command {
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS): Command {
         // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
         // IF YOU USE THIS PLEASE PASS IN A TARGET POSE ON THE BLUE SIDE
         // IT WILL BE MIRRORED TO THE RED SIDE IF YOU ARE ON THE RED ALLIANCE
@@ -482,7 +482,7 @@ object Drivetrain : Subsystem {
                 Pose2d(target.translation, heading)
             )
             
-            val constraints = PathConstraints(4.0, 3.0, 2 * Math.PI, 4 * Math.PI)
+            val constraints = PathConstraints(6.0, 4.0, 2 * Math.PI, 4 * Math.PI)
 
             val path = PathPlannerPath(
                 waypoints,
