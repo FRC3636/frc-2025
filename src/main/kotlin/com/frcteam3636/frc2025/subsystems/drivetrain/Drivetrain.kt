@@ -165,7 +165,6 @@ object Drivetrain : Subsystem {
         )
 
         if (Robot.model != Robot.Model.SIMULATION) {
-            PathfindingCommand.warmupCommand().schedule()
             FollowPathCommand.warmupCommand().schedule()
         }
 
@@ -483,7 +482,7 @@ object Drivetrain : Subsystem {
                 Pose2d(target.translation, heading)
             )
             
-            val constraints = PathConstraints(2.0, 3.0, 2 * Math.PI, 4 * Math.PI)
+            val constraints = PathConstraints(4.0, 3.0, 2 * Math.PI, 4 * Math.PI)
 
             val path = PathPlannerPath(
                 waypoints,

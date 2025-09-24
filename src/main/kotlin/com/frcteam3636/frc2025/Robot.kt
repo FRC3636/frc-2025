@@ -70,6 +70,8 @@ object Robot : LoggedRobot() {
 
     var gyroOffsetManually = false
 
+    var startingPosition = StartingPosition.Left
+
     /** Status signals used to check the health of the robot's hardware */
     val diagnosticsStatusSignals = mutableMapOf<String, StatusSignal<*>>()
 
@@ -91,6 +93,7 @@ object Robot : LoggedRobot() {
         Dashboard.initialize()
 
         Diagnostics.timer.start()
+        threadCommand().schedule()
 //        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
 
     }
@@ -414,6 +417,10 @@ object Robot : LoggedRobot() {
         }
     }
 
+    override fun disabledPeriodic() {
+        startingPosition = determineStartingPosition()
+    }
+
     override fun simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic()
 
@@ -459,7 +466,6 @@ object Robot : LoggedRobot() {
             beforeFirstEnable = false
         if (!Drivetrain.tagsVisible)
             Drivetrain.zeroGyro(true)
-        val startingPosition = determineStartingPosition()
         autoCommand = when (Dashboard.autoChooser.selected) {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
@@ -497,5 +503,17 @@ object Robot : LoggedRobot() {
             "prototype" -> Model.PROTOTYPE
             else -> throw AssertionError("Invalid model found in preferences: $key")
         }
+    }
+
+    private fun threadCommand(): Command {
+        return Commands.sequence(
+            Commands.waitSeconds(20.0),
+            Commands.runOnce({
+                Threads.setCurrentThreadPriority(true, 1)
+            }),
+            Commands.runOnce({
+                println("Thread priority is now 1")
+            })
+        ).ignoringDisable(true)
     }
 }
