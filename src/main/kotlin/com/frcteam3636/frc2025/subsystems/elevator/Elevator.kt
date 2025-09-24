@@ -47,6 +47,9 @@ object Elevator : Subsystem {
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Elevator", inputs)
+        // idea stolen from 254's 2025 elevator code
+        if (Robot.isDisabled && inputs.height < 0.0.meters)
+            io.setEncoderPosition(0.0.meters)
     }
 
     fun getStatusSignals(): MutableList<BaseStatusSignal> {
