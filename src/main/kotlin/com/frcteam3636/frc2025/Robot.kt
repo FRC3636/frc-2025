@@ -470,8 +470,8 @@ object Robot : LoggedRobot() {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
             AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
-            AutoModes.TestAuto -> TestAuto().autoSequence()
-            AutoModes.TestAutoPickup -> TestAutoPickup().autoSequence()
+            AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
+            AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
             AutoModes.None -> Commands.none()
         }
         autoCommand?.schedule()
@@ -512,7 +512,8 @@ object Robot : LoggedRobot() {
                 Threads.setCurrentThreadPriority(true, 1)
             }),
             Commands.runOnce({
-                println("Thread priority is now 1")
+                println("Thread has real-time status: ${Threads.getCurrentThreadIsRealTime()}")
+                println("Thread scheduler priority: ${Threads.getCurrentThreadPriority()}")
             })
         ).ignoringDisable(true)
     }

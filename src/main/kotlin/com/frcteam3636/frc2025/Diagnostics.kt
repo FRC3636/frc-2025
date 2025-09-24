@@ -11,6 +11,7 @@ import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.GenericHID
+import edu.wpi.first.wpilibj.Threads
 import edu.wpi.first.wpilibj.Timer
 import java.net.InetAddress
 import kotlin.concurrent.thread
@@ -39,8 +40,16 @@ object Diagnostics {
         object GyroNotZeroedManually : RobotAlert("The gyro has not been zeroed manually. Gyro will be homed to the correct rotation automagically by vision <3.",
             AlertType.kInfo
         )
+        object MegaTag1Active : RobotAlert("Megatag V1 is currently in use until the first enable. Please ensure that the robot knows it's rotation before enabling. If there is an Apriltag in view, this is fine.", AlertType.kInfo)
+        object MegaTag2Active : RobotAlert("Megatag V2 is now in use for the remainder of this robot code run. If you are experiencing rotation issues, please zero the gyro manually using the button with the yellow tape.", AlertType.kInfo)
         object SelectedAutoLeft : RobotAlert("The robot has determined it is starting on the LEFT side. If this is wrong please ensure Apriltag visibility.", AlertType.kInfo)
-        object SelectedAutoRight : RobotAlert("The robot has determined it is starting on the RIGHT side. If this is wrong please ensure Apriltag visibility.", AlertType.kInfo)
+        object SelectedAutoRight : RobotAlert("The robot has determined it is starting on the RIGHT side. If this is wrong please ensure Apriltag visibility.",
+            AlertType.kInfo
+        )
+
+        object ThreadNotRealTime : RobotAlert("The main robot thread does not have real-time (RT) priority. Automatic functions may not work as expected and loop overruns may be present until this changes.",
+            AlertType.kWarning
+        )
 
         object JoystickDisconnected :
             RobotAlert("One or more Joysticks have disconnected, driver controls will not work.")
@@ -135,51 +144,33 @@ object Diagnostics {
         }
     }
 
-    private val limelightsSync = Any()
-    private var limelightsConnected = false
-    fun reportLimelightsInBackground(names: Array<String>) {
-        thread {
-            while (true) {
-                val allReachable = names.asIterable().all { name ->
-                    try {
-                        InetAddress.getByName("$name.local").isReachable(1000)
-                    } catch (_: Exception) {
-                        false
-                    }
-                }
-
-                synchronized(limelightsSync) {
-                    limelightsConnected = allReachable
-                }
-
-                Thread.sleep(5_000)
-            }
-        }
-    }
-
     fun periodic() {
         reset()
 
         // To save loop times, don't bother checking these if enabled
         if (Robot.isDisabled) {
             val selectedAuto = Dashboard.autoChooser.selected
-            if (selectedAuto == AutoModes.None) {
+            if (selectedAuto == AutoModes.None)
                 reportAlert(RobotAlert.DubiousAutoChoice)
-            }
-            if (!Robot.gyroOffsetManually) {
+            if (!Robot.gyroOffsetManually && Robot.beforeFirstEnable)
                 reportAlert(RobotAlert.GyroNotZeroedManually)
-            }
-            if (!Drivetrain.tagsVisible) {
+            if (!Drivetrain.tagsVisible)
                 reportAlert(RobotAlert.NoAutoTags)
-            }
             if (determineStartingPosition() == StartingPosition.Left)
                 reportAlert(RobotAlert.SelectedAutoLeft)
             else
                 reportAlert(RobotAlert.SelectedAutoRight)
+            if (Robot.beforeFirstEnable)
+                reportAlert(RobotAlert.MegaTag1Active)
+            else
+                reportAlert(RobotAlert.MegaTag2Active)
         }
 
         if (!Drivetrain.limelightsConnected)
             reportAlert(RobotAlert.LimelightDisconnected)
+
+        if (!Threads.getCurrentThreadIsRealTime())
+            reportAlert(RobotAlert.ThreadNotRealTime)
     }
 
     private var previousRobotAlerts = HashSet<RobotAlert>()

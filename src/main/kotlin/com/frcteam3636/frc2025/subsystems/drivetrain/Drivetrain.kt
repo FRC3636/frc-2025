@@ -399,7 +399,7 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS): Command {
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, startingPoseHeadingOffset: Rotation2d = Rotation2d.kZero, targetPoseHeadingOffset: Rotation2d = Rotation2d.kZero): Command {
         // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
         // IF YOU USE THIS PLEASE PASS IN A TARGET POSE ON THE BLUE SIDE
         // IT WILL BE MIRRORED TO THE RED SIDE IF YOU ARE ON THE RED ALLIANCE
@@ -412,13 +412,13 @@ object Drivetrain : Subsystem {
                 heading = (updatedTargetPose.translation - startingPose.translation).angle
             }
 
-            startingPose = Pose2d(startingPose.translation, heading)
+            startingPose = Pose2d(startingPose.translation, heading + startingPoseHeadingOffset)
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 startingPose,
-                Pose2d(updatedTargetPose.translation, heading)
+                Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset)
             )
 
-            Logger.recordOutput("/Drivetrain/Updated Target Pose", updatedTargetPose)
+            Logger.recordOutput("/Drivetrain/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset))
             Logger.recordOutput("/Drivetrain/Updated Starting Pose", startingPose)
 
             val path = PathPlannerPath(
@@ -482,7 +482,7 @@ object Drivetrain : Subsystem {
                 Pose2d(target.translation, heading)
             )
             
-            val constraints = PathConstraints(6.0, 4.0, 2 * Math.PI, 4 * Math.PI)
+            val constraints = PathConstraints(10.0,4.0, 2 * Math.PI, 4 * Math.PI)
 
             val path = PathPlannerPath(
                 waypoints,

@@ -13,7 +13,7 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
-class TestAutoPickup() : AutoMode() {
+class TestAutoTwoCoral() : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
         val reefPose = AprilTagTarget(18, ReefBranchSide.Left).pose
         val pickupPose = Pose2d(1.251.meters, 4.034.meters, Rotation2d.kZero)
