@@ -66,6 +66,8 @@ object Robot : LoggedRobot() {
     private val rioCANBus = CANBus("rio")
     private val canivore = CANBus("*")
 
+    var beforeFirstEnable = true
+
     var gyroOffsetManually = false
 
     /** Status signals used to check the health of the robot's hardware */
@@ -453,6 +455,8 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
+        if (beforeFirstEnable)
+            beforeFirstEnable = false
         if (!Drivetrain.tagsVisible)
             Drivetrain.zeroGyro(true)
         val startingPosition = determineStartingPosition()
@@ -468,6 +472,8 @@ object Robot : LoggedRobot() {
     }
 
     override fun teleopInit() {
+        if (beforeFirstEnable)
+            beforeFirstEnable = false
         autoCommand?.cancel()
     }
 

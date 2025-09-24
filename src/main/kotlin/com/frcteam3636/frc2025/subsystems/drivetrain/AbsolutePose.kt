@@ -110,7 +110,7 @@ data class LimelightMeasurement(
 
 class LimelightPoseProvider(
     private val name: String,
-    private val algorithm: LimelightAlgorithm,
+    private val megaTagV2: LimelightAlgorithm.MegaTag2,
 ) : AbsolutePoseProvider {
     // References:
     // https://docs.limelightvision.io/docs/docs-limelight/tutorials/tutorial-swerve-pose-estimation
@@ -123,6 +123,8 @@ class LimelightPoseProvider(
 
     private var lastSeenHb: Double = 0.0
     private var loopsSinceLastSeen: Int = 0
+
+    private var currentAlgorithm: LimelightAlgorithm = LimelightAlgorithm.MegaTag
 
     init {
         thread(isDaemon = true) {
@@ -140,7 +142,10 @@ class LimelightPoseProvider(
     private fun updateCurrentMeasurement(): LimelightMeasurement {
         val measurement = LimelightMeasurement()
 
-        when (algorithm) {
+        if (!Robot.beforeFirstEnable && currentAlgorithm == LimelightAlgorithm.MegaTag)
+            currentAlgorithm = megaTagV2
+
+        when (val algorithm = currentAlgorithm) {
             is LimelightAlgorithm.MegaTag ->
                 LimelightHelpers.getBotPoseEstimate_wpiBlue(name)?.let { estimate ->
                     measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()

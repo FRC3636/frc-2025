@@ -84,7 +84,7 @@ object Manipulator : Subsystem {
     fun intakeAuto(): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
         Commands.waitUntil { inputs.isCoralDetected },
-        runOnce { io.setVoltage(0.6.volts) },
+        runOnce { io.setVoltage(1.2.volts) },
         Commands.runOnce({
             coralState = CoralState.TRANSIT
         }),

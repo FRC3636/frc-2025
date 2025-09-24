@@ -107,11 +107,11 @@ object Drivetrain : Subsystem {
         else -> mapOf(
             "Limelight Right" to LimelightPoseProvider(
                 "limelight-right",
-                algorithm = LimelightAlgorithm.MegaTag
+                mt2Algo
             ),
             "Limelight Left" to LimelightPoseProvider(
                 "limelight-left",
-                algorithm = LimelightAlgorithm.MegaTag
+                mt2Algo
             )
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
@@ -128,7 +128,7 @@ object Drivetrain : Subsystem {
         )
 
     /** Helper for estimating the location of the drivetrain on the field */
-    private val poseEstimator =
+    val poseEstimator =
         SwerveDrivePoseEstimator(
             kinematics, // swerve drive kinematics
             inputs.gyroRotation, // initial gyro rotation
@@ -156,7 +156,7 @@ object Drivetrain : Subsystem {
                     Robot.Model.COMPETITION -> Constants.ALIGN_TRANSLATION_PID_GAINS
                     Robot.Model.PROTOTYPE -> DRIVING_PID_GAINS_NEO
                 }.toPPLib(),
-                Constants.ALIGN_ROTATION_PID_GAINS.toPPLib() // FIXME: Revert to translation if shit breaks
+                Constants.ALIGN_TRANSLATION_PID_GAINS.toPPLib()
             ),
             RobotConfig.fromGUISettings(),
             // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
@@ -195,14 +195,14 @@ object Drivetrain : Subsystem {
             Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
 
             Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
+            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Connected", inputs.connected)
             if (inputs.observedTags.isNotEmpty())
                 tagsVisible = true
 
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
-//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
-//                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
-//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
+                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
+                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
         }
 
@@ -213,7 +213,7 @@ object Drivetrain : Subsystem {
         )
 
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
-//        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
+        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
 
@@ -400,7 +400,7 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS): Command {
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, ): Command {
         // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
         // IF YOU USE THIS PLEASE PASS IN A TARGET POSE ON THE BLUE SIDE
         // IT WILL BE MIRRORED TO THE RED SIDE IF YOU ARE ON THE RED ALLIANCE
@@ -416,7 +416,7 @@ object Drivetrain : Subsystem {
             startingPose = Pose2d(startingPose.translation, heading)
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 startingPose,
-                updatedTargetPose
+                Pose2d(updatedTargetPose.translation, heading)
             )
 
             Logger.recordOutput("/Drivetrain/Updated Target Pose", updatedTargetPose)
@@ -448,26 +448,7 @@ object Drivetrain : Subsystem {
         endConditionTimeout: Double = 0.75,
         target: () -> Pose2d
     ): Command {
-//        Logger.recordOutput(
-//            "/Drivetrain/Auto Align/Distance To Target",
-//            0
-//        )
-        Logger.recordOutput(
-            "/Drivetrain/Auto Align/Has Reached Target",
-            false
-        )
-        Logger.recordOutput(
-            "/Drivetrain/Auto Align/Distance To Target X",
-            0.0
-        )
-        Logger.recordOutput(
-            "/Drivetrain/Auto Align/Distance To Target Y",
-            0.0
-        )
         return defer {
-            // If true, controls rotation with PID
-//            val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
-
             // If true, ends the command when in place
             val useEndCondition = Preferences.getBoolean("AlignUseEndCondition", true) && !disableEndConditionOverride
 
@@ -494,11 +475,12 @@ object Drivetrain : Subsystem {
                 )
             }
 
-            val startingPose = Pose2d(estimatedPose.translation, (target.translation - estimatedPose.translation).angle)
+            val heading = (target.translation - estimatedPose.translation).angle
+            val startingPose = Pose2d(estimatedPose.translation, heading)
 
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 startingPose,
-                target
+                Pose2d(target.translation, heading)
             )
             
             val constraints = PathConstraints(2.0, 3.0, 2 * Math.PI, 4 * Math.PI)
