@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Time
@@ -122,6 +123,7 @@ class LimelightPoseProvider(
     private var mutex = Any()
 
     private var lastSeenHb: Double = 0.0
+    private var hbSub = NetworkTableInstance.getDefault().getTable(name).getDoubleTopic("hb").subscribe(0.0)
     private var loopsSinceLastSeen: Int = 0
 
     private var currentAlgorithm: LimelightAlgorithm = LimelightAlgorithm.MegaTag
@@ -201,7 +203,7 @@ class LimelightPoseProvider(
             inputs.observedTags = observedTags
 
             // We assume the camera has disconnected if there are no new updates for several ticks.
-            val hb = LimelightHelpers.getHB(name)
+            val hb = hbSub.get()
             inputs.connected = hb > lastSeenHb || loopsSinceLastSeen < CONNECTED_TIMEOUT
             if (hb == lastSeenHb)
                 loopsSinceLastSeen++
