@@ -22,7 +22,7 @@ open class AutoMode {
 
     companion object Constants {
         //        val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(6.0, 4.0, 540.0.degreesPerSecond.inRadiansPerSecond(), 720.degrees.inRadians())
-        val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(2.0, 3.0, 2 * Math.PI, 4 * Math.PI)
+        val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(4.5, 4.0, 2 * Math.PI, 4 * Math.PI)
         val LEFT_PIECE_ONE = AprilTagTarget(20, ReefBranchSide.Right).pose
         val LEFT_PIECE_TWO = AprilTagTarget(19, ReefBranchSide.Left).pose
         val LEFT_PIECE_THREE = AprilTagTarget(19, ReefBranchSide.Right).pose
