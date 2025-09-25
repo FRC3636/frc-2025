@@ -23,7 +23,6 @@ import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.commands.FollowPathCommand
-import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.GoalEndState
@@ -41,7 +40,7 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.networktables.IntegerPublisher
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
@@ -75,7 +74,7 @@ object Drivetrain : Subsystem {
     private val alignPositionPublisher = NetworkTableInstance.getDefault()
         .getDoubleArrayTopic("RGB/Auto Align/Position Relative to Align Target")
         .publish()
-    val alignStatePublisher = NetworkTableInstance.getDefault()
+    val alignStatePublisher: IntegerPublisher = NetworkTableInstance.getDefault()
         .getIntegerTopic("RGB/Movement State")
         .publish()
         .apply {
@@ -158,7 +157,10 @@ object Drivetrain : Subsystem {
             ),
             RobotConfig.fromGUISettings(),
             // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
-            { DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red) },
+            {
+                @Suppress("IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE")
+                DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red)
+            },
             this
         )
 
@@ -372,11 +374,6 @@ object Drivetrain : Subsystem {
                 && Elevator.isAtTarget
                 && measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond < 0.2.metersPerSecond
 
-    private fun updateRGBToNoState(): Command = Commands.waitSeconds(1.5)
-        .finallyDo { ->
-            alignStatePublisher.set(AlignState.NotRunning.raw)
-        }
-
     fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS,
                                      startingPoseHeadingOffset: Rotation2d = Rotation2d.kZero,
                                      targetPoseHeadingOffset: Rotation2d = Rotation2d.kZero): Command {
@@ -566,19 +563,22 @@ object Drivetrain : Subsystem {
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
-            0.5.voltsPerSecond, 2.volts, null, {
-                SignalLogger.writeString("state", it.toString())
-            }), SysIdRoutine.Mechanism(
+            0.5.voltsPerSecond, 2.volts, null
+        ) {
+            SignalLogger.writeString("state", it.toString())
+        }, SysIdRoutine.Mechanism(
             io::runCharacterization,
             null,
             this,
         )
     )
 
+    @Suppress("unused")
     fun sysIdQuasistatic(direction: SysIdRoutine.Direction) = run {
         io.runCharacterization(0.volts)
     }.withTimeout(1.0).andThen(sysID.quasistatic(direction))!!
 
+    @Suppress("unused")
     fun sysIdDynamic(direction: SysIdRoutine.Direction) = run {
         io.runCharacterization(0.volts)
     }.withTimeout(1.0).andThen(sysID.dynamic(direction))!!
@@ -616,7 +616,6 @@ object Drivetrain : Subsystem {
 
         // Chassis Control
         val FREE_SPEED = 5.5.metersPerSecond
-        private val ROTATION_SPEED = 14.604.radiansPerSecond
 
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
 
@@ -625,46 +624,6 @@ object Drivetrain : Subsystem {
             PathConstraints(
                 3.0, 3.0, 2 * Math.PI, 4 * Math.PI
             )
-
-        // FIXME: Update for 2025
-        val PP_ROBOT_CONFIG_COMP = RobotConfig(
-            120.0.pounds, // FIXME: Placeholder
-            0.kilogramSquareMeters, // FIXME: Placeholder
-            ModuleConfig(
-                WHEEL_RADIUS,
-                FREE_SPEED,
-                1.0, // FIXME: Placeholder
-                DCMotor.getKrakenX60(1),
-                DRIVING_CURRENT_LIMIT,
-                1
-            ),
-            *MODULE_POSITIONS.map {
-                it.translation
-            }.toTypedArray()
-        )
-
-        val PP_ROBOT_CONFIG_PROTOTYPE = RobotConfig(
-            120.pounds, // FIXME: Placeholder
-            0.kilogramSquareMeters, // FIXME: Placeholder
-            ModuleConfig(
-                WHEEL_RADIUS,
-                NEO_DRIVING_FREE_SPEED,
-                1.0, // FIXME: Placeholder
-                DCMotor.getNEO(1),
-                DRIVING_CURRENT_LIMIT,
-                1
-            ),
-            *MODULE_POSITIONS.map {
-                it.translation
-            }.toTypedArray()
-        )
-
-        val PP_ROBOT_CONFIG = when (Robot.model) {
-            Robot.Model.SIMULATION -> PP_ROBOT_CONFIG_COMP
-            Robot.Model.COMPETITION -> PP_ROBOT_CONFIG_COMP
-            Robot.Model.PROTOTYPE -> PP_ROBOT_CONFIG_PROTOTYPE
-        }
-
 
         // CAN IDs
         val KRAKEN_MODULE_CAN_IDS =
@@ -720,6 +679,6 @@ object Drivetrain : Subsystem {
 
 
         val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.0)
-        val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
+//        val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
     }
 }
