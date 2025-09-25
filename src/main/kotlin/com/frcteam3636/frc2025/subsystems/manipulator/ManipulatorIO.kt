@@ -57,7 +57,7 @@ class ManipulatorIOReal : ManipulatorIO {
                 ProximityParams.ProximityThreshold = 0.35
                 FovParams.FOVCenterY = 10.0
                 FovParams.FOVRangeY = 7.0
-                ToFParams.UpdateMode = UpdateModeValue.LongRangeUserFreq
+                ToFParams.UpdateMode = UpdateModeValue.ShortRangeUserFreq
                 ToFParams.UpdateFrequency = 50.0
             }
         )
