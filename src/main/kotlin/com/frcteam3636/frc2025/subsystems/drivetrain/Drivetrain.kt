@@ -395,8 +395,9 @@ object Drivetrain : Subsystem {
                 Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset)
             )
 
-            Logger.recordOutput("/Drivetrain/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset))
-            Logger.recordOutput("/Drivetrain/Updated Starting Pose", startingPose)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
 
             val path = PathPlannerPath(
                 waypoints,
@@ -432,8 +433,10 @@ object Drivetrain : Subsystem {
                 Pose2d(updatedTargetPose.translation, headingFromMiddlePoint)
             )
 
-            Logger.recordOutput("/Drivetrain/Updated Target Pose", Pose2d(updatedTargetPose.translation, headingFromMiddlePoint))
-            Logger.recordOutput("/Drivetrain/Updated Starting Pose", startingPose)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", true)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, headingFromMiddlePoint))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Middle Pose", Pose2d(middlePoint.translation, headingFromMiddlePoint))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
 
             val path = PathPlannerPath(
                 waypoints,
