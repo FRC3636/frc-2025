@@ -219,7 +219,7 @@ class LimelightPoseProvider(
          * This is a somewhat conservative limit, but it is only applied when using the old MegaTag v1 algorithm.
          * It's possible it could be increased if it's too restrictive.
          */
-        private val MAX_SINGLE_TAG_DISTANCE = 3.meters
+        private val MAX_SINGLE_TAG_DISTANCE = 4.5.meters
 
         /**
          * The acceptable ambiguity for a single-tag reading on MegaTag v1.
