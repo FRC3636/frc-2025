@@ -35,7 +35,8 @@ open class AutoMode {
         const val OUTTAKE_TIMEOUT = 0.6
         const val INTAKE_TIMEOUT = 3.0
         const val CORAL_INTAKE_LEAVE_TIMEOUT = 1.0
-        const val ELEVATOR_DEPLOYMENT_TIME = 1.5
+        const val ELEVATOR_DEPLOYMENT_TIME_FIRST_PIECE = 1.5
+        const val ELEVATOR_DEPLOYMENT_TIME_OTHER_PIECE = 1.5
     }
 }
 

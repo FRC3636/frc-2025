@@ -14,7 +14,7 @@ class OnePieceCoral(val side: StartingPosition) : AutoMode() {
             Commands.parallel(
                 Drivetrain.driveToPointAllianceRelative(reefPose, DEFAULT_AUTO_CONSTRAINTS),
                 Commands.sequence(
-                    Commands.waitSeconds(ELEVATOR_DEPLOYMENT_TIME),
+                    Commands.waitSeconds(ELEVATOR_DEPLOYMENT_TIME_FIRST_PIECE),
                     Elevator.setTargetHeight(Elevator.Position.HighBar)
                 )
             ),
