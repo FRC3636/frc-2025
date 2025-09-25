@@ -204,29 +204,14 @@ object Robot : LoggedRobot() {
         }))
 
         joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.5, usePathfinding = false))
+
         joystickRight.povUp().whileTrue(
-            Drivetrain.alignToReefAlgae()
+            Drivetrain.alignToReefAlgae(false)
         )
-//        joystickLeft.button(1).whileTrue(Drivetrain.alignToReefAlgae())
+
         joystickRight.button(1).whileTrue(
-//            Commands.sequence(
-//                Manipulator.outtake().withTimeout(0.6),
-//                Elevator.setTargetHeight(Position.Stowed)
-//            )
             Manipulator.outtake()
         )
-
-//        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
-
-//        controller.b().onTrue(Commands.runOnce({
-//            println("Setting desired target node to left branch.")
-//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
-//        }))
-//
-//        controller.x().onTrue(Commands.runOnce({
-//            println("Setting desired target node to right branch.")
-//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
-//        }))
 
         // (The button with the yellow tape on it)
         joystickLeft.button(8).onTrue(Commands.runOnce({
@@ -294,17 +279,7 @@ object Robot : LoggedRobot() {
             )
         )
 
-        // TODO: find a good button for this if needed
-//        joystickRight.button(2).whileTrue(
-//            Commands.parallel(
-//                Manipulator.intakeNoRaceWithOutInterrupt(),
-//                Funnel.intake()
-//            )
-//        )
-        joystickRight.button(2).whileTrue(Drivetrain.alignToBarge())
-
-//            Manipulator.intake()
-
+        joystickRight.button(2).whileTrue(Drivetrain.alignToBarge(false))
 
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))

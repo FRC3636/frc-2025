@@ -586,7 +586,7 @@ object Drivetrain : Subsystem {
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
-        const val TRANSLATION_SENSITIVITY = 1.0 // FIXME: Increase
+        const val TRANSLATION_SENSITIVITY = 1.0
 
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.8
