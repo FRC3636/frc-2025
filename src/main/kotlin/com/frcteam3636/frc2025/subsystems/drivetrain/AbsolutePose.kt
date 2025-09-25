@@ -200,16 +200,16 @@ class LimelightPoseProvider(
         synchronized(mutex) {
             inputs.measurement = measurement
             inputs.observedTags = observedTags
-
-            // We assume the camera has disconnected if there are no new updates for several ticks.
-            val hb = hbSub.get()
-            inputs.connected = hb > lastSeenHb || loopsSinceLastSeen < CONNECTED_TIMEOUT
-            if (hb == lastSeenHb)
-                loopsSinceLastSeen++
-            else
-                loopsSinceLastSeen = 0
-            lastSeenHb = hb
         }
+
+        // We assume the camera has disconnected if there are no new updates for several ticks.
+        val hb = hbSub.get()
+        inputs.connected = hb > lastSeenHb || loopsSinceLastSeen < CONNECTED_TIMEOUT
+        if (hb == lastSeenHb)
+            loopsSinceLastSeen++
+        else
+            loopsSinceLastSeen = 0
+        lastSeenHb = hb
     }
 
     companion object {
