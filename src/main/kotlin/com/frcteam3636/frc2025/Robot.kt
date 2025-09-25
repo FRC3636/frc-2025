@@ -18,6 +18,7 @@ import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
 import com.pathplanner.lib.auto.NamedCommands
+import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
@@ -158,109 +159,13 @@ object Robot : LoggedRobot() {
         Funnel.register()
     }
 
-    /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
     private fun configureAutos() {
-//        NamedCommands.registerCommand(
-//            "revAim",
-//            Commands.parallel(
-//                Shooter.Pivot.followMotionProfile(Shooter.Pivot.Target.AIM),
-//                Shooter.Flywheels.rev(580.0, 0.0)
-//            )
-//        )
-        NamedCommands.registerCommand(
-            "raiseElevatorL4",
-            Elevator.setTargetHeight(Elevator.Position.HighBar)
-                .andThen(Commands.waitUntil { Elevator.isAtTarget })
-        )
-        NamedCommands.registerCommand(
-            "raiseElevatorL3",
-            Elevator.setTargetHeight(Elevator.Position.MidBar)
-                .andThen(Commands.waitUntil { Elevator.isAtTarget })
-        )
-        NamedCommands.registerCommand(
-            "raiseElevatorL2",
-            Elevator.setTargetHeight(Elevator.Position.LowBar)
-                .andThen(Commands.waitUntil { Elevator.isAtTarget })
-        )
-        NamedCommands.registerCommand(
-            "stowElevator",
-            Elevator.setTargetHeight(Elevator.Position.Stowed)
-        )
-        NamedCommands.registerCommand(
-            "outtake",
-            Manipulator.outtake().withTimeout(0.3.seconds)
-        )
-        NamedCommands.registerCommand(
-            "intake",
-            Commands.race(
-                Manipulator.intakeAuto(),
-                Funnel.intake()
-            ).withTimeout(3.0)
-        )
-        NamedCommands.registerCommand(
-            "alignToTarget",
-            Drivetrain.alignToClosestPOI(
-                sideOverride = ReefBranchSide.Left,
-                usePathfinding = false,
-                raiseElevator = false,
-                endConditionTimeout = 0.5
-            )
-                .withTimeout(3.5.seconds)
-        )
-        NamedCommands.registerCommand(
-            "alignToTargetRight",
-            Drivetrain.alignToClosestPOI(
-                sideOverride = ReefBranchSide.Right,
-                usePathfinding = false,
-                raiseElevator = false,
-                endConditionTimeout = 0.5
-            )
-                .withTimeout(3.5.seconds)
-        )
-        NamedCommands.registerCommand(
-            "raiseElevatorAlgae",
-            Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar)
-        )
-        NamedCommands.registerCommand(
-            "alignToReefAlgae",
-            Drivetrain.alignToReefAlgae(usePathfinding = false)
-                .withTimeout(0.75.seconds)
-        )
-        NamedCommands.registerCommand(
-            "alignToBarge",
-            Drivetrain.alignToBarge(usePathfinding = false)
-                .withTimeout(0.9.seconds)
-        )
-        NamedCommands.registerCommand(
-            "intakeAlgae",
-            Commands.sequence(
-                Commands.runOnce({
-                    Manipulator.isIntakeRunning = true
-                }),
-                Manipulator.intakeAlgae(),
-            )
-        )
-        NamedCommands.registerCommand(
-            "tossAlgae",
-            tossAlgae()
-        )
-        NamedCommands.registerCommand(
-            "alignToStation",
-            Commands.parallel(
-                Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
-                    .withTimeout(1.seconds),
-                Elevator.setTargetHeight(Elevator.Position.HighBar),
-            )
-        )
-        NamedCommands.registerCommand(
-            "waitForIntake",
-            Commands.race(
-                Commands.waitUntil {
-                    Manipulator.coralState != CoralState.NONE
-                },
-                Commands.waitSeconds(1.0)
-            )
-        )
+        PathPlannerLogging.setLogTargetPoseCallback {
+            Logger.recordOutput("/Drivetrain/Target Pose", it)
+        }
+        PathPlannerLogging.setLogActivePathCallback {
+            Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
+        }
     }
 
     private fun tossAlgae(): Command = Commands.sequence(

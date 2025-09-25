@@ -20,12 +20,6 @@ object Dashboard {
     }
 
     fun initialize() {
-        PathPlannerLogging.setLogTargetPoseCallback {
-            Logger.recordOutput("/Drivetrain/Target Pose", it)
-        }
-        PathPlannerLogging.setLogActivePathCallback {
-            Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
-        }
         SmartDashboard.putData(autoChooser)
     }
 }
