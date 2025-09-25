@@ -4,6 +4,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.FIELD_LAYOUT
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
+import com.frcteam3636.frc2025.utils.math.inches
 import com.pathplanner.lib.path.PathConstraints
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj.DriverStation
@@ -30,6 +31,7 @@ open class AutoMode {
         val RIGHT_PIECE_TWO = AprilTagTarget(17, ReefBranchSide.Left).pose
         val RIGHT_PIECE_THREE = AprilTagTarget(17, ReefBranchSide.Right).pose
         val RIGHT_PICKUP = AprilTagTarget(12, Translation2d.kZero).pose
+        val REEF_BACKUP_DISTANCE = 8.inches
         const val OUTTAKE_TIMEOUT = 0.6
         const val INTAKE_TIMEOUT = 3.0
         const val CORAL_INTAKE_LEAVE_TIMEOUT = 1.0

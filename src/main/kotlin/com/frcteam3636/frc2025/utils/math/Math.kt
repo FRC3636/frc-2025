@@ -1,6 +1,8 @@
 package com.frcteam3636.frc2025.utils.math
 
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.units.measure.Distance
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -13,4 +15,14 @@ fun Translation2d.fromPolar(magnitude: Double, angle: Double): Translation2d {
 
 fun Translation2d.dot(other: Translation2d): Double {
     return x * other.x + y * other.y
+}
+
+fun Pose2d.backup(distance: Distance): Pose2d {
+    // A negative translation in the direction of the rotation backs up
+    val dx = -distance * this.rotation.cos
+    val dy = -distance * this.rotation.sin
+    return Pose2d(
+        this.translation.plus(Translation2d(dx, dy)),
+        this.rotation
+    )
 }

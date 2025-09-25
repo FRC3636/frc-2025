@@ -369,26 +369,6 @@ object Drivetrain : Subsystem {
             .pose
     }
 
-    /** Use PID only to drive to left human player station */
-    fun alignToLeftStation() = alignToTarget(usePathfinding = false) {
-        AprilTagTarget.currentAllianceLeftStation.pose
-    }
-
-    /** Use PID only to drive to right human player station */
-    fun alignToRightStation() = alignToTarget(usePathfinding = false) {
-        AprilTagTarget.currentAllianceRightStation.pose
-    }
-
-    private val alignTranslationXController = ProfiledPIDController(
-        Constants.ALIGN_TRANSLATION_PID_GAINS,
-        TrapezoidProfile.Constraints(4.5 / 3.0, 0.4),
-    )
-    private val alignTranslationYController = ProfiledPIDController(
-        Constants.ALIGN_TRANSLATION_PID_GAINS,
-        TrapezoidProfile.Constraints(4.5 / 3.0, 0.4),
-    )
-    private val alignRotationController = PIDController(Constants.ALIGN_ROTATION_PID_GAINS)
-
     fun isAtTarget(relativePose: Pose2d): Boolean =
         relativePose.translation.norm < 2.centimeters.inMeters() // Translation
                 && Elevator.isAtTarget
@@ -399,10 +379,9 @@ object Drivetrain : Subsystem {
             alignStatePublisher.set(AlignState.NotRunning.raw)
         }
 
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, startingPoseHeadingOffset: Rotation2d = Rotation2d.kZero, targetPoseHeadingOffset: Rotation2d = Rotation2d.kZero): Command {
-        // THIS WILL FLIP THE POSE DEPENDING ON THE ALLIANCE
-        // IF YOU USE THIS PLEASE PASS IN A TARGET POSE ON THE BLUE SIDE
-        // IT WILL BE MIRRORED TO THE RED SIDE IF YOU ARE ON THE RED ALLIANCE
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS,
+                                     startingPoseHeadingOffset: Rotation2d = Rotation2d.kZero,
+                                     targetPoseHeadingOffset: Rotation2d = Rotation2d.kZero): Command {
         return defer {
             var startingPose = estimatedPose
             var heading = (target.translation - estimatedPose.translation).angle
@@ -419,6 +398,43 @@ object Drivetrain : Subsystem {
             )
 
             Logger.recordOutput("/Drivetrain/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset))
+            Logger.recordOutput("/Drivetrain/Updated Starting Pose", startingPose)
+
+            val path = PathPlannerPath(
+                waypoints,
+                constraints,
+                null,
+                GoalEndState(0.0, updatedTargetPose.rotation)
+            )
+
+            path.preventFlipping = true
+
+            AutoBuilder.followPath(path)
+        }
+    }
+
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, middlePoint: Pose2d): Command {
+        return defer {
+            var startingPose = estimatedPose
+            var middlePoint = middlePoint
+            var headingToMiddlePoint = (middlePoint.translation - startingPose.translation).angle
+            var updatedTargetPose = target
+            var headingFromMiddlePoint = (updatedTargetPose.translation - middlePoint.translation).angle
+            if (DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red) {
+                updatedTargetPose = FlippingUtil.flipFieldPose(target)
+                middlePoint = FlippingUtil.flipFieldPose(middlePoint)
+                headingFromMiddlePoint = (updatedTargetPose.translation - startingPose.translation).angle
+                headingToMiddlePoint = (middlePoint.translation - startingPose.translation).angle
+            }
+
+            startingPose = Pose2d(startingPose.translation, headingToMiddlePoint)
+            val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                startingPose,
+                Pose2d(middlePoint.translation, headingFromMiddlePoint),
+                Pose2d(updatedTargetPose.translation, headingFromMiddlePoint)
+            )
+
+            Logger.recordOutput("/Drivetrain/Updated Target Pose", Pose2d(updatedTargetPose.translation, headingFromMiddlePoint))
             Logger.recordOutput("/Drivetrain/Updated Starting Pose", startingPose)
 
             val path = PathPlannerPath(
