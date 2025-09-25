@@ -96,7 +96,7 @@ object Manipulator : Subsystem {
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
-    fun outtake(): Command = runEnd(
+    fun outtake(): Command = startEnd(
         {
             if (Elevator.position != Elevator.Position.HighBar) {
                 io.setCurrent(40.amps)

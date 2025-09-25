@@ -72,7 +72,7 @@ object Elevator : Subsystem {
             .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
     fun runHoming(): Command =
-        runEnd({
+        startEnd({
             io.setVoltage((-1.0).volts)
         }, {
             if (isPressed) {
