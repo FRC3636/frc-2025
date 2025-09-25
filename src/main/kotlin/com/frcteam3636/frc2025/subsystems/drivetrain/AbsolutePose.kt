@@ -143,7 +143,7 @@ class LimelightPoseProvider(
     private fun updateCurrentMeasurement(): LimelightMeasurement {
         val measurement = LimelightMeasurement()
 
-        if (!Robot.beforeFirstEnable && currentAlgorithm == LimelightAlgorithm.MegaTag)
+        if ((!Robot.beforeFirstEnable) && currentAlgorithm == LimelightAlgorithm.MegaTag)
             currentAlgorithm = megaTagV2
 
         when (val algorithm = currentAlgorithm) {
