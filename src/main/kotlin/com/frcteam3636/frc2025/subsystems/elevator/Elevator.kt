@@ -32,11 +32,10 @@ object Elevator : Subsystem {
         SysIdRoutine.Config(
             0.5.voltsPerSecond,
             2.volts,
-            null,
-            {
-                SignalLogger.writeString("state", it.toString())
-            }
-        ),
+            null
+        ) {
+            SignalLogger.writeString("state", it.toString())
+        },
         SysIdRoutine.Mechanism(
             io::setVoltage,
             null,
@@ -91,9 +90,11 @@ object Elevator : Subsystem {
         io.setBrakeMode(true)
     })
 
+    @Suppress("unused")
     fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
         sysID.quasistatic(direction)!!
 
+    @Suppress("unused")
     fun sysIdDynamic(direction: SysIdRoutine.Direction) =
         sysID.dynamic(direction)!!
 

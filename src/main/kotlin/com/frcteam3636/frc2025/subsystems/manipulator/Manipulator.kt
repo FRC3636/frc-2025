@@ -36,11 +36,11 @@ object Manipulator : Subsystem {
 
     var isIntakeRunning = false
 
-    init {
+//    init {
 //        mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
 //            append(motorAngleVisualizer)
 //        }
-    }
+//    }
 
     override fun periodic() {
         io.updateInputs(inputs)
@@ -113,7 +113,7 @@ object Manipulator : Subsystem {
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
 
     fun outtakeAlgae(): Command = startEnd(
-        { io.setCurrent(-60.amps) },
+        { io.setCurrent((-60).amps) },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE

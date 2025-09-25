@@ -5,8 +5,6 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
-import com.frcteam3636.frc2025.utils.math.backup
-import com.frcteam3636.frc2025.utils.math.inches
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 

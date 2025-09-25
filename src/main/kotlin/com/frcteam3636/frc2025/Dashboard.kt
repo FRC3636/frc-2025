@@ -1,6 +1,5 @@
 package com.frcteam3636.frc2025
 
-import com.frcteam3636.frc2025.subsystems.drivetrain.autos.TestAutoTwoCoral
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Preferences

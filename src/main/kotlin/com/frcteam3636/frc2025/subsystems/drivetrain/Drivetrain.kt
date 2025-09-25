@@ -23,7 +23,6 @@ import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.commands.FollowPathCommand
-import com.pathplanner.lib.commands.PathfindingCommand
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
@@ -43,7 +42,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick

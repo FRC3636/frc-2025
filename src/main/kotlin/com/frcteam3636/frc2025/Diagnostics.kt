@@ -13,8 +13,6 @@ import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.Threads
 import edu.wpi.first.wpilibj.Timer
-import java.net.InetAddress
-import kotlin.concurrent.thread
 
 /**
  * Reports diagnostics and sends notifications to the driver station.
