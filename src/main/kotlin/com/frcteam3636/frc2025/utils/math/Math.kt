@@ -2,6 +2,8 @@
 package com.frcteam3636.frc2025.utils.math
 
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Distance
 import kotlin.math.PI
@@ -19,11 +21,5 @@ fun Translation2d.dot(other: Translation2d): Double {
 }
 
 fun Pose2d.backup(distance: Distance): Pose2d {
-    // A negative translation in the direction of the rotation backs up
-    val dx = -distance * this.rotation.cos
-    val dy = -distance * this.rotation.sin
-    return Pose2d(
-        this.translation.plus(Translation2d(dx, dy)),
-        this.rotation
-    )
+    return this + Transform2d(Translation2d(-distance, 0.meters), Rotation2d.kZero)
 }
