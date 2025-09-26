@@ -242,7 +242,7 @@ object Robot : LoggedRobot() {
         joystickLeft.button(2).onTrue(
             tossAlgae()
         )
-//
+
         controller.leftBumper().whileTrue(Funnel.outtake())
         controller.rightBumper().onTrue(
             Commands.sequence(
