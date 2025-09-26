@@ -352,6 +352,7 @@ object Robot : LoggedRobot() {
             AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
             AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
             AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
+            AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()
             AutoModes.None -> Commands.none()
         }
         autoCommand?.schedule()
