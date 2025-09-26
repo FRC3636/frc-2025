@@ -185,7 +185,7 @@ class LimelightPoseProvider(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
                         // This value is pulled directly from the Limelight docs (linked at the top of this class)
-                        VecBuilder.fill(.7, .7, 9999999.0)
+                        VecBuilder.fill(.5, .5, 9999999.0)
                     )
                 }
             }
