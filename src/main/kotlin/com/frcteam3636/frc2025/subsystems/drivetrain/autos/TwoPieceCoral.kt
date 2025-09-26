@@ -12,13 +12,14 @@ import edu.wpi.first.wpilibj2.command.Commands
 class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
         val reefPose = if (side == StartingPosition.Left) LEFT_PIECE_TWO else RIGHT_PIECE_TWO
+        val firstReefPose = if (side == StartingPosition.Left) LEFT_PIECE_ONE else RIGHT_PIECE_ONE
         val pickupPose = if (side == StartingPosition.Left) LEFT_PICKUP else RIGHT_PICKUP
 
         return Commands.sequence(
             OnePieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
-                Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS, reefPose.backup(REEF_BACKUP_DISTANCE))
+                Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS, firstReefPose.backup(REEF_BACKUP_DISTANCE))
             ),
             Commands.parallel(
                 Commands.sequence(
