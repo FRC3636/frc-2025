@@ -164,7 +164,6 @@ class LimelightPoseProvider(
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
-                        // This value is pulled directly from the Limelight docs (linked at the top of this class)
                         VecBuilder.fill(.5, .5, .25)
                     )
                 }
@@ -185,8 +184,8 @@ class LimelightPoseProvider(
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
-//                        VecBuilder.fill(stdDevs[6], stdDevs[6], stdDevs[11]),
-                        VecBuilder.fill(.5, .5, 9999999.0)
+                        // This value is pulled directly from the Limelight docs (linked at the top of this class)
+                        VecBuilder.fill(.7, .7, 9999999.0)
                     )
                 }
             }
