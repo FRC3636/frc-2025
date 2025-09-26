@@ -27,13 +27,7 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
                         },
                         Commands.waitSeconds(CORAL_INTAKE_LEAVE_TIMEOUT)
                     ),
-                    Commands.parallel(
-                        Drivetrain.driveToPointAllianceRelative(reefPose, DEFAULT_AUTO_CONSTRAINTS),
-                        Commands.sequence(
-                            Commands.waitSeconds(ELEVATOR_DEPLOYMENT_TIME_OTHER_PIECE),
-                            Elevator.setTargetHeight(Elevator.Position.HighBar)
-                        )
-                    ),
+                    Drivetrain.driveToPointAllianceRelativeWithSlowZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE, SLOW_ZONE_ENTER_VELOCITY),
                 ),
                 Commands.race(
                     Manipulator.intakeAuto(),

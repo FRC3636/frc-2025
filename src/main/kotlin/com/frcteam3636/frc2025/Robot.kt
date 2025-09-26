@@ -353,6 +353,7 @@ object Robot : LoggedRobot() {
             AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
             AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
             AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()
+            AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
             AutoModes.None -> Commands.none()
         }
         autoCommand?.schedule()

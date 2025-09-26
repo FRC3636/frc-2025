@@ -31,5 +31,6 @@ enum class AutoModes(val autoName: String, val developerAuto: Boolean = false) {
     ThreePieceCoral("Three Piece Coral"),
     TestAutoOneCoral("Test Auto 1 Coral", true),
     TestAutoTwoCoral("Test Auto 2 Coral", true),
-    TestAutoTwoCoralCurve("Test Auto 2 Coral Curved", true)
+    TestAutoTwoCoralCurve("Test Auto 2 Coral Curved", true),
+    TestAutoThreeCoral("Test Auto 3 Coral", true),
 }

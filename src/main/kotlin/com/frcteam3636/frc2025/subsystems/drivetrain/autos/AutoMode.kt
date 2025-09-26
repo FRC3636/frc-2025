@@ -4,7 +4,11 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.FIELD_LAYOUT
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
+import com.frcteam3636.frc2025.utils.math.feet
+import com.frcteam3636.frc2025.utils.math.inMetersPerSecond
 import com.frcteam3636.frc2025.utils.math.inches
+import com.frcteam3636.frc2025.utils.math.meters
+import com.frcteam3636.frc2025.utils.math.metersPerSecond
 import com.pathplanner.lib.path.PathConstraints
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj.DriverStation
@@ -22,7 +26,10 @@ open class AutoMode {
     }
 
     companion object Constants {
+        val SLOW_ZONE_DISTANCE = 2.5.feet
+        val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
         val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(10.0, 4.0, 2 * Math.PI, 4 * Math.PI)
+        val DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE = PathConstraints(SLOW_ZONE_ENTER_VELOCITY.inMetersPerSecond(), 2.0, 2 * Math.PI, 4 * Math.PI)
         val LEFT_PIECE_ONE = AprilTagTarget(20, ReefBranchSide.Right).pose
         val LEFT_PIECE_TWO = AprilTagTarget(19, ReefBranchSide.Left).pose
         val LEFT_PIECE_THREE = AprilTagTarget(19, ReefBranchSide.Right).pose
@@ -32,7 +39,7 @@ open class AutoMode {
         val RIGHT_PIECE_THREE = AprilTagTarget(17, ReefBranchSide.Right).pose
         val RIGHT_PICKUP = AprilTagTarget(12, Translation2d.kZero).pose
         val REEF_BACKUP_DISTANCE = 8.inches
-        const val OUTTAKE_TIMEOUT = 0.6
+        const val OUTTAKE_TIMEOUT = 0.3
         const val INTAKE_TIMEOUT = 3.0
         const val CORAL_INTAKE_LEAVE_TIMEOUT = 1.0
         const val ELEVATOR_DEPLOYMENT_TIME_FIRST_PIECE = 1.5

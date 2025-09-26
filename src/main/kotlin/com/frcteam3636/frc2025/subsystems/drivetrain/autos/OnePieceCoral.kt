@@ -11,13 +11,7 @@ class OnePieceCoral(val side: StartingPosition) : AutoMode() {
         val reefPose = if (side == StartingPosition.Left) LEFT_PIECE_ONE else RIGHT_PIECE_ONE
 
         return Commands.sequence(
-            Commands.parallel(
-                Drivetrain.driveToPointAllianceRelative(reefPose, DEFAULT_AUTO_CONSTRAINTS),
-                Commands.sequence(
-                    Commands.waitSeconds(ELEVATOR_DEPLOYMENT_TIME_FIRST_PIECE),
-                    Elevator.setTargetHeight(Elevator.Position.HighBar)
-                )
-            ),
+            Drivetrain.driveToPointAllianceRelativeWithSlowZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE, SLOW_ZONE_ENTER_VELOCITY),
             Manipulator.outtake().withTimeout(OUTTAKE_TIMEOUT),
             Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
         )

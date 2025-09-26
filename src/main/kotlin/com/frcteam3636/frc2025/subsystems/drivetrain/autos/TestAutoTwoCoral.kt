@@ -7,7 +7,9 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
+import com.frcteam3636.frc2025.utils.math.feet
 import com.frcteam3636.frc2025.utils.math.meters
+import com.frcteam3636.frc2025.utils.math.metersPerSecond
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
@@ -32,13 +34,7 @@ class TestAutoTwoCoral() : AutoMode() {
                         },
                         Commands.waitSeconds(5.0)
                     ),
-                    Commands.parallel(
-                        Drivetrain.driveToPointAllianceRelative(reefPose, DEFAULT_AUTO_CONSTRAINTS),
-                        Commands.sequence(
-                            Commands.waitSeconds(ELEVATOR_DEPLOYMENT_TIME_OTHER_PIECE),
-                            Elevator.setTargetHeight(Elevator.Position.HighBar)
-                        )
-                    ),
+                    Drivetrain.driveToPointAllianceRelativeWithSlowZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE, SLOW_ZONE_ENTER_VELOCITY),
                 ),
                 Commands.race(
                     Manipulator.intakeAuto(),
