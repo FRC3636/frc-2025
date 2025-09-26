@@ -153,7 +153,7 @@ object Drivetrain : Subsystem {
                     Robot.Model.COMPETITION -> Constants.ALIGN_TRANSLATION_PID_GAINS
                     Robot.Model.PROTOTYPE -> DRIVING_PID_GAINS_NEO
                 }.toPPLib(),
-                Constants.ALIGN_TRANSLATION_PID_GAINS.toPPLib()
+                Constants.ALIGN_ROTATION_PID_GAINS.toPPLib()
             ),
             RobotConfig.fromGUISettings(),
             // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
@@ -496,7 +496,7 @@ object Drivetrain : Subsystem {
                 Pose2d(target.translation, heading)
             )
             
-            val constraints = PathConstraints(10.0,4.0, 2 * Math.PI, 4 * Math.PI)
+            val constraints = PathConstraints(10.0,3.0, 2 * Math.PI, 4 * Math.PI)
 
             val path = PathPlannerPath(
                 waypoints,
@@ -679,6 +679,6 @@ object Drivetrain : Subsystem {
 
 
         val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.0)
-//        val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
+        val ALIGN_ROTATION_PID_GAINS = PIDGains(5.0)
     }
 }

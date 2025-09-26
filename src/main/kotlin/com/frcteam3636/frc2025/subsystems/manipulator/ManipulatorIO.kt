@@ -5,6 +5,7 @@ import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANrangeConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.TorqueCurrentFOC
+import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.UpdateModeValue
@@ -85,6 +86,7 @@ class ManipulatorIOReal : ManipulatorIO {
     }
 
     private val currentControl = TorqueCurrentFOC(0.0)
+    private val voltageControl = VoltageOut(0.0)
 
     override fun setCurrent(current: Current) {
         assert(current.inAmps() in -60.0..60.0)
@@ -93,7 +95,7 @@ class ManipulatorIOReal : ManipulatorIO {
 
     override fun setVoltage(voltage: Voltage) {
         assert(voltage.inVolts() in -12.0..12.0)
-        manipulatorMotor.setVoltage(voltage.inVolts())
+        manipulatorMotor.setControl(voltageControl.withOutput(voltage))
     }
 
     override fun updateInputs(inputs: ManipulatorInputs) {
