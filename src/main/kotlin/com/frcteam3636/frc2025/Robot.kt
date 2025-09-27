@@ -362,6 +362,7 @@ object Robot : LoggedRobot() {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
             AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
+            AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
             AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
             AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
             AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()

@@ -65,7 +65,7 @@ object Manipulator : Subsystem {
     fun intake(driverFeedback: Command = Commands.none()): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
         Commands.waitUntil { inputs.isCoralDetected },
-        runOnce { io.setVoltage(1.2.volts) },
+        runOnce { io.setVoltage(1.volts) },
         Commands.runOnce({
             coralState = CoralState.TRANSIT
         }),
@@ -84,7 +84,7 @@ object Manipulator : Subsystem {
     fun intakeAuto(): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
         Commands.waitUntil { inputs.isCoralDetected },
-        runOnce { io.setVoltage(1.2.volts) },
+        runOnce { io.setVoltage(1.volts) },
         Commands.runOnce({
             coralState = CoralState.TRANSIT
         }),

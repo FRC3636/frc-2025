@@ -5,6 +5,8 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
+import com.frcteam3636.frc2025.utils.math.backup
+import com.frcteam3636.frc2025.utils.math.feet
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
@@ -16,23 +18,21 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
         return Commands.sequence(
             TwoPieceCoral(side).autoSequence(false),
             Commands.parallel(
-                Elevator.setTargetHeight(Elevator.Position.Stowed),
-                Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS)
-            ),
-            Commands.parallel(
                 Commands.sequence(
-                    Commands.race(
-                        Commands.waitUntil {
-                            Manipulator.coralState != CoralState.NONE
-                        },
-                        Commands.waitSeconds(CORAL_INTAKE_LEAVE_TIMEOUT)
-                    ),
-                    Drivetrain.driveToPointAllianceRelativeWithSlowZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE, SLOW_ZONE_ENTER_VELOCITY),
+                    Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS),
+                    Commands.waitSeconds(CORAL_INTAKE_LEAVE_TIMEOUT),
+                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE),
                 ),
-                Commands.race(
-                    Manipulator.intakeAuto(),
-                    Funnel.intake()
-                ).withTimeout(INTAKE_TIMEOUT),
+                Elevator.setTargetHeight(Elevator.Position.Stowed),
+                Commands.sequence(
+                    Commands.waitUntil {
+                        Drivetrain.estimatedPose.translation.getDistance(pickupPose.translation).feet < 2.feet
+                    },
+                    Commands.race(
+                        Manipulator.intakeAuto(),
+                        Funnel.intake(),
+                    )
+                )
             ),
             Manipulator.outtake().withTimeout(OUTTAKE_TIMEOUT),
             Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },

@@ -12,6 +12,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.AutoMode
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
@@ -570,7 +571,12 @@ object Drivetrain : Subsystem {
 
             Commands.parallel(
                 AutoBuilder.followPath(path),
-                Elevator.setTargetHeight(raisePoint)
+                Commands.sequence(
+                    Commands.waitUntil {
+                        estimatedPose.translation.getDistance(updatedTargetPose.translation).meters <= slowZoneDistanceFromTarget
+                    },
+                    Elevator.setTargetHeight(raisePoint)
+                ).onlyIf { shouldRaise }
             )
         }
     }
@@ -625,11 +631,20 @@ object Drivetrain : Subsystem {
             
             val constraints = PathConstraints(10.0,3.0, 2 * Math.PI, 4 * Math.PI)
 
+            val constraintZone = ConstraintsZone(
+                0.85, 1.0, AutoMode.DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE
+            )
+
             val path = PathPlannerPath(
                 waypoints,
+                emptyList(),
+                emptyList(),
+                mutableListOf(constraintZone),
+                emptyList(),
                 constraints,
                 null,
-                GoalEndState(0.0, target.rotation)
+                GoalEndState(0.0, target.rotation),
+                false
             )
 
             path.preventFlipping = true
