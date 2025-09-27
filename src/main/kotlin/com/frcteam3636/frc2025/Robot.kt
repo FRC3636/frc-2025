@@ -18,10 +18,12 @@ import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
 import com.pathplanner.lib.auto.NamedCommands
+import com.pathplanner.lib.util.FlippingUtil
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.util.WPILibVersion
@@ -37,8 +39,10 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
+import java.util.NoSuchElementException
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.jvm.optionals.getOrNull
 
 
 /**
@@ -129,7 +133,7 @@ object Robot : LoggedRobot() {
             val logPath = try {
                 // Pull the replay log from AdvantageScope (or prompt the user)
                 LogFileUtil.findReplayLog()
-            } catch (_: java.util.NoSuchElementException) {
+            } catch (_: NoSuchElementException) {
                 null
             }
 
@@ -341,8 +345,19 @@ object Robot : LoggedRobot() {
     override fun autonomousInit() {
         if (beforeFirstEnable)
             beforeFirstEnable = false
-        if (!Drivetrain.tagsVisible)
-            Drivetrain.zeroGyro(true)
+        // Protection against stupidity (freshmen)
+        // This can only go so far as it assumes the bot is rotated at
+        // exactly 180 degrees for it's starting position
+        // better than starting at some random pose that's likely off the field
+        if (!Drivetrain.tagsVisible) {
+            val alliance = DriverStation.getAlliance().getOrNull()
+            var startingPose: Pose2d
+            startingPose = if (startingPosition == StartingPosition.Left) AutoMode.LEFT_STARTING_POSE else AutoMode.RIGHT_STARTING_POSE
+            if (alliance == DriverStation.Alliance.Red) {
+                startingPose = FlippingUtil.flipFieldPose(startingPose)
+            }
+            Drivetrain.poseEstimator.resetPose(startingPose)
+        }
         autoCommand = when (Dashboard.autoChooser.selected) {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()

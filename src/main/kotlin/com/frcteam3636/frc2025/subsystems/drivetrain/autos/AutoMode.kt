@@ -10,6 +10,8 @@ import com.frcteam3636.frc2025.utils.math.inches
 import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.metersPerSecond
 import com.pathplanner.lib.path.PathConstraints
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
@@ -25,7 +27,7 @@ open class AutoMode {
         return Commands.none()
     }
 
-    companion object Constants {
+    public companion object Constants {
         val SLOW_ZONE_DISTANCE = 2.5.feet
         val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
         val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(10.0, 4.0, 2 * Math.PI, 4 * Math.PI)
@@ -38,6 +40,8 @@ open class AutoMode {
         val RIGHT_PIECE_TWO = AprilTagTarget(17, ReefBranchSide.Left).pose
         val RIGHT_PIECE_THREE = AprilTagTarget(17, ReefBranchSide.Right).pose
         val RIGHT_PICKUP = AprilTagTarget(12, Translation2d.kZero).pose
+        val LEFT_STARTING_POSE = Pose2d(7.277, 6.183, Rotation2d.fromDegrees(180.0))
+        val RIGHT_STARTING_POSE = Pose2d(7.277, 1.869, Rotation2d.fromDegrees(180.0))
         val REEF_BACKUP_DISTANCE = 8.inches
         const val OUTTAKE_TIMEOUT = 0.3
         const val INTAKE_TIMEOUT = 3.0
