@@ -152,7 +152,6 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     init {
-        Robot.diagnosticsStatusSignals[id.name] = inner.version
         BaseStatusSignal.setUpdateFrequencyForAll(100.0, inner.position, inner.velocity)
         inner.optimizeBusUtilization()
     }

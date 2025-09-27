@@ -73,9 +73,6 @@ object Robot : LoggedRobot() {
 
     var startingPosition = StartingPosition.Left
 
-    /** Status signals used to check the health of the robot's hardware */
-    val diagnosticsStatusSignals = mutableMapOf<String, StatusSignal<*>>()
-
     override fun robotInit() {
         // Report the use of the Kotlin Language for "FRC Usage Report" statistics
         HAL.report(
