@@ -40,6 +40,7 @@ inline val Number.inchesPerSecond: LinearVelocity get() = InchesPerSecond.of(thi
 
 inline val Number.rotationsPerSecond: AngularVelocity get() = RotationsPerSecond.of(this.toDouble())
 inline val Number.rotationsPerSecondPerSecond: AngularAcceleration get() = RotationsPerSecondPerSecond.of(this.toDouble())
+inline val Number.degreesPerSecondPerSecond: AngularAcceleration get() = DegreesPerSecondPerSecond.of(this.toDouble())
 inline val Number.rpm: AngularVelocity get() = RPM.of(this.toDouble())
 inline val Number.radiansPerSecond: AngularVelocity get() = RadiansPerSecond.of(this.toDouble())
 inline val Number.degreesPerSecond: AngularVelocity get() = DegreesPerSecond.of(this.toDouble())

@@ -24,7 +24,7 @@ object Elevator : Subsystem {
 
     val isPressed get() = inputs.leftCurrent > 1.9.amps || inputs.rightCurrent > 1.9.amps
     private var desiredHeight = 0.meters
-    val isAtTarget get() = (inputs.height - desiredHeight) < 0.5.inches
+    val isAtTarget get() = (inputs.leftHeight - desiredHeight) < 0.5.inches
 
     var position = Position.Stowed
 
@@ -32,11 +32,10 @@ object Elevator : Subsystem {
         SysIdRoutine.Config(
             0.5.voltsPerSecond,
             2.volts,
-            null,
-            {
-                SignalLogger.writeString("state", it.toString())
-            }
-        ),
+            null
+        ) {
+            SignalLogger.writeString("state", it.toString())
+        },
         SysIdRoutine.Mechanism(
             io::setVoltage,
             null,
@@ -47,6 +46,9 @@ object Elevator : Subsystem {
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Elevator", inputs)
+        // idea stolen from 254's 2025 elevator code
+        if (Robot.isDisabled && ((inputs.leftHeight < 0.0.meters) || (inputs.rightHeight < 0.0.meters)))
+            io.setEncoderPosition(0.0.meters)
     }
 
     fun getStatusSignals(): MutableList<BaseStatusSignal> {
@@ -59,7 +61,7 @@ object Elevator : Subsystem {
             io.runToHeight(position.height)
             desiredHeight = position.height
         }, {})
-            .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
+            .until { abs(inputs.leftHeight.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
     fun setTargetHeightAlgae(position: Position): Command =
         startEnd({
@@ -67,10 +69,10 @@ object Elevator : Subsystem {
             io.runToHeightWithOverride(position.height, 200.0.rotationsPerSecond, 20.0.rotationsPerSecondPerSecond)
             desiredHeight = position.height
         }, {})
-            .until { abs(inputs.height.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
+            .until { abs(inputs.leftHeight.inMeters() - position.height.inMeters()) < 0.75.inches.inMeters() }
 
     fun runHoming(): Command =
-        runEnd({
+        startEnd({
             io.setVoltage((-1.0).volts)
         }, {
             if (isPressed) {
@@ -88,9 +90,11 @@ object Elevator : Subsystem {
         io.setBrakeMode(true)
     })
 
+    @Suppress("unused")
     fun sysIdQuasistatic(direction: SysIdRoutine.Direction) =
         sysID.quasistatic(direction)!!
 
+    @Suppress("unused")
     fun sysIdDynamic(direction: SysIdRoutine.Direction) =
         sysID.dynamic(direction)!!
 

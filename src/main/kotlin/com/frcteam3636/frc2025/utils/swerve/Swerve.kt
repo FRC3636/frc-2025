@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.frcteam3636.frc2025.utils.swerve
 
 import com.frcteam3636.frc2025.utils.math.inMetersPerSecond
@@ -91,5 +92,6 @@ val SwerveModuleState.translation2dPerSecond: Translation2d
 val ChassisSpeeds.translation2dPerSecond: Translation2d
     get() = Translation2d(vxMetersPerSecond, vyMetersPerSecond)
 
+@Suppress("unused")
 val ChassisSpeeds.angularVelocity: AngularVelocity
     get() = omegaRadiansPerSecond.radiansPerSecond

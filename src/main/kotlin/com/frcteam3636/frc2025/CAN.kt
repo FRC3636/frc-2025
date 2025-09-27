@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.frcteam3636.frc2025
 
 import au.grapplerobotics.LaserCan

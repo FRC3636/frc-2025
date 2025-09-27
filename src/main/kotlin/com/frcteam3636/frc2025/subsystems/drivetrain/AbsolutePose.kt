@@ -5,35 +5,32 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.degrees
-import com.frcteam3636.frc2025.utils.math.inMeters
 import com.frcteam3636.frc2025.utils.math.inSeconds
 import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Pose3d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.Units.DegreesPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.util.struct.Struct
 import edu.wpi.first.util.struct.StructSerializable
-import edu.wpi.first.wpilibj.Alert
-import edu.wpi.first.wpilibj.Alert.AlertType
-import edu.wpi.first.wpilibj.Timer
 import org.littletonrobotics.junction.LogTable
-import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.inputs.LoggableInputs
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
-import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
 import kotlin.concurrent.thread
-import kotlin.math.pow
 
 class AbsolutePoseProviderInputs : LoggableInputs {
     /**
@@ -91,11 +88,29 @@ sealed class LimelightAlgorithm {
 data class LimelightMeasurement(
     var poseMeasurement: AbsolutePoseMeasurement? = null,
     var observedTags: IntArray = intArrayOf(),
-)
+) /* --- BEGIN KOTLIN COMPILER GENERATED CODE ---- */ {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LimelightMeasurement
+
+        if (poseMeasurement != other.poseMeasurement) return false
+        if (!observedTags.contentEquals(other.observedTags)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = poseMeasurement?.hashCode() ?: 0
+        result = 31 * result + observedTags.contentHashCode()
+        return result
+    }
+} /* --- END KOTLIN COMPILER GENERATED CODE ---- */
 
 class LimelightPoseProvider(
     private val name: String,
-    private val algorithm: LimelightAlgorithm,
+    private val megaTagV2: LimelightAlgorithm.MegaTag2,
 ) : AbsolutePoseProvider {
     // References:
     // https://docs.limelightvision.io/docs/docs-limelight/tutorials/tutorial-swerve-pose-estimation
@@ -107,7 +122,10 @@ class LimelightPoseProvider(
     private var mutex = Any()
 
     private var lastSeenHb: Double = 0.0
+    private var hbSub = NetworkTableInstance.getDefault().getTable(name).getDoubleTopic("hb").subscribe(0.0)
     private var loopsSinceLastSeen: Int = 0
+
+    private var currentAlgorithm: LimelightAlgorithm = LimelightAlgorithm.MegaTag
 
     init {
         thread(isDaemon = true) {
@@ -125,7 +143,10 @@ class LimelightPoseProvider(
     private fun updateCurrentMeasurement(): LimelightMeasurement {
         val measurement = LimelightMeasurement()
 
-        when (algorithm) {
+        if ((!Robot.beforeFirstEnable) && currentAlgorithm == LimelightAlgorithm.MegaTag)
+            currentAlgorithm = megaTagV2
+
+        when (val algorithm = currentAlgorithm) {
             is LimelightAlgorithm.MegaTag ->
                 LimelightHelpers.getBotPoseEstimate_wpiBlue(name)?.let { estimate ->
                     measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
@@ -143,8 +164,7 @@ class LimelightPoseProvider(
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
-                        // This value is pulled directly from the Limelight docs (linked at the top of this class)
-                        VecBuilder.fill(.5, .5, 9999999.0)
+                        VecBuilder.fill(.5, .5, .25)
                     )
                 }
 
@@ -164,7 +184,7 @@ class LimelightPoseProvider(
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
                         estimate.timestampSeconds.seconds,
-//                        VecBuilder.fill(stdDevs[6], stdDevs[6], stdDevs[11]),
+                        // This value is pulled directly from the Limelight docs (linked at the top of this class)
                         VecBuilder.fill(.5, .5, 9999999.0)
                     )
                 }
@@ -179,16 +199,16 @@ class LimelightPoseProvider(
         synchronized(mutex) {
             inputs.measurement = measurement
             inputs.observedTags = observedTags
-
-            // We assume the camera has disconnected if there are no new updates for several ticks.
-            val hb = LimelightHelpers.getHB(name)
-            inputs.connected = hb > lastSeenHb && loopsSinceLastSeen < CONNECTED_TIMEOUT
-            lastSeenHb = hb
-            if (hb == lastSeenHb)
-                loopsSinceLastSeen++
-            else
-                loopsSinceLastSeen = 0
         }
+
+        // We assume the camera has disconnected if there are no new updates for several ticks.
+        val hb = hbSub.get()
+        inputs.connected = hb > lastSeenHb || loopsSinceLastSeen < CONNECTED_TIMEOUT
+        if (hb == lastSeenHb)
+            loopsSinceLastSeen++
+        else
+            loopsSinceLastSeen = 0
+        lastSeenHb = hb
     }
 
     companion object {
@@ -198,7 +218,7 @@ class LimelightPoseProvider(
          * This is a somewhat conservative limit, but it is only applied when using the old MegaTag v1 algorithm.
          * It's possible it could be increased if it's too restrictive.
          */
-        private val MAX_SINGLE_TAG_DISTANCE = 3.meters
+        private val MAX_SINGLE_TAG_DISTANCE = 4.5.meters
 
         /**
          * The acceptable ambiguity for a single-tag reading on MegaTag v1.
@@ -208,7 +228,7 @@ class LimelightPoseProvider(
         /**
          * The amount of time (in robot ticks) an update before considering the camera to be disconnected.
          */
-        private const val CONNECTED_TIMEOUT = 50.0
+        private const val CONNECTED_TIMEOUT = 250.0
     }
 }
 
@@ -250,19 +270,6 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
     }
 }
 
-@Logged
-open class QuestNavInputs {
-    /**
-     * The most recent measurement from the Quest.
-     */
-    var pose = Pose2d()
-
-    /**
-     * Whether the provider is connected.
-     */
-    var connected = false
-}
-
 data class AbsolutePoseMeasurement(
     val pose: Pose2d,
     val timestamp: Time,
@@ -283,7 +290,7 @@ fun SwerveDrivePoseEstimator.addAbsolutePoseMeasurement(measurement: AbsolutePos
     addVisionMeasurement(
         measurement.pose,
         measurement.timestamp.inSeconds(),
-        measurement.stdDeviation // FIXME: seems to fire the bot into orbit...?
+        measurement.stdDeviation
     )
 }
 
@@ -314,13 +321,13 @@ class AbsolutePoseMeasurementStruct : Struct<AbsolutePoseMeasurement> {
 
 
 //internal const val APRIL_TAG_AMBIGUITY_FILTER = 0.3
-internal val APRIL_TAG_STD_DEV = { distance: Double, count: Int ->
-    val distanceMultiplier = (distance - (count - 1) * 3).pow(2.0)
-    val translationalStdDev = (0.05 / count) * distanceMultiplier
-    val rotationalStdDev = 0.2 * distanceMultiplier + 0.1
-    VecBuilder.fill(
-        translationalStdDev, translationalStdDev, rotationalStdDev
-    )
-}
+//internal val APRIL_TAG_STD_DEV = { distance: Double, count: Int ->
+//    val distanceMultiplier = (distance - (count - 1) * 3).pow(2.0)
+//    val translationalStdDev = (0.05 / count) * distanceMultiplier
+//    val rotationalStdDev = 0.2 * distanceMultiplier + 0.1
+//    VecBuilder.fill(
+//        translationalStdDev, translationalStdDev, rotationalStdDev
+//    )
+//}
 
 val LIMELIGHT_FOV = 75.76079874010732.degrees

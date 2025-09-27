@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
 import com.ctre.phoenix6.BaseStatusSignal
-import com.ctre.phoenix6.StatusSignal
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
@@ -86,7 +85,6 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
 class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
     override var rotation = Rotation2d()
     override var velocity: AngularVelocity = 0.radiansPerSecond
-        private set
     override val connected = true
 
     override fun periodic() {

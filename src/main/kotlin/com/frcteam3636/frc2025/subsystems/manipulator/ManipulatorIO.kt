@@ -1,33 +1,26 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
 
-import au.grapplerobotics.ConfigurationFailedException
-import au.grapplerobotics.LaserCan
-import au.grapplerobotics.interfaces.LaserCanInterface
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANrangeConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.TorqueCurrentFOC
+import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.UpdateModeValue
 import com.frcteam3636.frc2025.CANrange
 import com.frcteam3636.frc2025.CTREDeviceId
-import com.frcteam3636.frc2025.GrappleRoboticsDeviceId
-import com.frcteam3636.frc2025.Lasercan
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.inAmps
 import com.frcteam3636.frc2025.utils.math.inVolts
-import com.frcteam3636.frc2025.utils.math.meters
-import com.frcteam3636.frc2025.utils.math.millimeters
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import org.team9432.annotation.Logged
-import kotlin.collections.mutableListOf
 
 @Logged
 open class ManipulatorInputs {
@@ -65,7 +58,7 @@ class ManipulatorIOReal : ManipulatorIO {
                 ProximityParams.ProximityThreshold = 0.35
                 FovParams.FOVCenterY = 10.0
                 FovParams.FOVRangeY = 7.0
-                ToFParams.UpdateMode = UpdateModeValue.LongRangeUserFreq
+                ToFParams.UpdateMode = UpdateModeValue.ShortRangeUserFreq
                 ToFParams.UpdateFrequency = 50.0
             }
         )
@@ -93,6 +86,7 @@ class ManipulatorIOReal : ManipulatorIO {
     }
 
     private val currentControl = TorqueCurrentFOC(0.0)
+    private val voltageControl = VoltageOut(0.0)
 
     override fun setCurrent(current: Current) {
         assert(current.inAmps() in -60.0..60.0)
@@ -101,7 +95,7 @@ class ManipulatorIOReal : ManipulatorIO {
 
     override fun setVoltage(voltage: Voltage) {
         assert(voltage.inVolts() in -12.0..12.0)
-        manipulatorMotor.setVoltage(voltage.inVolts())
+        manipulatorMotor.setControl(voltageControl.withOutput(voltage))
     }
 
     override fun updateInputs(inputs: ManipulatorInputs) {
