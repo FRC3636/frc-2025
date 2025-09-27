@@ -25,6 +25,7 @@ import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.commands.FollowPathCommand
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.path.ConstraintsZone
 import com.pathplanner.lib.path.GoalEndState
 import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.path.PathPlannerPath
@@ -389,6 +390,8 @@ object Drivetrain : Subsystem {
                 heading = (updatedTargetPose.translation - startingPose.translation).angle
             }
 
+            assert(startingPose.translation != updatedTargetPose.translation)
+
             startingPose = Pose2d(startingPose.translation, heading + startingPoseHeadingOffset)
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 startingPose,
@@ -397,6 +400,7 @@ object Drivetrain : Subsystem {
 
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", false)
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Slow Zone", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Constraint Zone", false)
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset))
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
 
@@ -426,6 +430,8 @@ object Drivetrain : Subsystem {
                 headingToMiddlePoint = (middlePoint.translation - startingPose.translation).angle
             }
 
+            assert(startingPose.translation != updatedTargetPose.translation)
+
             startingPose = Pose2d(startingPose.translation, headingToMiddlePoint)
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
                 startingPose,
@@ -435,6 +441,7 @@ object Drivetrain : Subsystem {
 
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", true)
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Slow Zone", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Constraint Zone", false)
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, headingFromMiddlePoint))
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Middle Pose", Pose2d(middlePoint.translation, headingFromMiddlePoint))
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
@@ -454,6 +461,7 @@ object Drivetrain : Subsystem {
 
     fun driveToPointAllianceRelativeWithSlowZone(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, constraintsSlowZone: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, slowZoneDistanceFromTarget: Distance, slowZoneStartVelocity: LinearVelocity, shouldRaise: Boolean = true, raisePoint: Elevator.Position = Elevator.Position.HighBar): Command {
         return defer {
+            assert(slowZoneDistanceFromTarget > 0.0.meters)
             var startingPose = estimatedPose
             var slowZoneStart = target.backup(slowZoneDistanceFromTarget)
             var heading = (slowZoneStart.translation - estimatedPose.translation).angle
@@ -465,6 +473,8 @@ object Drivetrain : Subsystem {
                 heading = (updatedTargetPose.translation - startingPose.translation).angle
                 slowZoneHeading = (updatedTargetPose.translation - slowZoneStart.translation).angle
             }
+
+            assert(startingPose.translation != updatedTargetPose.translation)
 
             startingPose = Pose2d(startingPose.translation, heading)
             val firstPathWaypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
@@ -479,6 +489,7 @@ object Drivetrain : Subsystem {
 
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", false)
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Slow Zone", true)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Constraint Zone", false)
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading))
             Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
 
@@ -505,6 +516,61 @@ object Drivetrain : Subsystem {
                 Commands.parallel(AutoBuilder.followPath(secondPath),
                     Elevator.setTargetHeight(raisePoint)
                 )
+            )
+        }
+    }
+
+    fun driveToPointAllianceRelativeWithSlowConstraintZone(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, constraintsSlowZone: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, slowZoneDistanceFromTarget: Distance, shouldRaise: Boolean = true, raisePoint: Elevator.Position = Elevator.Position.HighBar): Command {
+        return defer {
+            assert(slowZoneDistanceFromTarget > 0.0.meters)
+            var startingPose = estimatedPose
+            var heading = (target.translation - estimatedPose.translation).angle
+            var updatedTargetPose = target
+            if (DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red) {
+                updatedTargetPose = FlippingUtil.flipFieldPose(target)
+                heading = (updatedTargetPose.translation - startingPose.translation).angle
+            }
+
+            assert(startingPose.translation != updatedTargetPose.translation)
+
+            startingPose = Pose2d(startingPose.translation, heading)
+            val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                startingPose,
+                Pose2d(updatedTargetPose.translation, heading)
+            )
+
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Slow Zone", true)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Constraint Zone", true)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
+
+            val distanceToTarget = startingPose.translation.getDistance(target.translation).meters
+            assert(slowZoneDistanceFromTarget < distanceToTarget)
+
+            val minPosition = 1.0 - (slowZoneDistanceFromTarget.inMeters() / distanceToTarget.inMeters())
+
+            val constraintZone = ConstraintsZone(
+                minPosition, 1.0, constraintsSlowZone
+            )
+
+            val path = PathPlannerPath(
+                waypoints,
+                emptyList(),
+                emptyList(),
+                mutableListOf(constraintZone),
+                emptyList(),
+                constraints,
+                null,
+                GoalEndState(0.0, updatedTargetPose.rotation),
+                false
+            )
+
+            path.preventFlipping = true
+
+            Commands.parallel(
+                AutoBuilder.followPath(path),
+                Elevator.setTargetHeight(raisePoint)
             )
         }
     }
