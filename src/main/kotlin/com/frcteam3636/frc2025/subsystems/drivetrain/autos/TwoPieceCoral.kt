@@ -19,7 +19,7 @@ class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
             OnePieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
-                Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS, firstReefPose.backup(REEF_BACKUP_DISTANCE))
+                Drivetrain.driveToPointAllianceRelativeWithMiddlePoint(pickupPose, DEFAULT_AUTO_CONSTRAINTS, firstReefPose.backup(REEF_BACKUP_DISTANCE))
             ),
             Commands.parallel(
                 Commands.sequence(

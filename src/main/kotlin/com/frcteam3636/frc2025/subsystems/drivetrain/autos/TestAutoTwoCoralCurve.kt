@@ -8,9 +8,7 @@ import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.math.backup
-import com.frcteam3636.frc2025.utils.math.degrees
 import com.frcteam3636.frc2025.utils.math.feet
-import com.frcteam3636.frc2025.utils.math.inches
 import com.frcteam3636.frc2025.utils.math.meters
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
@@ -34,7 +32,7 @@ class TestAutoTwoCoralCurve() : AutoMode() {
             Manipulator.outtake().withTimeout(OUTTAKE_TIMEOUT),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
-                Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS, firstReefPose.backup(2.feet))
+                Drivetrain.driveToPointAllianceRelativeWithMiddlePoint(pickupPose, DEFAULT_AUTO_CONSTRAINTS, firstReefPose.backup(2.feet))
             ),
             Commands.parallel(
                 Commands.sequence(

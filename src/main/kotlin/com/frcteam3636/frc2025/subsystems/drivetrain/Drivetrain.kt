@@ -26,7 +26,6 @@ import com.pathplanner.lib.commands.FollowPathCommand
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.GoalEndState
-import com.pathplanner.lib.path.IdealStartingState
 import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.path.PathPlannerPath
 import com.pathplanner.lib.path.Waypoint
@@ -45,7 +44,6 @@ import edu.wpi.first.networktables.IntegerPublisher
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.units.measure.Velocity
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.Preferences
@@ -414,7 +412,7 @@ object Drivetrain : Subsystem {
             AutoBuilder.followPath(path)
         }
     }
-    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, middlePoint: Pose2d): Command {
+    fun driveToPointAllianceRelativeWithMiddlePoint(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, middlePoint: Pose2d): Command {
         return defer {
             var startingPose = estimatedPose
             var middlePoint = middlePoint
