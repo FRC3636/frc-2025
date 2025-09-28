@@ -28,7 +28,7 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Commands.sequence(
                     Commands.waitUntil {
-                        Drivetrain.estimatedPose.translation.getDistance(pickupPose.translation).feet < 2.feet
+                        Drivetrain.estimatedPose.translation.getDistance(pickupPose.translation).feet < INTAKE_START_DISTANCE
                     },
                     Commands.race(
                         Manipulator.intakeAuto(),

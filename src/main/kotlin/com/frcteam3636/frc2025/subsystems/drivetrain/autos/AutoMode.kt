@@ -45,8 +45,8 @@ open class AutoMode {
         val LEFT_STARTING_POSE = Pose2d(7.277, 6.183, Rotation2d.fromDegrees(180.0))
         val RIGHT_STARTING_POSE = Pose2d(7.277, 1.869, Rotation2d.fromDegrees(180.0))
         val REEF_BACKUP_DISTANCE = 8.inches
+        val INTAKE_START_DISTANCE = 2.feet
         const val OUTTAKE_TIMEOUT = 0.3
-        const val CORAL_INTAKE_LEAVE_TIMEOUT = 0.25
         const val ELEVATOR_DEPLOYMENT_TIME_FIRST_PIECE = 1.5
         const val ELEVATOR_DEPLOYMENT_TIME_OTHER_PIECE = 1.5
     }
