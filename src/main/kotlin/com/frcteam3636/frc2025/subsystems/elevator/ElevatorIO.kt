@@ -232,7 +232,7 @@ class ElevatorIOSim : ElevatorIO {
 
     override fun setVoltage(volts: Voltage) {
         elevatorSim.setInputVoltage(volts.inVolts())
-        Logger.recordOutput("/Elevator/OutVolt", volts)
+        Logger.recordOutput("Elevator/OutVolt", volts)
     }
 
     override fun setEncoderPosition(position: Distance) {

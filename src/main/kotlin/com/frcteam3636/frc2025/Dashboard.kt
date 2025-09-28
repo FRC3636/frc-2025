@@ -1,11 +1,9 @@
 package com.frcteam3636.frc2025
 
-import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import org.littletonrobotics.junction.Logger
 
 object Dashboard {
     val autoChooser = SendableChooser<AutoModes>().apply {

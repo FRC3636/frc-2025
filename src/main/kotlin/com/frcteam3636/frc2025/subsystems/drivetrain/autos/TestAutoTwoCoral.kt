@@ -7,9 +7,7 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
-import com.frcteam3636.frc2025.utils.math.feet
 import com.frcteam3636.frc2025.utils.math.meters
-import com.frcteam3636.frc2025.utils.math.metersPerSecond
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command

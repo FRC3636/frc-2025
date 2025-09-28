@@ -4,7 +4,10 @@ import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.controls.VoltageOut
-import com.frcteam3636.frc2025.*
+import com.frcteam3636.frc2025.CTREDeviceId
+import com.frcteam3636.frc2025.REVMotorControllerId
+import com.frcteam3636.frc2025.SparkMax
+import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.*
 import com.frcteam3636.frc2025.utils.swerve.speed
 import com.revrobotics.spark.SparkBase
@@ -209,7 +212,7 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
     override var velocity: LinearVelocity
         get() = inner.encoder.velocity.metersPerSecond
         set(value) {
-            Logger.recordOutput("/Drivetrain/$id/OutputVel", value)
+            Logger.recordOutput("Drivetrain/$id/OutputVel", value)
             inner.closedLoopController.setReference(value.inMetersPerSecond(), SparkBase.ControlType.kVelocity)
         }
 

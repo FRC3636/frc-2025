@@ -7,7 +7,6 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.utils.math.feet
 import com.frcteam3636.frc2025.utils.math.inMetersPerSecond
 import com.frcteam3636.frc2025.utils.math.inches
-import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.metersPerSecond
 import com.pathplanner.lib.path.PathConstraints
 import edu.wpi.first.math.geometry.Pose2d
@@ -27,7 +26,7 @@ open class AutoMode {
         return Commands.none()
     }
 
-    public companion object Constants {
+    companion object Constants {
         val SLOW_ZONE_DISTANCE = 2.feet
         val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
         val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(10.0, 4.0, 2 * Math.PI, 4 * Math.PI)

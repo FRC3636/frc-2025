@@ -3,13 +3,11 @@ package com.frcteam3636.frc2025
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
-import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.*
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
-import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.frc2025.utils.rumble
@@ -17,7 +15,6 @@ import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
-import com.pathplanner.lib.auto.NamedCommands
 import com.pathplanner.lib.util.FlippingUtil
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.hal.FRCNetComm.tInstances
@@ -39,7 +36,6 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
-import java.util.NoSuchElementException
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.jvm.optionals.getOrNull
@@ -162,10 +158,10 @@ object Robot : LoggedRobot() {
 
     private fun configureAutos() {
         PathPlannerLogging.setLogTargetPoseCallback {
-            Logger.recordOutput("/Drivetrain/Target Pose", it)
+            Logger.recordOutput("Drivetrain/Target Pose", it)
         }
         PathPlannerLogging.setLogActivePathCallback {
-            Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
+            Logger.recordOutput("Drivetrain/Desired Path", *it.toTypedArray())
         }
     }
 
