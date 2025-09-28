@@ -19,7 +19,9 @@ class FourPieceCoral(val side: StartingPosition) : AutoMode() {
             Commands.parallel(
                 Commands.sequence(
                     Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS),
-                    Commands.waitSeconds(CORAL_INTAKE_LEAVE_TIMEOUT),
+                    Commands.waitUntil {
+                        Manipulator.coralState != CoralState.NONE
+                    },
                     Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE,
                         raisePoint = Elevator.Position.MidBar),
                 ),
