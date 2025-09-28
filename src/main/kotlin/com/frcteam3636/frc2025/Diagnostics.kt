@@ -11,6 +11,7 @@ import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.GenericHID
+import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.Threads
 import edu.wpi.first.wpilibj.Timer
 
@@ -49,6 +50,8 @@ object Diagnostics {
             AlertType.kWarning
         )
 
+        object JitInProgress : RobotAlert("Please wait to enable, JITing in progress.")
+
         object JoystickDisconnected :
             RobotAlert("One or more Joysticks have disconnected, driver controls will not work.")
 
@@ -60,6 +63,9 @@ object Diagnostics {
                 "Check USB device order in Driver Station! The connected devices are likely in the wrong order.",
                 AlertType.kWarning
             )
+
+        object LowBatteryVoltage : RobotAlert("Battery voltage is very low, consider turning off the robot or replacing the battery.", AlertType.kWarning)
+
 
         class CAN private constructor(bus: CANBus) {
             private class BusFailure(bus: CANBus) : RobotAlert("The \"${bus.humanReadableName}\" CAN bus has FAILED!")
@@ -87,9 +93,6 @@ object Diagnostics {
         robotAlerts += robotAlert
     }
 
-    private val errorResetTimer = Timer().apply { start() }
-    private val knownCANBusErrors = HashMap<String, Int>()
-
     /** Report the CAN Bus's errors */
     fun report(canBus: CANBus) {
         val status = canBus.cachedStatus
@@ -100,17 +103,8 @@ object Diagnostics {
             return
         }
 
-        // If there are errors, the wiring probably disconnected or a motor isn't working.
-        val knownErrors = knownCANBusErrors[canBus.name] ?: 0
-        if (status.REC + status.TEC > knownErrors) {
+        if (status.REC + status.TEC > 0) {
             reportAlert(RobotAlert.CAN.bus(canBus).error)
-        }
-
-        // Every 20 seconds we record an "acceptable" number of errors so that if a
-        // motor is plugged in after it has been erroring for a while, the alert will
-        // dismiss itself.
-        if (errorResetTimer.hasElapsed(20.seconds)) {
-            knownCANBusErrors[canBus.name] = status.REC + status.TEC
         }
     }
 
@@ -158,17 +152,24 @@ object Diagnostics {
                 reportAlert(RobotAlert.SelectedAutoLeft)
             else
                 reportAlert(RobotAlert.SelectedAutoRight)
-            if (Robot.beforeFirstEnable)
-                reportAlert(RobotAlert.MegaTag1Active)
-            else
-                reportAlert(RobotAlert.MegaTag2Active)
+
+            if (!Threads.getCurrentThreadIsRealTime())
+                reportAlert(RobotAlert.ThreadNotRealTime)
+
+            if (RobotController.getBatteryVoltage() <= 11.8)
+                reportAlert(RobotAlert.LowBatteryVoltage)
         }
 
         if (!Drivetrain.limelightsConnected)
             reportAlert(RobotAlert.LimelightDisconnected)
 
-        if (!Threads.getCurrentThreadIsRealTime())
-            reportAlert(RobotAlert.ThreadNotRealTime)
+        if (Robot.beforeFirstEnable)
+            reportAlert(RobotAlert.MegaTag1Active)
+        else
+            reportAlert(RobotAlert.MegaTag2Active)
+
+        if (Timer.getTimestamp() >= 45.0)
+            reportAlert(RobotAlert.JitInProgress)
     }
 
     private var previousRobotAlerts = HashSet<RobotAlert>()

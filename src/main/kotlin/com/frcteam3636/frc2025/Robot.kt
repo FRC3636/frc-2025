@@ -10,6 +10,7 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.math.seconds
+import com.frcteam3636.frc2025.utils.math.volts
 import com.frcteam3636.frc2025.utils.rumble
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
@@ -80,6 +81,7 @@ object Robot : LoggedRobot() {
         )
 
         SignalLogger.enableAutoLogging(false)
+        RobotController.setBrownoutVoltage(6.0.volts)
 
         // Joysticks are likely to be missing in simulation, which usually isn't a problem.
         DriverStation.silenceJoystickConnectionWarning(model != Model.COMPETITION)
@@ -92,8 +94,6 @@ object Robot : LoggedRobot() {
 
         Diagnostics.timer.start()
         threadCommand().schedule()
-//        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
-
     }
 
     /** Start logging or pull replay logs from a file */
