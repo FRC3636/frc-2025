@@ -6,8 +6,6 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.StartingPosition
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.determineStartingPosition
 import com.frcteam3636.frc2025.utils.cachedStatus
-import com.frcteam3636.frc2025.utils.math.hasElapsed
-import com.frcteam3636.frc2025.utils.math.seconds
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.Alert.AlertType
 import edu.wpi.first.wpilibj.GenericHID
