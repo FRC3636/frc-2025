@@ -106,7 +106,7 @@ object Diagnostics {
             reportAlert(RobotAlert.CAN.bus(canBus).error)
         }
 
-        // Every second we record an "acceptable" number of errors so that if a
+        // Every 20 seconds we record an "acceptable" number of errors so that if a
         // motor is plugged in after it has been erroring for a while, the alert will
         // dismiss itself.
         if (errorResetTimer.hasElapsed(20.seconds)) {
