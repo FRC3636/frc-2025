@@ -343,8 +343,6 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        if (beforeFirstEnable)
-            beforeFirstEnable = false
         // Protection against stupidity (freshmen)
         // This can only go so far as it assumes the bot is rotated at
         // exactly 180 degrees for it's starting position
@@ -358,6 +356,11 @@ object Robot : LoggedRobot() {
             }
             Drivetrain.poseEstimator.resetPose(startingPose)
         }
+        // We shall keep the robot on MT1 as well to try and
+        // get the estimated pose up to date and correct
+        // if the placement sucks
+        if (beforeFirstEnable && Drivetrain.tagsVisible)
+            beforeFirstEnable = false
         autoCommand = when (Dashboard.autoChooser.selected) {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
