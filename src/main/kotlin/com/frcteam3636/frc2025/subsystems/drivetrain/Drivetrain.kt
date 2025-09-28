@@ -12,35 +12,40 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_PID_GAINS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.AutoMode
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.*
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
-import com.frcteam3636.frc2025.utils.ElasticWidgets
 import com.frcteam3636.frc2025.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2025.utils.math.*
-import com.frcteam3636.frc2025.utils.swerve.*
+import com.frcteam3636.frc2025.utils.swerve.PerCorner
+import com.frcteam3636.frc2025.utils.swerve.cornerStatesToChassisSpeeds
+import com.frcteam3636.frc2025.utils.swerve.toCornerSwerveModuleStates
+import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.frcteam3636.frc2025.utils.translation2d
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.commands.FollowPathCommand
-import com.pathplanner.lib.commands.PathfindingCommand
-import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.path.ConstraintsZone
 import com.pathplanner.lib.path.GoalEndState
 import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.path.PathPlannerPath
 import com.pathplanner.lib.path.Waypoint
 import com.pathplanner.lib.pathfinding.Pathfinding
+import com.pathplanner.lib.util.FlippingUtil
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform3d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.math.trajectory.TrapezoidProfile
-import edu.wpi.first.math.util.Units
+import edu.wpi.first.networktables.IntegerPublisher
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.Alert
+import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.Preferences
@@ -73,12 +78,14 @@ object Drivetrain : Subsystem {
     private val alignPositionPublisher = NetworkTableInstance.getDefault()
         .getDoubleArrayTopic("RGB/Auto Align/Position Relative to Align Target")
         .publish()
-    val alignStatePublisher = NetworkTableInstance.getDefault()
+    val alignStatePublisher: IntegerPublisher = NetworkTableInstance.getDefault()
         .getIntegerTopic("RGB/Movement State")
         .publish()
         .apply {
             setDefault(AlignState.NotRunning.raw)
         }
+
+    var tagsVisible = false
 
     enum class AlignState(val raw: Long) {
         NotRunning(0),
@@ -87,7 +94,7 @@ object Drivetrain : Subsystem {
         Success(3),
     }
 
-    private val mt2Algo = LimelightAlgorithm.MegaTag2({
+    val mt2Algo = LimelightAlgorithm.MegaTag2({
         poseEstimator.estimatedPosition.rotation
     }, {
         inputs.gyroVelocity
@@ -101,16 +108,12 @@ object Drivetrain : Subsystem {
         else -> mapOf(
             "Limelight Right" to LimelightPoseProvider(
                 "limelight-right",
-                algorithm = mt2Algo
+                mt2Algo
             ),
             "Limelight Left" to LimelightPoseProvider(
                 "limelight-left",
-                algorithm = mt2Algo
-            ),
-//            "Limelight Rear" to LimelightPoseProvider(
-//                "limelight-rear",
-//                algorithm = mt2Algo
-//            ),
+                mt2Algo
+            )
         )
     }.mapValues { Pair(it.value, AbsolutePoseProviderInputs()) }
 
@@ -126,14 +129,15 @@ object Drivetrain : Subsystem {
         )
 
     /** Helper for estimating the location of the drivetrain on the field */
-    private val poseEstimator =
+    val poseEstimator =
         SwerveDrivePoseEstimator(
             kinematics, // swerve drive kinematics
             inputs.gyroRotation, // initial gyro rotation
             inputs.measuredPositions.toTypedArray(), // initial module positions
             Pose2d(), // initial pose
-            VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5.0)),
-            VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10.0))
+            VecBuilder.fill(0.02, 0.02, 0.005),
+            // Overwrite each measurement
+            VecBuilder.fill(0.0, 0.0, 0.0)
         )
 
 
@@ -153,16 +157,18 @@ object Drivetrain : Subsystem {
                     Robot.Model.COMPETITION -> Constants.ALIGN_TRANSLATION_PID_GAINS
                     Robot.Model.PROTOTYPE -> DRIVING_PID_GAINS_NEO
                 }.toPPLib(),
-                Constants.ALIGN_TRANSLATION_PID_GAINS.toPPLib()
+                Constants.ALIGN_ROTATION_PID_GAINS.toPPLib()
             ),
             RobotConfig.fromGUISettings(),
             // Mirror path when the robot is on the red alliance (the robot starts on the opposite side of the field)
-            { DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red) },
+            {
+                @Suppress("IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE")
+                DriverStation.getAlliance() == Optional.of(DriverStation.Alliance.Red)
+            },
             this
         )
 
         if (Robot.model != Robot.Model.SIMULATION) {
-            PathfindingCommand.warmupCommand().schedule()
             FollowPathCommand.warmupCommand().schedule()
         }
 
@@ -182,6 +188,7 @@ object Drivetrain : Subsystem {
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Drivetrain", inputs)
+        tagsVisible = false
 
         // Update absolute pose sensors and add their measurements to the pose estimator
         for ((name, ioPair) in absolutePoseIOs) {
@@ -191,11 +198,14 @@ object Drivetrain : Subsystem {
             Logger.processInputs("Drivetrain/Absolute Pose/$name", inputs)
 
             Logger.recordOutput("Drivetrain/Absolute Pose/$name/Has Measurement", inputs.measurement != null)
+            Logger.recordOutput("Drivetrain/Absolute Pose/$name/Connected", inputs.connected)
+            if (inputs.observedTags.isNotEmpty())
+                tagsVisible = true
+
             inputs.measurement?.let {
                 poseEstimator.addAbsolutePoseMeasurement(it)
-//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
-//                Logger.recordOutput("Drivetrain/Last Added Pose", it.pose)
-//                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
+                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Measurement", it)
+                Logger.recordOutput("Drivetrain/Absolute Pose/$name/Pose", it.pose)
             }
         }
 
@@ -206,7 +216,7 @@ object Drivetrain : Subsystem {
         )
 
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
-//        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
+        Logger.recordOutput("Drivetrain/Estimated Pose", estimatedPose)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
 
@@ -363,35 +373,213 @@ object Drivetrain : Subsystem {
             .pose
     }
 
-    /** Use PID only to drive to left human player station */
-    fun alignToLeftStation() = alignToTarget(usePathfinding = false) {
-        AprilTagTarget.currentAllianceLeftStation.pose
-    }
-
-    /** Use PID only to drive to right human player station */
-    fun alignToRightStation() = alignToTarget(usePathfinding = false) {
-        AprilTagTarget.currentAllianceRightStation.pose
-    }
-
-    private val alignTranslationXController = ProfiledPIDController(
-        Constants.ALIGN_TRANSLATION_PID_GAINS,
-        TrapezoidProfile.Constraints(4.5 / 3.0, 0.4),
-    )
-    private val alignTranslationYController = ProfiledPIDController(
-        Constants.ALIGN_TRANSLATION_PID_GAINS,
-        TrapezoidProfile.Constraints(4.5 / 3.0, 0.4),
-    )
-    private val alignRotationController = PIDController(Constants.ALIGN_ROTATION_PID_GAINS)
 
     fun isAtTarget(relativePose: Pose2d): Boolean =
         relativePose.translation.norm < 2.centimeters.inMeters() // Translation
                 && Elevator.isAtTarget
                 && measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond < 0.2.metersPerSecond
 
-    private fun updateRGBToNoState(): Command = Commands.waitSeconds(1.5)
-        .finallyDo { ->
-            alignStatePublisher.set(AlignState.NotRunning.raw)
+    fun driveToPointAllianceRelative(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS,
+                                     startingPoseHeadingOffset: Rotation2d = Rotation2d.kZero,
+                                     targetPoseHeadingOffset: Rotation2d = Rotation2d.kZero): Command {
+        return defer {
+            var startingPose = estimatedPose
+            var heading = (target.translation - estimatedPose.translation).angle
+            var updatedTargetPose = target
+            if (DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red) {
+                updatedTargetPose = FlippingUtil.flipFieldPose(target)
+                heading = (updatedTargetPose.translation - startingPose.translation).angle
+            }
+
+            assert(startingPose.translation != updatedTargetPose.translation)
+
+            startingPose = Pose2d(startingPose.translation, heading + startingPoseHeadingOffset)
+            val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                startingPose,
+                Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset)
+            )
+
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Slow Zone", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Constraint Zone", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading + targetPoseHeadingOffset))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
+
+            val path = PathPlannerPath(
+                waypoints,
+                constraints,
+                null,
+                GoalEndState(0.0, updatedTargetPose.rotation)
+            )
+
+            path.preventFlipping = true
+
+            AutoBuilder.followPath(path)
         }
+    }
+    fun driveToPointAllianceRelativeWithMiddlePoint(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, middlePoint: Pose2d): Command {
+        return defer {
+            var startingPose = estimatedPose
+            var middlePoint = middlePoint
+            var headingToMiddlePoint = (middlePoint.translation - startingPose.translation).angle
+            var updatedTargetPose = target
+            var headingFromMiddlePoint = (updatedTargetPose.translation - middlePoint.translation).angle
+            if (DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red) {
+                updatedTargetPose = FlippingUtil.flipFieldPose(target)
+                middlePoint = FlippingUtil.flipFieldPose(middlePoint)
+                headingFromMiddlePoint = (updatedTargetPose.translation - startingPose.translation).angle
+                headingToMiddlePoint = (middlePoint.translation - startingPose.translation).angle
+            }
+
+            assert(startingPose.translation != updatedTargetPose.translation)
+
+            startingPose = Pose2d(startingPose.translation, headingToMiddlePoint)
+            val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                startingPose,
+                Pose2d(middlePoint.translation, headingFromMiddlePoint),
+                Pose2d(updatedTargetPose.translation, headingFromMiddlePoint)
+            )
+
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", true)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Slow Zone", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Constraint Zone", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, headingFromMiddlePoint))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Middle Pose", Pose2d(middlePoint.translation, headingFromMiddlePoint))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
+
+            val path = PathPlannerPath(
+                waypoints,
+                constraints,
+                null,
+                GoalEndState(0.0, updatedTargetPose.rotation)
+            )
+
+            path.preventFlipping = true
+
+            AutoBuilder.followPath(path)
+        }
+    }
+
+    fun driveToPointAllianceRelativeWithSlowZone(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, constraintsSlowZone: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, slowZoneDistanceFromTarget: Distance, slowZoneStartVelocity: LinearVelocity, shouldRaise: Boolean = true, raisePoint: Elevator.Position = Elevator.Position.HighBar): Command {
+        return defer {
+            assert(slowZoneDistanceFromTarget > 0.0.meters)
+            var startingPose = estimatedPose
+            var slowZoneStart = target.backup(slowZoneDistanceFromTarget)
+            var heading = (slowZoneStart.translation - estimatedPose.translation).angle
+            var slowZoneHeading = (target.translation - slowZoneStart.translation).angle
+            var updatedTargetPose = target
+            if (DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red) {
+                updatedTargetPose = FlippingUtil.flipFieldPose(target)
+                slowZoneStart = FlippingUtil.flipFieldPose(slowZoneStart)
+                heading = (updatedTargetPose.translation - startingPose.translation).angle
+                slowZoneHeading = (updatedTargetPose.translation - slowZoneStart.translation).angle
+            }
+
+            assert(startingPose.translation != updatedTargetPose.translation)
+
+            startingPose = Pose2d(startingPose.translation, heading)
+            val firstPathWaypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                startingPose,
+                Pose2d(slowZoneStart.translation, heading)
+            )
+
+            val slowZoneWaypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                Pose2d(slowZoneStart.translation, slowZoneHeading),
+                Pose2d(updatedTargetPose.translation, slowZoneHeading)
+            )
+
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Slow Zone", true)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Constraint Zone", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
+
+            val firstPath = PathPlannerPath(
+                firstPathWaypoints,
+                constraints,
+                null,
+                GoalEndState(slowZoneStartVelocity, updatedTargetPose.rotation)
+            )
+
+            firstPath.preventFlipping = true
+
+            val secondPath = PathPlannerPath(
+                slowZoneWaypoints,
+                constraintsSlowZone,
+                null,
+                GoalEndState(0.0, updatedTargetPose.rotation)
+            )
+
+            secondPath.preventFlipping = true
+
+            Commands.sequence(
+                AutoBuilder.followPath(firstPath),
+                Commands.parallel(AutoBuilder.followPath(secondPath),
+                    Elevator.setTargetHeight(raisePoint)
+                )
+            )
+        }
+    }
+
+    fun driveToPointAllianceRelativeWithSlowConstraintZone(target: Pose2d, constraints: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, constraintsSlowZone: PathConstraints = DEFAULT_PATHING_CONSTRAINTS, slowZoneDistanceFromTarget: Distance, shouldRaise: Boolean = true, raisePoint: Elevator.Position = Elevator.Position.HighBar): Command {
+        return defer {
+            assert(slowZoneDistanceFromTarget > 0.0.meters)
+            var startingPose = estimatedPose
+            var heading = (target.translation - estimatedPose.translation).angle
+            var updatedTargetPose = target
+            if (DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red) {
+                updatedTargetPose = FlippingUtil.flipFieldPose(target)
+                heading = (updatedTargetPose.translation - startingPose.translation).angle
+            }
+
+            assert(startingPose.translation != updatedTargetPose.translation)
+
+            startingPose = Pose2d(startingPose.translation, heading)
+            val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                startingPose,
+                Pose2d(updatedTargetPose.translation, heading)
+            )
+
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Middle Point", false)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Slow Zone", true)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Using Constraint Zone", true)
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Target Pose", Pose2d(updatedTargetPose.translation, heading))
+            Logger.recordOutput("/Drivetrain/Auto Drive to Point/Updated Starting Pose", startingPose)
+
+            val distanceToTarget = startingPose.translation.getDistance(target.translation).meters
+            assert(slowZoneDistanceFromTarget < distanceToTarget)
+
+            val minPosition = 1.0 - (slowZoneDistanceFromTarget.inMeters() / distanceToTarget.inMeters())
+
+            val constraintZone = ConstraintsZone(
+                minPosition, 1.0, constraintsSlowZone
+            )
+
+            val path = PathPlannerPath(
+                waypoints,
+                emptyList(),
+                emptyList(),
+                mutableListOf(constraintZone),
+                emptyList(),
+                constraints,
+                null,
+                GoalEndState(0.0, updatedTargetPose.rotation),
+                false
+            )
+
+            path.preventFlipping = true
+
+            Commands.parallel(
+                AutoBuilder.followPath(path),
+                Commands.sequence(
+                    Commands.waitUntil {
+                        estimatedPose.translation.getDistance(updatedTargetPose.translation).meters <= slowZoneDistanceFromTarget
+                    },
+                    Elevator.setTargetHeight(raisePoint)
+                ).onlyIf { shouldRaise }
+            )
+        }
+    }
 
     /**
      * Drive to a pose on the field.
@@ -406,26 +594,7 @@ object Drivetrain : Subsystem {
         endConditionTimeout: Double = 0.75,
         target: () -> Pose2d
     ): Command {
-//        Logger.recordOutput(
-//            "/Drivetrain/Auto Align/Distance To Target",
-//            0
-//        )
-        Logger.recordOutput(
-            "/Drivetrain/Auto Align/Has Reached Target",
-            false
-        )
-        Logger.recordOutput(
-            "/Drivetrain/Auto Align/Distance To Target X",
-            0.0
-        )
-        Logger.recordOutput(
-            "/Drivetrain/Auto Align/Distance To Target Y",
-            0.0
-        )
         return defer {
-            // If true, controls rotation with PID
-//            val enableRotationControl = Preferences.getBoolean("AlignUseRotationControl", true)
-
             // If true, ends the command when in place
             val useEndCondition = Preferences.getBoolean("AlignUseEndCondition", true) && !disableEndConditionOverride
 
@@ -452,22 +621,37 @@ object Drivetrain : Subsystem {
                 )
             }
 
-            var waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
-                estimatedPose,
-                target
-            )
+            val heading = (target.translation - estimatedPose.translation).angle
+            val startingPose = Pose2d(estimatedPose.translation, heading)
 
-            val constraints = PathConstraints(2.0, 3.0, 2 * Math.PI, 4 * Math.PI)
+            val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
+                startingPose,
+                Pose2d(target.translation, heading)
+            )
+            
+            val constraints = PathConstraints(10.0,3.0, 2 * Math.PI, 4 * Math.PI)
+
+            val constraintZone = ConstraintsZone(
+                0.85, 1.0, AutoMode.DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE
+            )
 
             val path = PathPlannerPath(
                 waypoints,
+                emptyList(),
+                emptyList(),
+                mutableListOf(constraintZone),
+                emptyList(),
                 constraints,
                 null,
-                GoalEndState(0.0, target.rotation)
+                GoalEndState(0.0, target.rotation),
+                false
             )
 
             path.preventFlipping = true
 
+            commands.add(Commands.runOnce({
+                alignStatePublisher.set(AlignState.Aligning.raw)
+            }))
             commands.add(AutoBuilder.followPath(path))
 
             val endCondition = Trigger {
@@ -521,19 +705,22 @@ object Drivetrain : Subsystem {
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(
-            0.5.voltsPerSecond, 2.volts, null, {
-                SignalLogger.writeString("state", it.toString())
-            }), SysIdRoutine.Mechanism(
+            0.5.voltsPerSecond, 2.volts, null
+        ) {
+            SignalLogger.writeString("state", it.toString())
+        }, SysIdRoutine.Mechanism(
             io::runCharacterization,
             null,
             this,
         )
     )
 
+    @Suppress("unused")
     fun sysIdQuasistatic(direction: SysIdRoutine.Direction) = run {
         io.runCharacterization(0.volts)
     }.withTimeout(1.0).andThen(sysID.quasistatic(direction))!!
 
+    @Suppress("unused")
     fun sysIdDynamic(direction: SysIdRoutine.Direction) = run {
         io.runCharacterization(0.volts)
     }.withTimeout(1.0).andThen(sysID.dynamic(direction))!!
@@ -541,7 +728,7 @@ object Drivetrain : Subsystem {
     internal object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
-        const val TRANSLATION_SENSITIVITY = 1.0 // FIXME: Increase
+        const val TRANSLATION_SENSITIVITY = 1.0
 
         /** Unit: Rotations per second */
         const val ROTATION_SENSITIVITY = 0.8
@@ -571,7 +758,6 @@ object Drivetrain : Subsystem {
 
         // Chassis Control
         val FREE_SPEED = 5.5.metersPerSecond
-        private val ROTATION_SPEED = 14.604.radiansPerSecond
 
         val ROTATION_PID_GAINS = PIDGains(3.0, 0.0, 0.4)
 
@@ -580,46 +766,6 @@ object Drivetrain : Subsystem {
             PathConstraints(
                 3.0, 3.0, 2 * Math.PI, 4 * Math.PI
             )
-
-        // FIXME: Update for 2025
-        val PP_ROBOT_CONFIG_COMP = RobotConfig(
-            120.0.pounds, // FIXME: Placeholder
-            0.kilogramSquareMeters, // FIXME: Placeholder
-            ModuleConfig(
-                WHEEL_RADIUS,
-                FREE_SPEED,
-                1.0, // FIXME: Placeholder
-                DCMotor.getKrakenX60(1),
-                DRIVING_CURRENT_LIMIT,
-                1
-            ),
-            *MODULE_POSITIONS.map {
-                it.translation
-            }.toTypedArray()
-        )
-
-        val PP_ROBOT_CONFIG_PROTOTYPE = RobotConfig(
-            120.pounds, // FIXME: Placeholder
-            0.kilogramSquareMeters, // FIXME: Placeholder
-            ModuleConfig(
-                WHEEL_RADIUS,
-                NEO_DRIVING_FREE_SPEED,
-                1.0, // FIXME: Placeholder
-                DCMotor.getNEO(1),
-                DRIVING_CURRENT_LIMIT,
-                1
-            ),
-            *MODULE_POSITIONS.map {
-                it.translation
-            }.toTypedArray()
-        )
-
-        val PP_ROBOT_CONFIG = when (Robot.model) {
-            Robot.Model.SIMULATION -> PP_ROBOT_CONFIG_COMP
-            Robot.Model.COMPETITION -> PP_ROBOT_CONFIG_COMP
-            Robot.Model.PROTOTYPE -> PP_ROBOT_CONFIG_PROTOTYPE
-        }
-
 
         // CAN IDs
         val KRAKEN_MODULE_CAN_IDS =
@@ -675,6 +821,6 @@ object Drivetrain : Subsystem {
 
 
         val ALIGN_TRANSLATION_PID_GAINS = PIDGains(5.0)
-        val ALIGN_ROTATION_PID_GAINS = PIDGains(2.0)
+        val ALIGN_ROTATION_PID_GAINS = PIDGains(5.0)
     }
 }

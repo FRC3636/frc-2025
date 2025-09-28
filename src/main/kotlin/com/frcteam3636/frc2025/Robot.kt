@@ -5,6 +5,7 @@ import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignal
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2025.subsystems.drivetrain.autos.*
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
@@ -17,12 +18,14 @@ import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
 import com.pathplanner.lib.auto.NamedCommands
+import com.pathplanner.lib.util.FlippingUtil
+import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.*
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
@@ -36,8 +39,10 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
+import java.util.NoSuchElementException
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.jvm.optionals.getOrNull
 
 
 /**
@@ -66,8 +71,11 @@ object Robot : LoggedRobot() {
     private val rioCANBus = CANBus("rio")
     private val canivore = CANBus("*")
 
-    /** Status signals used to check the health of the robot's hardware */
-    val diagnosticsStatusSignals = mutableMapOf<String, StatusSignal<*>>()
+    var beforeFirstEnable = true
+
+    var gyroOffsetManually = false
+
+    var startingPosition = StartingPosition.Left
 
     override fun robotInit() {
         // Report the use of the Kotlin Language for "FRC Usage Report" statistics
@@ -87,6 +95,7 @@ object Robot : LoggedRobot() {
         Dashboard.initialize()
 
         Diagnostics.timer.start()
+        threadCommand().schedule()
 //        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
 
     }
@@ -124,7 +133,7 @@ object Robot : LoggedRobot() {
             val logPath = try {
                 // Pull the replay log from AdvantageScope (or prompt the user)
                 LogFileUtil.findReplayLog()
-            } catch (_: java.util.NoSuchElementException) {
+            } catch (_: NoSuchElementException) {
                 null
             }
 
@@ -151,109 +160,13 @@ object Robot : LoggedRobot() {
         Funnel.register()
     }
 
-    /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
     private fun configureAutos() {
-//        NamedCommands.registerCommand(
-//            "revAim",
-//            Commands.parallel(
-//                Shooter.Pivot.followMotionProfile(Shooter.Pivot.Target.AIM),
-//                Shooter.Flywheels.rev(580.0, 0.0)
-//            )
-//        )
-        NamedCommands.registerCommand(
-            "raiseElevatorL4",
-            Elevator.setTargetHeight(Elevator.Position.HighBar)
-                .andThen(Commands.waitUntil { Elevator.isAtTarget })
-        )
-        NamedCommands.registerCommand(
-            "raiseElevatorL3",
-            Elevator.setTargetHeight(Elevator.Position.MidBar)
-                .andThen(Commands.waitUntil { Elevator.isAtTarget })
-        )
-        NamedCommands.registerCommand(
-            "raiseElevatorL2",
-            Elevator.setTargetHeight(Elevator.Position.LowBar)
-                .andThen(Commands.waitUntil { Elevator.isAtTarget })
-        )
-        NamedCommands.registerCommand(
-            "stowElevator",
-            Elevator.setTargetHeight(Elevator.Position.Stowed)
-        )
-        NamedCommands.registerCommand(
-            "outtake",
-            Manipulator.outtake().withTimeout(0.3.seconds)
-        )
-        NamedCommands.registerCommand(
-            "intake",
-            Commands.race(
-                Manipulator.intakeAuto(),
-                Funnel.intake()
-            ).withTimeout(3.0)
-        )
-        NamedCommands.registerCommand(
-            "alignToTarget",
-            Drivetrain.alignToClosestPOI(
-                sideOverride = ReefBranchSide.Left,
-                usePathfinding = false,
-                raiseElevator = false,
-                endConditionTimeout = 0.5
-            )
-                .withTimeout(3.5.seconds)
-        )
-        NamedCommands.registerCommand(
-            "alignToTargetRight",
-            Drivetrain.alignToClosestPOI(
-                sideOverride = ReefBranchSide.Right,
-                usePathfinding = false,
-                raiseElevator = false,
-                endConditionTimeout = 0.5
-            )
-                .withTimeout(3.5.seconds)
-        )
-        NamedCommands.registerCommand(
-            "raiseElevatorAlgae",
-            Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar)
-        )
-        NamedCommands.registerCommand(
-            "alignToReefAlgae",
-            Drivetrain.alignToReefAlgae(usePathfinding = false)
-                .withTimeout(0.75.seconds)
-        )
-        NamedCommands.registerCommand(
-            "alignToBarge",
-            Drivetrain.alignToBarge(usePathfinding = false)
-                .withTimeout(0.9.seconds)
-        )
-        NamedCommands.registerCommand(
-            "intakeAlgae",
-            Commands.sequence(
-                Commands.runOnce({
-                    Manipulator.isIntakeRunning = true
-                }),
-                Manipulator.intakeAlgae(),
-            )
-        )
-        NamedCommands.registerCommand(
-            "tossAlgae",
-            tossAlgae()
-        )
-        NamedCommands.registerCommand(
-            "alignToStation",
-            Commands.parallel(
-                Drivetrain.alignToClosestPOI(sideOverride = ReefBranchSide.Right, usePathfinding = false)
-                    .withTimeout(1.seconds),
-                Elevator.setTargetHeight(Elevator.Position.HighBar),
-            )
-        )
-        NamedCommands.registerCommand(
-            "waitForIntake",
-            Commands.race(
-                Commands.waitUntil {
-                    Manipulator.coralState != CoralState.NONE
-                },
-                Commands.waitSeconds(1.0)
-            )
-        )
+        PathPlannerLogging.setLogTargetPoseCallback {
+            Logger.recordOutput("/Drivetrain/Target Pose", it)
+        }
+        PathPlannerLogging.setLogActivePathCallback {
+            Logger.recordOutput("/Drivetrain/Desired Path", *it.toTypedArray())
+        }
     }
 
     private fun tossAlgae(): Command = Commands.sequence(
@@ -292,33 +205,19 @@ object Robot : LoggedRobot() {
         }))
 
         joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.5, usePathfinding = false))
+
         joystickRight.povUp().whileTrue(
-            Drivetrain.alignToReefAlgae()
+            Drivetrain.alignToReefAlgae(false)
         )
-//        joystickLeft.button(1).whileTrue(Drivetrain.alignToReefAlgae())
+
         joystickRight.button(1).whileTrue(
-//            Commands.sequence(
-//                Manipulator.outtake().withTimeout(0.6),
-//                Elevator.setTargetHeight(Position.Stowed)
-//            )
             Manipulator.outtake()
         )
-
-//        controller.a().whileTrue(Drivetrain.alignToTargetWithPIDController())
-
-//        controller.b().onTrue(Commands.runOnce({
-//            println("Setting desired target node to left branch.")
-//            Drivetrain.currentTargetSelection = ReefBranchSide.Left
-//        }))
-//
-//        controller.x().onTrue(Commands.runOnce({
-//            println("Setting desired target node to right branch.")
-//            Drivetrain.currentTargetSelection = ReefBranchSide.Right
-//        }))
 
         // (The button with the yellow tape on it)
         joystickLeft.button(8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
+            gyroOffsetManually = true
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
@@ -344,7 +243,7 @@ object Robot : LoggedRobot() {
         joystickLeft.button(2).onTrue(
             tossAlgae()
         )
-//
+
         controller.leftBumper().whileTrue(Funnel.outtake())
         controller.rightBumper().onTrue(
             Commands.sequence(
@@ -381,17 +280,7 @@ object Robot : LoggedRobot() {
             )
         )
 
-        // TODO: find a good button for this if needed
-//        joystickRight.button(2).whileTrue(
-//            Commands.parallel(
-//                Manipulator.intakeNoRaceWithOutInterrupt(),
-//                Funnel.intake()
-//            )
-//        )
-        joystickRight.button(2).whileTrue(Drivetrain.alignToBarge())
-
-//            Manipulator.intake()
-
+        joystickRight.button(2).whileTrue(Drivetrain.alignToBarge(false))
 
 //        controller.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
 //        controller.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
@@ -407,6 +296,10 @@ object Robot : LoggedRobot() {
         if (model == Model.SIMULATION) {
             SimulatedArena.getInstance().resetFieldForAuto()
         }
+    }
+
+    override fun disabledPeriodic() {
+        startingPosition = determineStartingPosition()
     }
 
     override fun simulationPeriodic() {
@@ -440,8 +333,6 @@ object Robot : LoggedRobot() {
         BaseStatusSignal.refreshAll(*Manipulator.getStatusSignals().toTypedArray())
         statusSignals.clear()
 
-        Dashboard.update()
-
         if (Diagnostics.timer.hasElapsed(1.0)) {
             reportDiagnostics()
             Diagnostics.send()
@@ -452,12 +343,38 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        Drivetrain.zeroGyro(true)
-        autoCommand = Dashboard.autoChooser.selected
+        if (beforeFirstEnable)
+            beforeFirstEnable = false
+        // Protection against stupidity (freshmen)
+        // This can only go so far as it assumes the bot is rotated at
+        // exactly 180 degrees for it's starting position
+        // better than starting at some random pose that's likely off the field
+        if (!Drivetrain.tagsVisible) {
+            val alliance = DriverStation.getAlliance().getOrNull()
+            var startingPose: Pose2d
+            startingPose = if (startingPosition == StartingPosition.Left) AutoMode.LEFT_STARTING_POSE else AutoMode.RIGHT_STARTING_POSE
+            if (alliance == DriverStation.Alliance.Red) {
+                startingPose = FlippingUtil.flipFieldPose(startingPose)
+            }
+            Drivetrain.poseEstimator.resetPose(startingPose)
+        }
+        autoCommand = when (Dashboard.autoChooser.selected) {
+            AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
+            AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
+            AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
+            AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
+            AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
+            AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
+            AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()
+            AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+            AutoModes.None -> Commands.none()
+        }
         autoCommand?.schedule()
     }
 
     override fun teleopInit() {
+        if (beforeFirstEnable)
+            beforeFirstEnable = false
         autoCommand?.cancel()
     }
 
@@ -481,5 +398,18 @@ object Robot : LoggedRobot() {
             "prototype" -> Model.PROTOTYPE
             else -> throw AssertionError("Invalid model found in preferences: $key")
         }
+    }
+
+    private fun threadCommand(): Command {
+        return Commands.sequence(
+            Commands.waitSeconds(20.0),
+            Commands.runOnce({
+                Threads.setCurrentThreadPriority(true, 1)
+            }),
+            Commands.runOnce({
+                println("Thread has real-time status: ${Threads.getCurrentThreadIsRealTime()}")
+                println("Thread scheduler priority: ${Threads.getCurrentThreadPriority()}")
+            })
+        ).ignoringDisable(true)
     }
 }
