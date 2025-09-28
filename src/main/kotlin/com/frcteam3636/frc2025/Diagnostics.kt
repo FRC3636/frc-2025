@@ -109,7 +109,7 @@ object Diagnostics {
         // Every second we record an "acceptable" number of errors so that if a
         // motor is plugged in after it has been erroring for a while, the alert will
         // dismiss itself.
-        if (errorResetTimer.hasElapsed(5.seconds)) {
+        if (errorResetTimer.hasElapsed(20.seconds)) {
             knownCANBusErrors[canBus.name] = status.REC + status.TEC
         }
     }
