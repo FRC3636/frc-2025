@@ -20,9 +20,9 @@ object Funnel : Subsystem {
 //    private var motorAngleVisualiser =
 //        LoggedMechanismLigament2d("Funnel Motor Angle", 40.0, 0.0, 5.0, Color8Bit(Color.kRed))
 
-    init {
+//    init {
 //        mechanism.getRoot("Funnel", 50.0, 50.0).apply { append(motorAngleVisualiser) }
-    }
+//    }
 
     override fun periodic() {
         io.updateInputs(inputs)

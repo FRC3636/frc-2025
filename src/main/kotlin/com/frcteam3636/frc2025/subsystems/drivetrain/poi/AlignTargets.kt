@@ -27,7 +27,20 @@ interface AlignableTarget {
     val pose: Pose2d
 }
 
-data class TargetGroup(val targets: Array<AprilTagTarget>)
+data class TargetGroup(val targets: Array<AprilTagTarget>) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TargetGroup
+
+        return targets.contentEquals(other.targets)
+    }
+
+    override fun hashCode(): Int {
+        return targets.contentHashCode()
+    }
+}
 
 data class TargetSelection(
     val group: TargetGroup,
@@ -144,23 +157,6 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
                     else -> blueReefAlgaeTargets
                 }
             }
-
-        val redLeftStationTarget = AprilTagTarget(1, Translation2d())
-        val redRightStationTarget = AprilTagTarget(2, Translation2d())
-        val blueLeftStationTarget = AprilTagTarget(13, Translation2d())
-        val blueRightStationTarget = AprilTagTarget(12, Translation2d())
-
-        val currentAllianceLeftStation
-            get() = when (DriverStation.getAlliance().getOrNull()) {
-                DriverStation.Alliance.Red -> redLeftStationTarget
-                else -> blueLeftStationTarget
-            }
-
-        val currentAllianceRightStation
-            get() = when (DriverStation.getAlliance().getOrNull()) {
-                DriverStation.Alliance.Red -> redRightStationTarget
-                else -> blueRightStationTarget
-            }
     }
 }
 
@@ -236,7 +232,7 @@ class BargeTarget private constructor(override val pose: Pose2d) : AlignableTarg
 fun Iterable<AprilTagTarget>.closestToPose(
     pose: Pose2d,
 ): AprilTagTarget =
-    minByOrNull { it ->
+    minByOrNull {
         it.pose.relativeTo(pose).translation.norm
     } ?: error("Can't find closest target")
 
@@ -267,15 +263,24 @@ fun Iterable<TargetGroup>.closestTargetToPoseWithSelection(
 private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters
 
 private enum class FieldOffset(val distance: Distance) {
+    @Suppress("unused")
     None(0.inches),
+
+    @Suppress("unused")
     Stemnasium(0.75.inches),
+
+    @Suppress("unused")
     ClackamasAcademy(0.25.inches),
+
+    @Suppress("unused")
     Wilsonville(0.25.inches),
+
+    @Suppress("unused")
     DCMP(0.375.inches);
 
     companion object {
-        val current = DCMP
+        val current = Stemnasium
     }
 }
 
-private val REEF_DISTANCE_OFFSET = (-0.5).inches
+private val REEF_DISTANCE_OFFSET = (1.5).inches

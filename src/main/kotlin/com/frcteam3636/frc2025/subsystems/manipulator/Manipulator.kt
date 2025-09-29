@@ -1,12 +1,11 @@
 package com.frcteam3636.frc2025.subsystems.manipulator
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.frcteam3636.frc2025.Robot
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.alignStatePublisher
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
-import com.frcteam3636.frc2025.utils.LimelightHelpers
 import com.frcteam3636.frc2025.utils.math.amps
-import com.frcteam3636.frc2025.utils.math.meters
 import com.frcteam3636.frc2025.utils.math.volts
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj2.command.Command
@@ -37,11 +36,11 @@ object Manipulator : Subsystem {
 
     var isIntakeRunning = false
 
-    init {
+//    init {
 //        mechanism.getRoot("Manipulator", 50.0, 50.0).apply {
 //            append(motorAngleVisualizer)
 //        }
-    }
+//    }
 
     override fun periodic() {
         io.updateInputs(inputs)
@@ -49,16 +48,8 @@ object Manipulator : Subsystem {
 
 //        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
 //        Logger.recordOutput("/Manipulator/Mechanism", mechanism)
-        Logger.recordOutput("/Manipulator/Is Intake Running", isIntakeRunning)
+        Logger.recordOutput("Manipulator/Is Intake Running", isIntakeRunning)
     }
-
-    private fun blinkLimelight(): Command = Commands.runOnce({
-        LimelightHelpers.setLEDMode_ForceBlink("limelight-left")
-    })
-        .andThen(Commands.waitSeconds(0.3))
-        .finallyDo { ->
-            LimelightHelpers.setLEDMode_PipelineControl("limelight-left")
-        }
 
 
     fun idle(): Command = startEnd({
@@ -67,14 +58,19 @@ object Manipulator : Subsystem {
         io.setSpeed(0.0)
     })
 
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return io.getStatusSignals()
+    }
+
     fun intake(driverFeedback: Command = Commands.none()): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
-        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
-        runOnce { io.setVoltage(0.6.volts) },
+        Commands.waitUntil { inputs.isCoralDetected },
+        runOnce { io.setVoltage(1.volts) },
         Commands.runOnce({
             coralState = CoralState.TRANSIT
         }),
-        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        Commands.waitUntil { !inputs.isCoralDetected },
+        runOnce { io.setSpeed(-0.02) },
         Commands.runOnce({
             coralState = CoralState.HELD
             driverFeedback.schedule()
@@ -87,12 +83,12 @@ object Manipulator : Subsystem {
 
     fun intakeAuto(): Command = Commands.sequence(
         runOnce { io.setVoltage(2.0.volts) },
-        Commands.waitUntil { inputs.laserCanDistance < 0.3.meters },
-        runOnce { io.setVoltage(0.6.volts) },
+        Commands.waitUntil { inputs.isCoralDetected },
+        runOnce { io.setVoltage(1.volts) },
         Commands.runOnce({
             coralState = CoralState.TRANSIT
         }),
-        Commands.waitUntil { inputs.laserCanDistance > 0.3.meters },
+        Commands.waitUntil { !inputs.isCoralDetected },
         runOnce { io.setSpeed(-0.02) },
         Commands.runOnce({
             coralState = CoralState.HELD
@@ -100,9 +96,9 @@ object Manipulator : Subsystem {
     )
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
 
-    fun outtake(): Command = runEnd(
+    fun outtake(): Command = startEnd(
         {
-            if (Elevator.position == Elevator.Position.MidBar || Elevator.position == Elevator.Position.LowBar || Elevator.position == Elevator.Position.Stowed) {
+            if (Elevator.position != Elevator.Position.HighBar) {
                 io.setCurrent(40.amps)
             } else {
                 io.setCurrent(50.amps)
@@ -117,7 +113,7 @@ object Manipulator : Subsystem {
         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
 
     fun outtakeAlgae(): Command = startEnd(
-        { io.setCurrent(-60.amps) },
+        { io.setCurrent((-60).amps) },
         {
             io.setSpeed(0.0)
             coralState = CoralState.NONE

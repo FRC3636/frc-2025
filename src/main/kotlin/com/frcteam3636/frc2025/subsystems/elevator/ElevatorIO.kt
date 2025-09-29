@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2025.subsystems.elevator
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage
 import com.ctre.phoenix6.controls.MotionMagicVoltage
@@ -27,7 +28,8 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class ElevatorInputs {
-    var height = 0.meters
+    var leftHeight = 0.meters
+    var rightHeight = 0.meters
     var rightCurrent = 0.amps
     var leftCurrent = 0.amps
     var velocity = 0.metersPerSecond
@@ -44,20 +46,13 @@ interface ElevatorIO {
     fun setEncoderPosition(position: Distance)
 
     fun setBrakeMode(enabled: Boolean) {}
+
+    fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return mutableListOf()
+    }
 }
 
 class ElevatorIOReal : ElevatorIO {
-
-//    private val encoder = CANcoder(CTREDeviceId.ElevatorEncoder).apply {
-//        val config = CANcoderConfiguration().apply {
-//            MagnetSensor.apply {
-//                withAbsoluteSensorDiscontinuityPoint(Rotations.one())
-//                SensorDirection = SensorDirectionValue.Clockwise_Positive
-//            }
-//        }
-//        configurator.apply(config)
-//    }
-
     private val leftConfig = TalonFXConfiguration().apply {
         MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
     }
@@ -98,6 +93,26 @@ class ElevatorIOReal : ElevatorIO {
 //                SupplyCurrentLimit = 20.0
 //            }
         }
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            100.0,
+            leftElevatorMotor.position,
+            rightElevatorMotor.position,
+            leftElevatorMotor.velocity,
+            rightElevatorMotor.supplyCurrent,
+            leftElevatorMotor.supplyCurrent
+        )
+        leftElevatorMotor.optimizeBusUtilization()
+        rightElevatorMotor.optimizeBusUtilization()
+    }
+
+    override fun getStatusSignals(): MutableList<BaseStatusSignal> {
+        return mutableListOf(
+            leftElevatorMotor.getPosition(false),
+            rightElevatorMotor.getPosition(false),
+            leftElevatorMotor.getSupplyCurrent(false),
+            leftElevatorMotor.getVelocity(false),
+            rightElevatorMotor.getSupplyCurrent(false)
+        )
     }
 
     private inline fun configure(config: TalonFXConfiguration.() -> Unit) {
@@ -109,10 +124,11 @@ class ElevatorIOReal : ElevatorIO {
     }
 
     override fun updateInputs(inputs: ElevatorInputs) {
-        inputs.height = leftElevatorMotor.position.value.toLinear(SPOOL_RADIUS)
-        inputs.velocity = leftElevatorMotor.velocity.value.toLinear(SPOOL_RADIUS)
-        inputs.rightCurrent = rightElevatorMotor.supplyCurrent.value
-        inputs.leftCurrent = leftElevatorMotor.supplyCurrent.value
+        inputs.leftHeight = leftElevatorMotor.getPosition(false).value.toLinear(SPOOL_RADIUS)
+        inputs.rightHeight = rightElevatorMotor.getPosition(false).value.toLinear(SPOOL_RADIUS)
+        inputs.velocity = leftElevatorMotor.getVelocity(false).value.toLinear(SPOOL_RADIUS)
+        inputs.rightCurrent = rightElevatorMotor.getSupplyCurrent(false).value
+        inputs.leftCurrent = leftElevatorMotor.getSupplyCurrent(false).value
     }
 
     override fun runToHeight(height: Distance) {
@@ -167,9 +183,10 @@ class ElevatorIOReal : ElevatorIO {
 
         //        private val DISTANCE_PER_TURN = Meters.per(Radian).of(SPOOL_RADIUS.meters)
         private val PID_GAINS = PIDGains(30.0, 0.0, 0.0)
-        private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
-        private const val GRAVITY_GAIN = 0.27592
-        private const val PROFILE_ACCELERATION = 50.0 // TODO: Increase to good setting
+
+        //        private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
+//        private const val GRAVITY_GAIN = 0.27592
+        private const val PROFILE_ACCELERATION = 50.0
         private const val PROFILE_JERK = 0.0
         private val PROFILE_VELOCITY = 350.inchesPerSecond.toAngular(SPOOL_RADIUS)
     }
@@ -206,7 +223,7 @@ class ElevatorIOSim : ElevatorIO {
 
     override fun updateInputs(inputs: ElevatorInputs) {
         elevatorSim.update(Robot.period)
-        inputs.height = elevatorSim.positionMeters.meters
+        inputs.leftHeight = elevatorSim.positionMeters.meters
         inputs.velocity = elevatorSim.velocityMetersPerSecond.metersPerSecond
         inputs.leftCurrent = elevatorSim.currentDrawAmps.amps
         inputs.rightCurrent = elevatorSim.currentDrawAmps.amps
@@ -229,7 +246,7 @@ class ElevatorIOSim : ElevatorIO {
 
     override fun setVoltage(volts: Voltage) {
         elevatorSim.setInputVoltage(volts.inVolts())
-        Logger.recordOutput("/Elevator/OutVolt", volts)
+        Logger.recordOutput("Elevator/OutVolt", volts)
     }
 
     override fun setEncoderPosition(position: Distance) {

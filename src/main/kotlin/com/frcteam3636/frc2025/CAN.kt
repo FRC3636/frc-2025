@@ -1,6 +1,10 @@
+@file:Suppress("unused")
+
 package com.frcteam3636.frc2025
 
+import au.grapplerobotics.LaserCan
 import com.ctre.phoenix6.hardware.CANcoder
+import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.ctre.phoenix6.hardware.TalonFX
 import com.revrobotics.spark.SparkFlex
@@ -19,7 +23,9 @@ enum class REVMotorControllerId(val num: Int) {
     BackLeftDrivingMotor(2),
     BackRightDrivingMotor(3),
     FrontRightDrivingMotor(4),
+}
 
+enum class GrappleRoboticsDeviceId(val num: Int) {
     ManipulatorLaserCAN(21),
 }
 
@@ -40,8 +46,11 @@ enum class CTREDeviceId(val num: Int, val bus: String) {
     FunnelMotor(14, "*"),
     PigeonGyro(20, "*"),
     ElevatorEncoder(30, "*"),
+    CANRange(62, "rio")
 }
 
 fun CANcoder(id: CTREDeviceId) = CANcoder(id.num, id.bus)
 fun TalonFX(id: CTREDeviceId) = TalonFX(id.num, id.bus)
 fun Pigeon2(id: CTREDeviceId) = Pigeon2(id.num, id.bus)
+fun Lasercan(id: GrappleRoboticsDeviceId) = LaserCan(id.num)
+fun CANrange(id: CTREDeviceId) = CANrange(id.num, id.bus)

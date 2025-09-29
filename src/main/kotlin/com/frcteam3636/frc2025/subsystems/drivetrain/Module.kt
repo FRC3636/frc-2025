@@ -1,9 +1,13 @@
 package com.frcteam3636.frc2025.subsystems.drivetrain
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.controls.VoltageOut
-import com.frcteam3636.frc2025.*
+import com.frcteam3636.frc2025.CTREDeviceId
+import com.frcteam3636.frc2025.REVMotorControllerId
+import com.frcteam3636.frc2025.SparkMax
+import com.frcteam3636.frc2025.TalonFX
 import com.frcteam3636.frc2025.utils.math.*
 import com.frcteam3636.frc2025.utils.swerve.speed
 import com.revrobotics.spark.SparkBase
@@ -44,12 +48,16 @@ interface SwerveModule {
     // and magnitude equal to the total signed distance traveled by the wheel.
     val position: SwerveModulePosition
 
+    fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
+
     fun periodic() {}
     fun characterize(voltage: Voltage)
 }
 
 class MAXSwerveModule(
-    private val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
+    val drivingMotor: DrivingMotor, turningId: REVMotorControllerId, private val chassisAngle: Rotation2d
 ) : SwerveModule {
     private val turningSpark = SparkMax(turningId, SparkLowLevel.MotorType.kBrushless).apply {
         configure(SparkMaxConfig().apply {
@@ -72,21 +80,23 @@ class MAXSwerveModule(
         }, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
     }
 
+
     // whereas the turning encoder must be absolute so that
     // we know where the wheel is pointing
     private val turningEncoder = turningSpark.getAbsoluteEncoder()
 
+    private var turningEncoderPosition: Double = turningEncoder.position
 
     private val turningPIDController = turningSpark.closedLoopController
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            drivingMotor.velocity.inMetersPerSecond(), Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.velocity.inMetersPerSecond(), Rotation2d.fromRadians(turningEncoderPosition) + chassisAngle
         )
 
     override val position: SwerveModulePosition
         get() = SwerveModulePosition(
-            drivingMotor.position, Rotation2d.fromRadians(turningEncoder.position) + chassisAngle
+            drivingMotor.position, Rotation2d.fromRadians(turningEncoderPosition) + chassisAngle
         )
 
     override fun characterize(voltage: Voltage) {
@@ -100,7 +110,7 @@ class MAXSwerveModule(
             val corrected = SwerveModuleState(value.speedMetersPerSecond, value.angle - chassisAngle)
             // optimize the state to avoid rotating more than 90 degrees
             corrected.optimize(
-                Rotation2d.fromRadians(turningEncoder.position)
+                Rotation2d.fromRadians(turningEncoderPosition)
             )
 
             drivingMotor.velocity = corrected.speed
@@ -112,12 +122,23 @@ class MAXSwerveModule(
 
             field = corrected
         }
+
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return drivingMotor.getSignals()
+    }
+
+    override fun periodic() {
+        turningEncoderPosition = turningEncoder.position
+    }
 }
 
 interface DrivingMotor {
     val position: Distance
     var velocity: LinearVelocity
     fun setVoltage(voltage: Voltage)
+    fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
 }
 
 class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
@@ -137,20 +158,25 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     }
 
     init {
-        Robot.statusSignals[id.name] = inner.version
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, inner.position, inner.velocity)
+        inner.optimizeBusUtilization()
     }
 
     override val position: Distance
-        get() = inner.position.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.getPosition(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
 
     private var velocityControl = VelocityVoltage(0.0).apply {
         EnableFOC = true
     }
 
     override var velocity: LinearVelocity
-        get() = inner.velocity.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
+        get() = inner.getVelocity(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
         set(value) {
-            inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
+            inner.setControl(
+                velocityControl.withVelocity(
+                    value.toAngular(WHEEL_RADIUS).inRotationsPerSecond() / DRIVING_GEAR_RATIO_TALON
+                )
+            )
         }
 
     private val voltageControl = VoltageOut(0.0).apply {
@@ -159,6 +185,10 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     override fun setVoltage(voltage: Voltage) {
         inner.setControl(voltageControl.withOutput(voltage.inVolts()))
+    }
+
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf(inner.getPosition(false), inner.getVelocity(false))
     }
 }
 
@@ -189,7 +219,7 @@ class DrivingSparkMAX(val id: REVMotorControllerId) : DrivingMotor {
     override var velocity: LinearVelocity
         get() = inner.encoder.velocity.metersPerSecond
         set(value) {
-            Logger.recordOutput("/Drivetrain/$id/OutputVel", value)
+            Logger.recordOutput("Drivetrain/$id/OutputVel", value)
             inner.closedLoopController.setReference(value.inMetersPerSecond(), SparkBase.ControlType.kVelocity)
         }
 
@@ -265,7 +295,7 @@ const val DRIVING_GEAR_RATIO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.
 
 internal val NEO_DRIVING_FREE_SPEED = NEO_FREE_SPEED.toLinear(WHEEL_CIRCUMFERENCE) / DRIVING_GEAR_RATIO
 
-internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(.19426, 0.0)
+internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(.19426, 0.0, 0.0) // FIXME: Tune?
 internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
 internal val DRIVING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(0.22852, 0.1256, 0.022584)
 internal val DRIVING_FF_GAINS_NEO: MotorFFGains =
