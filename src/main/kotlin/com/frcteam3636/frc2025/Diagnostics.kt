@@ -49,7 +49,7 @@ object Diagnostics {
             AlertType.kWarning
         )
 
-        object JitInProgress : RobotAlert("Please wait to enable, JITing in progress.")
+        object JitInProgress : RobotAlert("Please wait to enable, JITing in progress.", AlertType.kWarning)
 
         object JoystickDisconnected :
             RobotAlert("One or more Joysticks have disconnected, driver controls will not work.")
