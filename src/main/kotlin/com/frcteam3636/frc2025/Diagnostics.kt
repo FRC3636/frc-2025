@@ -39,10 +39,11 @@ object Diagnostics {
         )
         object MegaTag1Active : RobotAlert("Megatag V1 is currently in use until the first enable. Please ensure that the robot knows it's rotation before enabling. If there is an Apriltag in view, this is fine.", AlertType.kInfo)
         object MegaTag2Active : RobotAlert("Megatag V2 is now in use for the remainder of this robot code run. If you are experiencing rotation issues, please zero the gyro manually using the button with the yellow tape.", AlertType.kInfo)
-        object SelectedAutoLeft : RobotAlert("The robot has determined it is starting on the LEFT side. If this is wrong please ensure Apriltag visibility.", AlertType.kInfo)
-        object SelectedAutoRight : RobotAlert("The robot has determined it is starting on the RIGHT side. If this is wrong please ensure Apriltag visibility.",
+        object SelectedAutoLeft : RobotAlert("The robot has determined it is starting on the LEFT side. If this is wrong please ensure Apriltag visibility or select a middle auto.", AlertType.kInfo)
+        object SelectedAutoRight : RobotAlert("The robot has determined it is starting on the RIGHT side. If this is wrong please ensure Apriltag visibility or select a middle auto.",
             AlertType.kInfo
         )
+        object SelectedAutoMiddle : RobotAlert("You have selected an auto starting in the MIDDLE. If this is wrong, please pick a different auto.", AlertType.kInfo)
 
         object ThreadNotRealTime : RobotAlert("The main robot thread does not have real-time (RT) priority. Automatic functions may not work as expected and loop overruns may be present until this changes.",
             AlertType.kWarning
@@ -142,14 +143,16 @@ object Diagnostics {
             val selectedAuto = Dashboard.autoChooser.selected
             if (selectedAuto == AutoModes.None)
                 reportAlert(RobotAlert.DubiousAutoChoice)
+            else if (determineStartingPosition() == StartingPosition.Left && selectedAuto.sideRequired)
+                reportAlert(RobotAlert.SelectedAutoLeft)
+            else if (selectedAuto.sideRequired)
+                reportAlert(RobotAlert.SelectedAutoRight)
+            else
+                reportAlert(RobotAlert.SelectedAutoMiddle)
             if (!Robot.gyroOffsetManually && Robot.beforeFirstEnable)
                 reportAlert(RobotAlert.GyroNotZeroedManually)
             if (!Drivetrain.tagsVisible)
                 reportAlert(RobotAlert.NoAutoTags)
-            if (determineStartingPosition() == StartingPosition.Left)
-                reportAlert(RobotAlert.SelectedAutoLeft)
-            else
-                reportAlert(RobotAlert.SelectedAutoRight)
 
             if (!Threads.getCurrentThreadIsRealTime())
                 reportAlert(RobotAlert.ThreadNotRealTime)
@@ -166,7 +169,7 @@ object Diagnostics {
         else
             reportAlert(RobotAlert.MegaTag2Active)
 
-        if (Timer.getTimestamp() >= 45.0)
+        if (Timer.getTimestamp() < 45.0)
             reportAlert(RobotAlert.JitInProgress)
     }
 

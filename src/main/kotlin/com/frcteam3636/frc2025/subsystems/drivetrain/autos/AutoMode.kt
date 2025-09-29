@@ -41,6 +41,7 @@ open class AutoMode {
         val RIGHT_PIECE_THREE = AprilTagTarget(17, ReefBranchSide.Right).pose
         val RIGHT_PICKUP_APRILTAG = AprilTagTarget(12, Translation2d.kZero).pose
         val RIGHT_PICKUP = Pose2d(RIGHT_PICKUP_APRILTAG.translation, RIGHT_PICKUP_APRILTAG.rotation + Rotation2d.k180deg)
+        val MIDDLE_PIECE_ONE = AprilTagTarget(21, ReefBranchSide.Left).pose
         val LEFT_STARTING_POSE = Pose2d(7.277, 6.183, Rotation2d.fromDegrees(180.0))
         val RIGHT_STARTING_POSE = Pose2d(7.277, 1.869, Rotation2d.fromDegrees(180.0))
         val REEF_BACKUP_DISTANCE = 8.inches

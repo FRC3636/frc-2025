@@ -22,14 +22,15 @@ object Dashboard {
     }
 }
 
-enum class AutoModes(val autoName: String, val developerAuto: Boolean = false) {
-    None("None"),
+enum class AutoModes(val autoName: String, val developerAuto: Boolean = false, val sideRequired: Boolean = true) {
+    None("None", sideRequired = false),
     OnePieceCoral("One Piece Coral"),
     TwoPieceCoral("Two Piece Coral"),
     ThreePieceCoral("Three Piece Coral"),
     FourPieceCoral("Four Piece Coral"),
-    TestAutoOneCoral("Test Auto 1 Coral", true),
-    TestAutoTwoCoral("Test Auto 2 Coral", true),
-    TestAutoTwoCoralCurve("Test Auto 2 Coral Curved", true),
-    TestAutoThreeCoral("Test Auto 3 Coral", true),
+    OnePieceCoralMiddle("One Piece Coral Middle", sideRequired = false),
+    TestAutoOneCoral("Test Auto 1 Coral", true, false),
+    TestAutoTwoCoral("Test Auto 2 Coral", true, false),
+    TestAutoTwoCoralCurve("Test Auto 2 Coral Curved", true, false),
+    TestAutoThreeCoral("Test Auto 3 Coral", true, false),
 }

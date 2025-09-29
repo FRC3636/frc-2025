@@ -339,11 +339,12 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
+        val selectedAuto = Dashboard.autoChooser.selected
         // Protection against stupidity (freshmen)
         // This can only go so far as it assumes the bot is rotated at
         // exactly 180 degrees for it's starting position
         // better than starting at some random pose that's likely off the field
-        if (!Drivetrain.tagsVisible) {
+        if (!Drivetrain.tagsVisible && selectedAuto.sideRequired) {
             val alliance = DriverStation.getAlliance().getOrNull()
             var startingPose: Pose2d
             startingPose = if (startingPosition == StartingPosition.Left) AutoMode.LEFT_STARTING_POSE else AutoMode.RIGHT_STARTING_POSE
@@ -357,11 +358,12 @@ object Robot : LoggedRobot() {
         // if the placement sucks
         if (beforeFirstEnable && Drivetrain.tagsVisible)
             beforeFirstEnable = false
-        autoCommand = when (Dashboard.autoChooser.selected) {
+        autoCommand = when (selectedAuto) {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
             AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
             AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
+            AutoModes.OnePieceCoralMiddle -> OnePieceCoralMiddle().autoSequence()
             AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
             AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
             AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()
