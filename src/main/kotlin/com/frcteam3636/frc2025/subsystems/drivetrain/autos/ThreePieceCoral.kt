@@ -22,7 +22,12 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
                     Commands.waitUntil {
                         Manipulator.coralState != CoralState.NONE
                     },
-                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE),
+                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(
+                        reefPose,
+                        DEFAULT_AUTO_CONSTRAINTS,
+                        DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
+                        SLOW_ZONE_DISTANCE
+                    ),
                 ),
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Commands.sequence(

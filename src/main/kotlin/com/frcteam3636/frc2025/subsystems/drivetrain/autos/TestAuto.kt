@@ -13,7 +13,13 @@ class TestAuto() : AutoMode() {
         val reefPose = AprilTagTarget(18, ReefBranchSide.Right).pose
 
         return Commands.sequence(
-            Drivetrain.driveToPointAllianceRelativeWithSlowZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE, SLOW_ZONE_ENTER_VELOCITY),
+            Drivetrain.driveToPointAllianceRelativeWithSlowZone(
+                reefPose,
+                DEFAULT_AUTO_CONSTRAINTS,
+                DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
+                SLOW_ZONE_DISTANCE,
+                SLOW_ZONE_ENTER_VELOCITY
+            ),
             Manipulator.outtake().withTimeout(OUTTAKE_TIMEOUT),
             Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
         )

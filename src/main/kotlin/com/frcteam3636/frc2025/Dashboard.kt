@@ -10,7 +10,11 @@ object Dashboard {
         for (autoMode in AutoModes.entries) {
             if (autoMode == AutoModes.None)
                 setDefaultOption(autoMode.autoName, autoMode)
-            else if (Preferences.getBoolean("developerMode", true) && autoMode.developerAuto && !DriverStation.isFMSAttached()) {
+            else if (Preferences.getBoolean(
+                    "developerMode",
+                    true
+                ) && autoMode.developerAuto && !DriverStation.isFMSAttached()
+            ) {
                 addOption(autoMode.autoName, autoMode)
             } else if (!autoMode.developerAuto)
                 addOption(autoMode.autoName, autoMode)

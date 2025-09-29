@@ -32,7 +32,14 @@ class TestAutoThreeCoral() : AutoMode() {
                         },
                         Commands.waitSeconds(5.0)
                     ),
-                    Drivetrain.driveToPointAllianceRelativeWithSlowZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE, SLOW_ZONE_ENTER_VELOCITY, raisePoint = Elevator.Position.MidBar),
+                    Drivetrain.driveToPointAllianceRelativeWithSlowZone(
+                        reefPose,
+                        DEFAULT_AUTO_CONSTRAINTS,
+                        DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
+                        SLOW_ZONE_DISTANCE,
+                        SLOW_ZONE_ENTER_VELOCITY,
+                        raisePoint = Elevator.Position.MidBar
+                    ),
                 ),
                 Commands.race(
                     Manipulator.intakeAuto(),

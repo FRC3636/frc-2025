@@ -32,7 +32,13 @@ class TestAutoTwoCoral() : AutoMode() {
                         },
                         Commands.waitSeconds(5.0)
                     ),
-                    Drivetrain.driveToPointAllianceRelativeWithSlowZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE, SLOW_ZONE_ENTER_VELOCITY),
+                    Drivetrain.driveToPointAllianceRelativeWithSlowZone(
+                        reefPose,
+                        DEFAULT_AUTO_CONSTRAINTS,
+                        DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
+                        SLOW_ZONE_DISTANCE,
+                        SLOW_ZONE_ENTER_VELOCITY
+                    ),
                 ),
                 Commands.race(
                     Manipulator.intakeAuto(),

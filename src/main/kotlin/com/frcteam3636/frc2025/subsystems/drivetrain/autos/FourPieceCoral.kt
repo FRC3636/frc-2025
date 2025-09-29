@@ -22,8 +22,10 @@ class FourPieceCoral(val side: StartingPosition) : AutoMode() {
                     Commands.waitUntil {
                         Manipulator.coralState != CoralState.NONE
                     },
-                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE,
-                        raisePoint = Elevator.Position.MidBar),
+                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(
+                        reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE, SLOW_ZONE_DISTANCE,
+                        raisePoint = Elevator.Position.MidBar
+                    ),
                 ),
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Commands.sequence(

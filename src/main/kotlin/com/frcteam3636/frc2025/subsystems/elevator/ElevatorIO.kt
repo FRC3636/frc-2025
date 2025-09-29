@@ -93,13 +93,26 @@ class ElevatorIOReal : ElevatorIO {
 //                SupplyCurrentLimit = 20.0
 //            }
         }
-        BaseStatusSignal.setUpdateFrequencyForAll(100.0, leftElevatorMotor.position, rightElevatorMotor.position, leftElevatorMotor.velocity, rightElevatorMotor.supplyCurrent, leftElevatorMotor.supplyCurrent)
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            100.0,
+            leftElevatorMotor.position,
+            rightElevatorMotor.position,
+            leftElevatorMotor.velocity,
+            rightElevatorMotor.supplyCurrent,
+            leftElevatorMotor.supplyCurrent
+        )
         leftElevatorMotor.optimizeBusUtilization()
         rightElevatorMotor.optimizeBusUtilization()
     }
 
     override fun getStatusSignals(): MutableList<BaseStatusSignal> {
-        return mutableListOf(leftElevatorMotor.getPosition(false), rightElevatorMotor.getPosition(false), leftElevatorMotor.getSupplyCurrent(false), leftElevatorMotor.getVelocity(false), rightElevatorMotor.getSupplyCurrent(false))
+        return mutableListOf(
+            leftElevatorMotor.getPosition(false),
+            rightElevatorMotor.getPosition(false),
+            leftElevatorMotor.getSupplyCurrent(false),
+            leftElevatorMotor.getVelocity(false),
+            rightElevatorMotor.getSupplyCurrent(false)
+        )
     }
 
     private inline fun configure(config: TalonFXConfiguration.() -> Unit) {
@@ -170,7 +183,8 @@ class ElevatorIOReal : ElevatorIO {
 
         //        private val DISTANCE_PER_TURN = Meters.per(Radian).of(SPOOL_RADIUS.meters)
         private val PID_GAINS = PIDGains(30.0, 0.0, 0.0)
-//        private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
+
+        //        private val FF_GAINS = MotorFFGains(0.039214, 1.0233, 0.025904)
 //        private const val GRAVITY_GAIN = 0.27592
         private const val PROFILE_ACCELERATION = 50.0
         private const val PROFILE_JERK = 0.0

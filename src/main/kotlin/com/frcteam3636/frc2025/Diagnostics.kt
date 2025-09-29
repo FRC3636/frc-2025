@@ -6,12 +6,8 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Gyro
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.StartingPosition
 import com.frcteam3636.frc2025.subsystems.drivetrain.autos.determineStartingPosition
 import com.frcteam3636.frc2025.utils.cachedStatus
-import edu.wpi.first.wpilibj.Alert
+import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.Alert.AlertType
-import edu.wpi.first.wpilibj.GenericHID
-import edu.wpi.first.wpilibj.RobotController
-import edu.wpi.first.wpilibj.Threads
-import edu.wpi.first.wpilibj.Timer
 
 /**
  * Reports diagnostics and sends notifications to the driver station.
@@ -27,25 +23,52 @@ object Diagnostics {
         val alert = Alert(message, alertType)
 
         object GyroDisconnected : RobotAlert("Failed to connect to gyro, vision and odometry will likely not function.")
-        object LimelightDisconnected : RobotAlert("Failed to connect to one or more LimeLights, vision will be impaired.")
+        object LimelightDisconnected :
+            RobotAlert("Failed to connect to one or more LimeLights, vision will be impaired.")
+
         object DubiousAutoChoice :
             RobotAlert(
                 "There is no auto selected. Are you absolutely sure you **do not** want to run an auto?",
                 AlertType.kWarning
             )
-        object NoAutoTags : RobotAlert("There are no visible Apriltags. Robot will assume a default starting position directly in front of the center cage pointed exactly forward, please ensure Apriltag visibility to have accurate auto routines.", alertType = AlertType.kWarning)
-        object GyroNotZeroedManually : RobotAlert("The gyro has not been zeroed manually. Gyro will be homed to the correct rotation automagically by vision <3.",
-            AlertType.kInfo
-        )
-        object MegaTag1Active : RobotAlert("Megatag V1 is currently in use until the first enable. Please ensure that the robot knows it's rotation before enabling. If there is an Apriltag in view, this is fine.", AlertType.kInfo)
-        object MegaTag2Active : RobotAlert("Megatag V2 is now in use for the remainder of this robot code run. If you are experiencing rotation issues, please zero the gyro manually using the button with the yellow tape.", AlertType.kInfo)
-        object SelectedAutoLeft : RobotAlert("The robot has determined it is starting on the LEFT side. If this is wrong please ensure Apriltag visibility or select a middle auto.", AlertType.kInfo)
-        object SelectedAutoRight : RobotAlert("The robot has determined it is starting on the RIGHT side. If this is wrong please ensure Apriltag visibility or select a middle auto.",
-            AlertType.kInfo
-        )
-        object SelectedAutoMiddle : RobotAlert("You have selected an auto starting in the MIDDLE. If this is wrong, please pick a different auto.", AlertType.kInfo)
 
-        object ThreadNotRealTime : RobotAlert("The main robot thread does not have real-time (RT) priority. Automatic functions may not work as expected and loop overruns may be present until this changes.",
+        object NoAutoTags : RobotAlert(
+            "There are no visible Apriltags. Robot will assume a default starting position directly in front of the center cage pointed exactly forward, please ensure Apriltag visibility to have accurate auto routines.",
+            alertType = AlertType.kWarning
+        )
+
+        object GyroNotZeroedManually : RobotAlert(
+            "The gyro has not been zeroed manually. Gyro will be homed to the correct rotation automagically by vision <3.",
+            AlertType.kInfo
+        )
+
+        object MegaTag1Active : RobotAlert(
+            "Megatag V1 is currently in use until the first enable. Please ensure that the robot knows it's rotation before enabling. If there is an Apriltag in view, this is fine.",
+            AlertType.kInfo
+        )
+
+        object MegaTag2Active : RobotAlert(
+            "Megatag V2 is now in use for the remainder of this robot code run. If you are experiencing rotation issues, please zero the gyro manually using the button with the yellow tape.",
+            AlertType.kInfo
+        )
+
+        object SelectedAutoLeft : RobotAlert(
+            "The robot has determined it is starting on the LEFT side. If this is wrong please ensure Apriltag visibility or select a middle auto.",
+            AlertType.kInfo
+        )
+
+        object SelectedAutoRight : RobotAlert(
+            "The robot has determined it is starting on the RIGHT side. If this is wrong please ensure Apriltag visibility or select a middle auto.",
+            AlertType.kInfo
+        )
+
+        object SelectedAutoMiddle : RobotAlert(
+            "You have selected an auto starting in the MIDDLE. If this is wrong, please pick a different auto.",
+            AlertType.kInfo
+        )
+
+        object ThreadNotRealTime : RobotAlert(
+            "The main robot thread does not have real-time (RT) priority. Automatic functions may not work as expected and loop overruns may be present until this changes.",
             AlertType.kWarning
         )
 
@@ -63,7 +86,10 @@ object Diagnostics {
                 AlertType.kWarning
             )
 
-        object LowBatteryVoltage : RobotAlert("Battery voltage is very low, consider turning off the robot or replacing the battery.", AlertType.kWarning)
+        object LowBatteryVoltage : RobotAlert(
+            "Battery voltage is very low, consider turning off the robot or replacing the battery.",
+            AlertType.kWarning
+        )
 
 
         class CAN private constructor(bus: CANBus) {

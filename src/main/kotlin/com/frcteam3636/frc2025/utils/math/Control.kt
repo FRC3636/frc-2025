@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.frcteam3636.frc2025.utils.math
 
 import com.ctre.phoenix6.configs.Slot0Configs

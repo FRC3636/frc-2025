@@ -30,7 +30,8 @@ open class AutoMode {
         val SLOW_ZONE_DISTANCE = 2.feet
         val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
         val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(10.0, 4.0, 2 * Math.PI, 4 * Math.PI)
-        val DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE = PathConstraints(SLOW_ZONE_ENTER_VELOCITY.inMetersPerSecond(), 2.0, 2 * Math.PI, 4 * Math.PI)
+        val DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE =
+            PathConstraints(SLOW_ZONE_ENTER_VELOCITY.inMetersPerSecond(), 2.0, 2 * Math.PI, 4 * Math.PI)
         val LEFT_PIECE_ONE = AprilTagTarget(20, ReefBranchSide.Right).pose
         val LEFT_PIECE_TWO = AprilTagTarget(19, ReefBranchSide.Left).pose
         val LEFT_PIECE_THREE = AprilTagTarget(19, ReefBranchSide.Right).pose
@@ -40,7 +41,8 @@ open class AutoMode {
         val RIGHT_PIECE_TWO = AprilTagTarget(17, ReefBranchSide.Left).pose
         val RIGHT_PIECE_THREE = AprilTagTarget(17, ReefBranchSide.Right).pose
         val RIGHT_PICKUP_APRILTAG = AprilTagTarget(12, Translation2d.kZero).pose
-        val RIGHT_PICKUP = Pose2d(RIGHT_PICKUP_APRILTAG.translation, RIGHT_PICKUP_APRILTAG.rotation + Rotation2d.k180deg)
+        val RIGHT_PICKUP =
+            Pose2d(RIGHT_PICKUP_APRILTAG.translation, RIGHT_PICKUP_APRILTAG.rotation + Rotation2d.k180deg)
         val MIDDLE_PIECE_ONE = AprilTagTarget(21, ReefBranchSide.Left).pose
         val LEFT_STARTING_POSE = Pose2d(7.277, 6.183, Rotation2d.fromDegrees(180.0))
         val RIGHT_STARTING_POSE = Pose2d(7.277, 1.869, Rotation2d.fromDegrees(180.0))
@@ -74,6 +76,5 @@ fun determineStartingPosition(): StartingPosition {
 
 enum class StartingPosition {
     Left,
-//    Middle,
     Right
 }

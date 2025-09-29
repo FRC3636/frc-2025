@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.frcteam3636.frc2025.utils.swerve
 
 import com.frcteam3636.frc2025.utils.math.inMetersPerSecond

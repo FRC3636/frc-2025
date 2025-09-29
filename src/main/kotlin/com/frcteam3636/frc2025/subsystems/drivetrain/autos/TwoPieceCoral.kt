@@ -20,11 +20,20 @@ class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
             OnePieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Commands.sequence(
-                    Drivetrain.driveToPointAllianceRelativeWithMiddlePoint(pickupPose, DEFAULT_AUTO_CONSTRAINTS, firstReefPose.backup(REEF_BACKUP_DISTANCE)),
+                    Drivetrain.driveToPointAllianceRelativeWithMiddlePoint(
+                        pickupPose,
+                        DEFAULT_AUTO_CONSTRAINTS,
+                        firstReefPose.backup(REEF_BACKUP_DISTANCE)
+                    ),
                     Commands.waitUntil {
                         Manipulator.coralState != CoralState.NONE
                     },
-                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,SLOW_ZONE_DISTANCE),
+                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(
+                        reefPose,
+                        DEFAULT_AUTO_CONSTRAINTS,
+                        DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
+                        SLOW_ZONE_DISTANCE
+                    ),
                 ),
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Commands.sequence(

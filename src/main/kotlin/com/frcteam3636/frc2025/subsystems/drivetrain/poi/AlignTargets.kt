@@ -265,12 +265,16 @@ private val APRIL_TAG_HORIZONTAL_OFFSET = 0.147525.meters
 private enum class FieldOffset(val distance: Distance) {
     @Suppress("unused")
     None(0.inches),
+
     @Suppress("unused")
     Stemnasium(0.75.inches),
+
     @Suppress("unused")
     ClackamasAcademy(0.25.inches),
+
     @Suppress("unused")
     Wilsonville(0.25.inches),
+
     @Suppress("unused")
     DCMP(0.375.inches);
 

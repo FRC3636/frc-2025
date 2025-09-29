@@ -200,7 +200,8 @@ object Robot : LoggedRobot() {
             Drivetrain.currentTargetSelection = ReefBranchSide.Right
         }))
 
-        joystickLeft.button(1).whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.5, usePathfinding = false))
+        joystickLeft.button(1)
+            .whileTrue(Drivetrain.alignToClosestPOI(endConditionTimeout = 0.5, usePathfinding = false))
 
         joystickRight.povUp().whileTrue(
             Drivetrain.alignToReefAlgae(false)
@@ -221,7 +222,6 @@ object Robot : LoggedRobot() {
             println("Zeroing gyro.")
             Drivetrain.zeroGyro(offset = Rotation2d.fromDegrees(-60.0))
         }).ignoringDisable(true))
-
 
 
         // Left close middle
@@ -347,7 +347,8 @@ object Robot : LoggedRobot() {
         if (!Drivetrain.tagsVisible && selectedAuto.sideRequired) {
             val alliance = DriverStation.getAlliance().getOrNull()
             var startingPose: Pose2d
-            startingPose = if (startingPosition == StartingPosition.Left) AutoMode.LEFT_STARTING_POSE else AutoMode.RIGHT_STARTING_POSE
+            startingPose =
+                if (startingPosition == StartingPosition.Left) AutoMode.LEFT_STARTING_POSE else AutoMode.RIGHT_STARTING_POSE
             if (alliance == DriverStation.Alliance.Red) {
                 startingPose = FlippingUtil.flipFieldPose(startingPose)
             }

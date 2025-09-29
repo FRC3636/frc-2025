@@ -48,7 +48,10 @@ interface SwerveModule {
     // and magnitude equal to the total signed distance traveled by the wheel.
     val position: SwerveModulePosition
 
-    fun getSignals(): Array<BaseStatusSignal> { return arrayOf() }
+    fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
+
     fun periodic() {}
     fun characterize(voltage: Voltage)
 }
@@ -169,7 +172,11 @@ class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
     override var velocity: LinearVelocity
         get() = inner.getVelocity(false).value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
         set(value) {
-            inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS).inRotationsPerSecond() / DRIVING_GEAR_RATIO_TALON))
+            inner.setControl(
+                velocityControl.withVelocity(
+                    value.toAngular(WHEEL_RADIUS).inRotationsPerSecond() / DRIVING_GEAR_RATIO_TALON
+                )
+            )
         }
 
     private val voltageControl = VoltageOut(0.0).apply {

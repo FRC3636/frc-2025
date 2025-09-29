@@ -61,7 +61,13 @@ class GyroNavX(private val ahrs: AHRS) : Gyro {
 
 class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
     init {
-        BaseStatusSignal.setUpdateFrequencyForAll(100.0, pigeon.yaw, pigeon.pitch, pigeon.roll, pigeon.angularVelocityZWorld)
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            100.0,
+            pigeon.yaw,
+            pigeon.pitch,
+            pigeon.roll,
+            pigeon.angularVelocityZWorld
+        )
     }
 
     override var rotation: Rotation2d
@@ -78,7 +84,12 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
         get() = pigeon.getYaw(false).status.isOK
 
     override fun getStatusSignals(): Array<BaseStatusSignal> {
-        return arrayOf(pigeon.getYaw(false), pigeon.getPitch(false), pigeon.getRoll(false), pigeon.getAngularVelocityZWorld(false))
+        return arrayOf(
+            pigeon.getYaw(false),
+            pigeon.getPitch(false),
+            pigeon.getRoll(false),
+            pigeon.getAngularVelocityZWorld(false)
+        )
     }
 }
 

@@ -1,4 +1,5 @@
 @file:Suppress("unused", "UnusedReceiverParameter")
+
 package com.frcteam3636.frc2025.utils.math
 
 import edu.wpi.first.math.geometry.Pose2d

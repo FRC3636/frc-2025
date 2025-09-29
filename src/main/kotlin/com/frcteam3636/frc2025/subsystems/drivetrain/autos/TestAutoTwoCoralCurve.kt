@@ -32,7 +32,11 @@ class TestAutoTwoCoralCurve() : AutoMode() {
             Manipulator.outtake().withTimeout(OUTTAKE_TIMEOUT),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
-                Drivetrain.driveToPointAllianceRelativeWithMiddlePoint(pickupPose, DEFAULT_AUTO_CONSTRAINTS, firstReefPose.backup(2.feet))
+                Drivetrain.driveToPointAllianceRelativeWithMiddlePoint(
+                    pickupPose,
+                    DEFAULT_AUTO_CONSTRAINTS,
+                    firstReefPose.backup(2.feet)
+                )
             ),
             Commands.parallel(
                 Commands.sequence(
