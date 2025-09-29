@@ -357,7 +357,7 @@ object Robot : LoggedRobot() {
         // We shall keep the robot on MT1 as well to try and
         // get the estimated pose up to date and correct
         // if the placement sucks
-        if (beforeFirstEnable && Drivetrain.tagsVisible)
+        if (beforeFirstEnable && !Drivetrain.tagsVisible)
             beforeFirstEnable = false
         autoCommand = when (selectedAuto) {
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
