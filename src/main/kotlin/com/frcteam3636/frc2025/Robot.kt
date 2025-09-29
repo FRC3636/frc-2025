@@ -64,6 +64,8 @@ object Robot : LoggedRobot() {
     private val joystickDev = Joystick(3)
 
     private var autoCommand: Command? = null
+    private var lastSelectedAuto = AutoModes.None
+    private var lastSelectedStartingPosition = StartingPosition.Left
 
     private val rioCANBus = CANBus("rio")
     private val canivore = CANBus("*")
@@ -96,7 +98,18 @@ object Robot : LoggedRobot() {
         threadCommand().schedule()
     }
 
-    /** Start logging or pull replay logs from a file */
+    /** Start logging or pull re        autoCommand = when (selectedAuto) {
+            AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
+            AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
+            AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
+            AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
+            AutoModes.OnePieceCoralMiddle -> OnePieceCoralMiddle().autoSequence()
+            AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
+            AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
+            AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()
+            AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+            AutoModes.None -> Commands.none()
+        }play logs from a file */
     private fun configureAdvantageKit() {
         Logger.recordMetadata("Git SHA", GIT_SHA)
         Logger.recordMetadata("Build Date", BUILD_DATE)
@@ -295,7 +308,24 @@ object Robot : LoggedRobot() {
     }
 
     override fun disabledPeriodic() {
+        val selectedAuto = Dashboard.autoChooser.selected
         startingPosition = determineStartingPosition()
+        if (lastSelectedAuto != selectedAuto || lastSelectedStartingPosition != startingPosition) {
+            lastSelectedAuto = selectedAuto
+            lastSelectedStartingPosition = startingPosition
+            autoCommand = when (selectedAuto) {
+                AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
+                AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
+                AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
+                AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
+                AutoModes.OnePieceCoralMiddle -> OnePieceCoralMiddle().autoSequence()
+                AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
+                AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
+                AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()
+                AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+                AutoModes.None -> Commands.none()
+            }
+        }
     }
 
     override fun simulationPeriodic() {
@@ -359,18 +389,6 @@ object Robot : LoggedRobot() {
         // if the placement sucks
         if (beforeFirstEnable && !Drivetrain.tagsVisible)
             beforeFirstEnable = false
-        autoCommand = when (selectedAuto) {
-            AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
-            AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
-            AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
-            AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
-            AutoModes.OnePieceCoralMiddle -> OnePieceCoralMiddle().autoSequence()
-            AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
-            AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
-            AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()
-            AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
-            AutoModes.None -> Commands.none()
-        }
         autoCommand?.schedule()
     }
 
