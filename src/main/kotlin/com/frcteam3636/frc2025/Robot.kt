@@ -98,18 +98,7 @@ object Robot : LoggedRobot() {
         threadCommand().schedule()
     }
 
-    /** Start logging or pull re        autoCommand = when (selectedAuto) {
-            AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
-            AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
-            AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
-            AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
-            AutoModes.OnePieceCoralMiddle -> OnePieceCoralMiddle().autoSequence()
-            AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
-            AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
-            AutoModes.TestAutoTwoCoralCurve -> TestAutoTwoCoralCurve().autoSequence()
-            AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
-            AutoModes.None -> Commands.none()
-        }play logs from a file */
+    /** Start logging or pull replay logs from a file */
     private fun configureAdvantageKit() {
         Logger.recordMetadata("Git SHA", GIT_SHA)
         Logger.recordMetadata("Build Date", BUILD_DATE)
