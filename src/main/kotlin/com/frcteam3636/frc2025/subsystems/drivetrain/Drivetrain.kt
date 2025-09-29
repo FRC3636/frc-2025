@@ -428,6 +428,8 @@ object Drivetrain : Subsystem {
             }
 
             assert(startingPose.translation != updatedTargetPose.translation)
+            assert(startingPose.translation != middlePoint.translation)
+            assert(middlePoint .translation != updatedTargetPose.translation)
 
             startingPose = Pose2d(startingPose.translation, headingToMiddlePoint)
             val waypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
@@ -472,6 +474,8 @@ object Drivetrain : Subsystem {
             }
 
             assert(startingPose.translation != updatedTargetPose.translation)
+            assert(slowZoneStart.translation != updatedTargetPose.translation)
+            assert(slowZoneStart.translation != startingPose.translation)
 
             startingPose = Pose2d(startingPose.translation, heading)
             val firstPathWaypoints: List<Waypoint> = PathPlannerPath.waypointsFromPoses(
