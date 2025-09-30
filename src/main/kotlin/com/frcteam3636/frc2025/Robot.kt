@@ -120,11 +120,11 @@ object Robot : LoggedRobot() {
             // Enables power distribution logging
             if (model == Model.COMPETITION) {
                 PowerDistribution(
-                    0, PowerDistribution.ModuleType.kRev
+                    1, PowerDistribution.ModuleType.kRev
                 )
             } else {
                 PowerDistribution(
-                    0, PowerDistribution.ModuleType.kCTRE
+                    1, PowerDistribution.ModuleType.kCTRE
                 )
             }
         } else {
