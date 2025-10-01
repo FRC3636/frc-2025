@@ -8,6 +8,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.autos.*
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
+import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.frc2025.utils.math.volts
@@ -233,7 +234,9 @@ object Robot : LoggedRobot() {
 
         joystickLeft.button(14).onTrue(Elevator.runHoming())
 
-        controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
+        controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf {
+            !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar)
+        })
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
