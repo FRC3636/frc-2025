@@ -49,6 +49,7 @@ object Manipulator : Subsystem {
 //        motorAngleVisualizer.angle += inputs.velocity.inDegreesPerSecond() * Robot.period
 //        Logger.recordOutput("/Manipulator/Mechanism", mechanism)
         Logger.recordOutput("Manipulator/Is Intake Running", isIntakeRunning)
+        Logger.recordOutput("Manipulator/Coral State", coralState.name)
     }
 
 
