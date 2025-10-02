@@ -49,8 +49,6 @@ open class AutoMode {
         val REEF_BACKUP_DISTANCE = 8.inches
         val INTAKE_START_DISTANCE = 2.feet
         const val OUTTAKE_TIMEOUT = 0.3
-        const val ELEVATOR_DEPLOYMENT_TIME_FIRST_PIECE = 1.5
-        const val ELEVATOR_DEPLOYMENT_TIME_OTHER_PIECE = 1.5
     }
 }
 
