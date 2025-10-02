@@ -166,7 +166,7 @@ object Diagnostics {
 
         // To save loop times, don't bother checking these if enabled
         if (Robot.isDisabled) {
-            val selectedAuto = Dashboard.autoChooser.selected
+            val selectedAuto = Dashboard.autoChooser.get()
             if (selectedAuto == AutoModes.None)
                 reportAlert(RobotAlert.DubiousAutoChoice)
             else if (determineStartingPosition() == StartingPosition.Left && selectedAuto.sideRequired)

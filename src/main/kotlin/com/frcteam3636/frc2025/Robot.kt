@@ -297,7 +297,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun disabledPeriodic() {
-        val selectedAuto = Dashboard.autoChooser.selected
+        val selectedAuto = Dashboard.autoChooser.get()
         startingPosition = determineStartingPosition()
         if (lastSelectedAuto != selectedAuto || lastSelectedStartingPosition != startingPosition) {
             lastSelectedAuto = selectedAuto
@@ -357,7 +357,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        val selectedAuto = Dashboard.autoChooser.selected
+        val selectedAuto = Dashboard.autoChooser.get()
         // Protection against stupidity (freshmen)
         // This can only go so far as it assumes the bot is rotated at
         // exactly 180 degrees for it's starting position
