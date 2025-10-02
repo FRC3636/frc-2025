@@ -237,8 +237,12 @@ object Robot : LoggedRobot() {
         controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf {
             !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar)
         })
-        controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
-        controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
+        controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar).onlyIf {
+            !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar)
+        })
+        controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar).onlyIf {
+            !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar)
+        })
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
         controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
         joystickLeft.button(2).onTrue(
