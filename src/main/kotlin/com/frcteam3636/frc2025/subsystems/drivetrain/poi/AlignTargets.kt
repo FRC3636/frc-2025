@@ -279,7 +279,7 @@ private enum class FieldOffset(val distance: Distance) {
     DCMP(0.375.inches),
 
     @Suppress("unused")
-    GirlsGenerationAndFIRSTChance(0.5.inches);
+    GirlsGenerationAndFIRSTChance(0.2.inches);
 
     companion object {
         val current = GirlsGenerationAndFIRSTChance
