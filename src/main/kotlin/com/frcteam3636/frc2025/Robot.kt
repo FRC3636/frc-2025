@@ -296,7 +296,6 @@ object Robot : LoggedRobot() {
         }
     }
 
-    // worked in sim. hasn't been tested on a real robot. should just work.
     override fun disabledPeriodic() {
         val selectedAuto = Dashboard.autoChooser.selected
         startingPosition = determineStartingPosition()
