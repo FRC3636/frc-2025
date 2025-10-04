@@ -238,12 +238,14 @@ object Robot : LoggedRobot() {
             !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar)
         })
         controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar).onlyIf {
-            !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar)
+            !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar) && (Manipulator.coralState != CoralState.TRANSIT)
         })
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar).onlyIf {
-            !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar)
+            !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar) && (Manipulator.coralState != CoralState.TRANSIT)
         })
-        controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
+        controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar).onlyIf {
+            Manipulator.coralState != CoralState.TRANSIT
+        })
         controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
         joystickLeft.button(2).onTrue(
             tossAlgae()
