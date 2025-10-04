@@ -30,6 +30,7 @@ import org.photonvision.PhotonPoseEstimator
 import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
 import java.nio.ByteBuffer
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.thread
 
 class AbsolutePoseProviderInputs : LoggableInputs {
@@ -119,7 +120,6 @@ class LimelightPoseProvider(
     private var observedTags = intArrayOf()
 
     private var measurement: AbsolutePoseMeasurement? = null
-    private var mutex = Any()
 
     private var lastSeenHb: Double = 0.0
     private var hbSub = NetworkTableInstance.getDefault().getTable(name).getDoubleTopic("hb").subscribe(0.0)
@@ -127,14 +127,16 @@ class LimelightPoseProvider(
 
     private var currentAlgorithm: LimelightAlgorithm = LimelightAlgorithm.MegaTag
 
+    private val lock = ReentrantLock()
+
     init {
         thread(isDaemon = true) {
             while (true) {
                 val temp = updateCurrentMeasurement()
-                synchronized(mutex) {
-                    measurement = temp.poseMeasurement
-                    observedTags = temp.observedTags
-                }
+                lock.lock()
+                measurement = temp.poseMeasurement
+                observedTags = temp.observedTags
+                lock.unlock()
                 Thread.sleep(Robot.period.toLong())
             }
         }
@@ -196,10 +198,10 @@ class LimelightPoseProvider(
     }
 
     override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
-        synchronized(mutex) {
-            inputs.measurement = measurement
-            inputs.observedTags = observedTags
-        }
+        lock.lock()
+        inputs.measurement = measurement
+        inputs.observedTags = observedTags
+        lock.unlock()
 
         // We assume the camera has disconnected if there are no new updates for several ticks.
         val hb = hbSub.get()
