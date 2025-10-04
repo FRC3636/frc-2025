@@ -37,7 +37,6 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.jvm.optionals.getOrNull
@@ -72,7 +71,6 @@ object Robot : LoggedRobot() {
     private val canivore = CANBus("*")
 
     var beforeFirstEnable = true
-    val beforeFirstEnableLock = ReentrantLock()
 
     var gyroOffsetManually = false
 
@@ -377,18 +375,14 @@ object Robot : LoggedRobot() {
         // We shall keep the robot on MT1 as well to try and
         // get the estimated pose up to date and correct
         // if the placement sucks
-        beforeFirstEnableLock.lock()
         if (beforeFirstEnable && Drivetrain.tagsVisible)
             beforeFirstEnable = false
-        beforeFirstEnableLock.unlock()
         autoCommand?.schedule()
     }
 
     override fun teleopInit() {
-        beforeFirstEnableLock.lock()
         if (beforeFirstEnable)
             beforeFirstEnable = false
-        beforeFirstEnableLock.unlock()
         autoCommand?.cancel()
     }
 

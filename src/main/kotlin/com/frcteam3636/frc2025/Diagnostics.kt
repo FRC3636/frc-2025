@@ -175,10 +175,8 @@ object Diagnostics {
                 reportAlert(RobotAlert.SelectedAutoRight)
             else
                 reportAlert(RobotAlert.SelectedAutoMiddle)
-            Robot.beforeFirstEnableLock.lock()
             if (!Robot.gyroOffsetManually && Robot.beforeFirstEnable)
                 reportAlert(RobotAlert.GyroNotZeroedManually)
-            Robot.beforeFirstEnableLock.unlock()
             if (!Drivetrain.tagsVisible)
                 reportAlert(RobotAlert.NoAutoTags)
 
@@ -192,12 +190,10 @@ object Diagnostics {
         if (!Drivetrain.limelightsConnected)
             reportAlert(RobotAlert.LimelightDisconnected)
 
-        Robot.beforeFirstEnableLock.lock()
         if (Robot.beforeFirstEnable)
             reportAlert(RobotAlert.MegaTag1Active)
         else
             reportAlert(RobotAlert.MegaTag2Active)
-        Robot.beforeFirstEnableLock.unlock()
 
         if (Timer.getTimestamp() < 45.0)
             reportAlert(RobotAlert.JitInProgress)
