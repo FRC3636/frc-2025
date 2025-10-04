@@ -175,6 +175,7 @@ object Diagnostics {
                 reportAlert(RobotAlert.SelectedAutoRight)
             else
                 reportAlert(RobotAlert.SelectedAutoMiddle)
+            Robot.beforeFirstEnableLock.lock()
             if (!Robot.gyroOffsetManually && Robot.beforeFirstEnable)
                 reportAlert(RobotAlert.GyroNotZeroedManually)
             if (!Drivetrain.tagsVisible)
@@ -194,6 +195,7 @@ object Diagnostics {
             reportAlert(RobotAlert.MegaTag1Active)
         else
             reportAlert(RobotAlert.MegaTag2Active)
+        Robot.beforeFirstEnableLock.unlock()
 
         if (Timer.getTimestamp() < 45.0)
             reportAlert(RobotAlert.JitInProgress)
