@@ -433,10 +433,10 @@ object Robot : LoggedRobot() {
     }
 
     override fun teleopPeriodic() {
-        if (Drivetrain.inputs.gyroRoll.abs(Units.Degrees) > 12.5) {
-            preventTip().schedule()
-            tipPreventionInProgress = true
-        }
+//        if (Drivetrain.inputs.gyroRoll.abs(Units.Degrees) > 12.5) {
+//            preventTip().schedule()
+//            tipPreventionInProgress = true
+//        }
     }
 
     override fun testInit() {

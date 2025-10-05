@@ -32,7 +32,7 @@ open class AutoMode {
         val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(10.0, 4.0, 2 * Math.PI, 4 * Math.PI)
         val DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE =
             PathConstraints(SLOW_ZONE_ENTER_VELOCITY.inMetersPerSecond(), 2.0, 2 * Math.PI, 4 * Math.PI)
-        val DEFAULT_AUTO_CONSTRAINTS_PICKUP = PathConstraints(7.0, 2.0, 2 * Math.PI, 4 * Math.PI)
+        val DEFAULT_AUTO_CONSTRAINTS_PICKUP = PathConstraints(4.75, 2.0, 2 * Math.PI, 4 * Math.PI)
         val LEFT_PIECE_ONE = AprilTagTarget(20, ReefBranchSide.Right).pose
         val LEFT_PIECE_TWO = AprilTagTarget(19, ReefBranchSide.Left).pose
         val LEFT_PIECE_THREE = AprilTagTarget(19, ReefBranchSide.Right).pose
