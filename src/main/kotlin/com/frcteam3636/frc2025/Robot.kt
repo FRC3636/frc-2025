@@ -10,6 +10,7 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
+import com.frcteam3636.frc2025.utils.math.degrees
 import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.frc2025.utils.math.volts
 import com.frcteam3636.frc2025.utils.rumble
@@ -24,6 +25,7 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.units.Units
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
@@ -41,6 +43,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.jvm.optionals.getOrNull
+import kotlin.math.abs
 
 
 /**
@@ -76,6 +79,8 @@ object Robot : LoggedRobot() {
     var gyroOffsetManually = false
 
     var startingPosition = StartingPosition.Left
+
+    var tipPreventionInProgress = false
 
     override fun robotInit() {
         // Report the use of the Kotlin Language for "FRC Usage Report" statistics
@@ -169,6 +174,9 @@ object Robot : LoggedRobot() {
     }
 
     private fun tossAlgae(): Command = Commands.sequence(
+        Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf {
+            Elevator.position != Elevator.Position.Stowed
+        },
         Commands.parallel(
             Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
             Commands.sequence(
@@ -187,6 +195,15 @@ object Robot : LoggedRobot() {
         ),
         Elevator.setTargetHeight(Elevator.Position.Stowed)
     )
+
+    private fun preventTip(): Command = Commands.parallel(
+        Manipulator.outtake().withTimeout(2.0),
+        Elevator.setTargetHeight(Elevator.Position.Stowed)
+    ).onlyIf {
+        !tipPreventionInProgress
+    }.andThen({
+        tipPreventionInProgress = false
+    })
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
@@ -246,7 +263,9 @@ object Robot : LoggedRobot() {
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar).onlyIf {
             Manipulator.coralState != CoralState.TRANSIT
         })
-        controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
+        controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar).onlyIf {
+            !(Manipulator.coralState != CoralState.NONE && Elevator.position == Elevator.Position.HighBar) && (Manipulator.coralState != CoralState.TRANSIT)
+        })
         joystickLeft.button(2).onTrue(
             tossAlgae()
         )
@@ -266,10 +285,13 @@ object Robot : LoggedRobot() {
                         )
                     ),
                     Funnel.intake()
-                )
-            ).andThen({
-                Manipulator.isIntakeRunning = false
-            })
+                ),
+                Commands.runOnce({
+                    Manipulator.isIntakeRunning = false
+                })
+            ).onlyIf {
+                Elevator.position == Elevator.Position.Stowed
+            }
         )
 
         controller.rightTrigger().onTrue(
@@ -408,6 +430,13 @@ object Robot : LoggedRobot() {
         if (beforeFirstEnable)
             beforeFirstEnable = false
         autoCommand?.cancel()
+    }
+
+    override fun teleopPeriodic() {
+        if (Drivetrain.inputs.gyroRoll.abs(Units.Degrees) > 12.5) {
+            preventTip().schedule()
+            tipPreventionInProgress = true
+        }
     }
 
     override fun testInit() {

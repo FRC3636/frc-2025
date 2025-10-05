@@ -859,7 +859,7 @@ object Drivetrain : Subsystem {
         val BRAKE_POSITION = MODULE_POSITIONS.map { position -> SwerveModuleState(0.0, position.translation.angle) }
 
 
-        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(20.0)
+        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(22.0)
         val ALIGN_ROTATION_PID_GAINS = PIDGains(5.0)
     }
 }

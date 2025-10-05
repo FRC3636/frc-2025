@@ -10,6 +10,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.BUMPER
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.TRACK_WIDTH
 import com.frcteam3636.frc2025.subsystems.drivetrain.Drivetrain.Constants.WHEEL_BASE
+import com.frcteam3636.frc2025.utils.math.degrees
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import com.frcteam3636.frc2025.utils.math.kilogramSquareMeters
 import com.frcteam3636.frc2025.utils.math.volts
@@ -36,6 +37,7 @@ import org.team9432.annotation.Logged
 open class DrivetrainInputs {
     var gyroRotation = Rotation2d()
     var gyroVelocity = 0.degreesPerSecond
+    var gyroRoll = 0.degrees
     var gyroConnected = true
     var measuredStates = PerCorner.generate { SwerveModuleState() }
     var measuredPositions = PerCorner.generate { SwerveModulePosition() }
@@ -53,6 +55,7 @@ abstract class DrivetrainIO {
         inputs.gyroRotation = gyro.rotation
         inputs.gyroVelocity = gyro.velocity
         inputs.gyroConnected = gyro.connected
+        inputs.gyroRoll = gyro.roll
         inputs.measuredStates = modules.map { it.state }
         inputs.measuredPositions = modules.map { it.position }
     }

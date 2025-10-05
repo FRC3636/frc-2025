@@ -3,6 +3,7 @@ package com.frcteam3636.frc2025.subsystems.drivetrain
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2025.Robot
+import com.frcteam3636.frc2025.utils.math.degrees
 import com.frcteam3636.frc2025.utils.math.degreesPerSecond
 import com.frcteam3636.frc2025.utils.math.radiansPerSecond
 import com.frcteam3636.frc2025.utils.swerve.PerCorner
@@ -10,6 +11,7 @@ import com.frcteam3636.frc2025.utils.swerve.translation2dPerSecond
 import com.studica.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import org.ironmaple.simulation.drivesims.GyroSimulation
 import org.littletonrobotics.junction.Logger
@@ -29,6 +31,8 @@ interface Gyro {
 
     /** Whether the gyro is connected. */
     val connected: Boolean
+
+    val roll: Angle
 
     fun getStatusSignals(): Array<BaseStatusSignal> {
         return arrayOf()
@@ -55,6 +59,9 @@ class GyroNavX(private val ahrs: AHRS) : Gyro {
     override val velocity: AngularVelocity
         get() = 0.degreesPerSecond // NavX get rate broken... use the Pigeon lol
 
+    override val roll: Angle
+        get() = ahrs.roll.degrees
+
     override val connected
         get() = ahrs.isConnected
 }
@@ -77,6 +84,9 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
             pigeon.setYaw(goal.measure)
         }
 
+    override val roll: Angle
+        get() = pigeon.getRoll(false).valueAsDouble.degrees
+
     override val velocity: AngularVelocity
         get() = pigeon.getAngularVelocityZWorld(false).value
 
@@ -97,6 +107,7 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
     override var rotation = Rotation2d()
     override var velocity: AngularVelocity = 0.radiansPerSecond
     override val connected = true
+    override val roll: Angle = 0.degrees
 
     override fun periodic() {
         // Calculate the average translation velocity of each module
@@ -124,4 +135,6 @@ class GyroMapleSim(val gyroSimulation: GyroSimulation) : Gyro {
         get() = gyroSimulation.measuredAngularVelocity
     override val connected: Boolean
         get() = true
+    override val roll: Angle
+        get() = 0.degrees
 }

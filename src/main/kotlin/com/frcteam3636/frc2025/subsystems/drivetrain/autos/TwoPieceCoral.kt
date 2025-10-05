@@ -29,7 +29,7 @@ class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
                 Commands.sequence(
                     Drivetrain.driveToPointAllianceRelativeWithMiddlePoint(
                         pickupPose,
-                        DEFAULT_AUTO_CONSTRAINTS,
+                        DEFAULT_AUTO_CONSTRAINTS_PICKUP,
                         firstReefPose.backup(REEF_BACKUP_DISTANCE)
                     ),
                     Commands.waitUntil {

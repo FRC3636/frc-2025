@@ -32,18 +32,20 @@ open class AutoMode {
         val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(10.0, 4.0, 2 * Math.PI, 4 * Math.PI)
         val DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE =
             PathConstraints(SLOW_ZONE_ENTER_VELOCITY.inMetersPerSecond(), 2.0, 2 * Math.PI, 4 * Math.PI)
+        val DEFAULT_AUTO_CONSTRAINTS_PICKUP = PathConstraints(7.0, 2.0, 2 * Math.PI, 4 * Math.PI)
         val LEFT_PIECE_ONE = AprilTagTarget(20, ReefBranchSide.Right).pose
         val LEFT_PIECE_TWO = AprilTagTarget(19, ReefBranchSide.Left).pose
         val LEFT_PIECE_THREE = AprilTagTarget(19, ReefBranchSide.Right).pose
-        val LEFT_PICKUP_APRILTAG = AprilTagTarget(13, Translation2d.kZero).pose
+        val LEFT_PICKUP_APRILTAG = AprilTagTarget(13, Translation2d.kZero, false).pose
         val LEFT_PICKUP = Pose2d(LEFT_PICKUP_APRILTAG.translation, LEFT_PICKUP_APRILTAG.rotation + Rotation2d.k180deg)
         val RIGHT_PIECE_ONE = AprilTagTarget(22, ReefBranchSide.Left).pose
         val RIGHT_PIECE_TWO = AprilTagTarget(17, ReefBranchSide.Left).pose
         val RIGHT_PIECE_THREE = AprilTagTarget(17, ReefBranchSide.Right).pose
-        val RIGHT_PICKUP_APRILTAG = AprilTagTarget(12, Translation2d.kZero).pose
+        val RIGHT_PICKUP_APRILTAG = AprilTagTarget(12, Translation2d.kZero, false).pose
         val RIGHT_PICKUP =
             Pose2d(RIGHT_PICKUP_APRILTAG.translation, RIGHT_PICKUP_APRILTAG.rotation + Rotation2d.k180deg)
         val MIDDLE_PIECE_ONE = AprilTagTarget(21, ReefBranchSide.Left).pose
+        val MIDDLE_ALGAE_PICKUP = AprilTagTarget(21, Translation2d.kZero).pose
         val LEFT_STARTING_POSE = Pose2d(7.277, 6.183, Rotation2d.fromDegrees(180.0))
         val RIGHT_STARTING_POSE = Pose2d(7.277, 1.869, Rotation2d.fromDegrees(180.0))
         val REEF_BACKUP_DISTANCE = 8.inches

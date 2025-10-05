@@ -57,7 +57,7 @@ data class TargetSelection(
  * @param offset An offset from the April Tag. The size of the robot is automatically added
  *               to this value so that it doesn't crash into
  */
-class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
+class AprilTagTarget(aprilTagId: Int, offset: Translation2d, shouldApplyReefOffset: Boolean = true) : AlignableTarget {
     override val pose: Pose2d
 
     constructor(aprilTagId: Int, side: ReefBranchSide) : this(
@@ -89,7 +89,7 @@ class AprilTagTarget(aprilTagId: Int, offset: Translation2d) : AlignableTarget {
 
         val offsetFromPoseFacingAprilTagWithBumperSpacer = Translation2d(
             // We don't want to be *on top* of the april tag, so back up a bit from the tag.
-            -(Drivetrain.Constants.BUMPER_LENGTH / 2.0) + REEF_DISTANCE_OFFSET,
+            -(Drivetrain.Constants.BUMPER_LENGTH / 2.0) + if (shouldApplyReefOffset) REEF_DISTANCE_OFFSET else 2.5.inches,
             0.meters,
         )
             .plus(offset)
