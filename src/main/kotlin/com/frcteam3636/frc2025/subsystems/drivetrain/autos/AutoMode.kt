@@ -37,7 +37,7 @@ open class AutoMode {
         val LEFT_PIECE_THREE = AprilTagTarget(19, ReefBranchSide.Right).pose
         val LEFT_PICKUP_APRILTAG = AprilTagTarget(13, Translation2d.kZero).pose
         val LEFT_PICKUP = Pose2d(LEFT_PICKUP_APRILTAG.translation, LEFT_PICKUP_APRILTAG.rotation + Rotation2d.k180deg)
-        val RIGHT_PIECE_ONE = AprilTagTarget(22, ReefBranchSide.Right).pose
+        val RIGHT_PIECE_ONE = AprilTagTarget(22, ReefBranchSide.Left).pose
         val RIGHT_PIECE_TWO = AprilTagTarget(17, ReefBranchSide.Left).pose
         val RIGHT_PIECE_THREE = AprilTagTarget(17, ReefBranchSide.Right).pose
         val RIGHT_PICKUP_APRILTAG = AprilTagTarget(12, Translation2d.kZero).pose

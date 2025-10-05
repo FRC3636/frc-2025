@@ -149,6 +149,13 @@ class LimelightPoseProvider(
         when (val algorithm = currentAlgorithm) {
             is LimelightAlgorithm.MegaTag ->
                 LimelightHelpers.getBotPoseEstimate_wpiBlue(name)?.let { estimate ->
+                    LimelightHelpers.SetRobotOrientation(
+                        name,
+                        megaTagV2.gyroPosition.degrees,
+                        // The Limelight sample code leaves these as zero, and the API docs call them "Unnecessary."
+                        0.0, 0.0, 0.0, 0.0, 0.0
+                    )
+
                     measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
 
                     // Reject zero tag or low-quality one tag readings

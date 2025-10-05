@@ -6,13 +6,20 @@ import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.math.feet
+import com.pathplanner.lib.util.FlippingUtil
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import kotlin.jvm.optionals.getOrDefault
 
 class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
         val reefPose = if (side == StartingPosition.Left) LEFT_PIECE_THREE else RIGHT_PIECE_THREE
         val pickupPose = if (side == StartingPosition.Left) LEFT_PICKUP else RIGHT_PICKUP
+
+        val thresholdPose = if (DriverStation.getAlliance()
+                .getOrDefault(DriverStation.Alliance.Blue) == DriverStation.Alliance.Blue
+        ) pickupPose else FlippingUtil.flipFieldPose(pickupPose)
 
         return Commands.sequence(
             TwoPieceCoral(side).autoSequence(false),
@@ -32,7 +39,7 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Commands.sequence(
                     Commands.waitUntil {
-                        Drivetrain.estimatedPose.translation.getDistance(pickupPose.translation).feet < INTAKE_START_DISTANCE
+                        Drivetrain.estimatedPose.translation.getDistance(thresholdPose.translation).feet < INTAKE_START_DISTANCE
                     },
                     Commands.race(
                         Manipulator.intakeAuto(),

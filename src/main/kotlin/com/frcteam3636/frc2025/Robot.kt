@@ -323,6 +323,22 @@ object Robot : LoggedRobot() {
         }
     }
 
+    override fun driverStationConnected() {
+        val selectedAuto = Dashboard.autoChooser.selected
+        startingPosition = determineStartingPosition()
+        autoCommand = when (selectedAuto) {
+            AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
+            AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
+            AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
+            AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
+            AutoModes.OnePieceCoralMiddle -> OnePieceCoralMiddle().autoSequence()
+            AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
+            AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
+            AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+            AutoModes.None -> Commands.none()
+        }
+    }
+
     override fun simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic()
 
@@ -364,12 +380,11 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        val selectedAuto = Dashboard.autoChooser.selected
         // Protection against stupidity (freshmen)
         // This can only go so far as it assumes the bot is rotated at
         // exactly 180 degrees for it's starting position
         // better than starting at some random pose that's likely off the field
-        if (!Drivetrain.tagsVisible && selectedAuto.sideRequired) {
+        if (!Drivetrain.tagsVisible && lastSelectedAuto.sideRequired) {
             val alliance = DriverStation.getAlliance().getOrNull()
             var startingPose: Pose2d
             startingPose =
