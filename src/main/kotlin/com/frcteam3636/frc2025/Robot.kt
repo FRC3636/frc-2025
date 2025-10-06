@@ -168,15 +168,18 @@ object Robot : LoggedRobot() {
     }
 
     private fun tossAlgae(): Command = Commands.sequence(
-        Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf {
+        Commands.runOnce({
+            Manipulator.isIntakeRunning = true
+        }),
+        Commands.race(
+            Elevator.setTargetHeight(Elevator.Position.Stowed),
+            Manipulator.intakeAlgae()
+        ).onlyIf {
             Elevator.position != Elevator.Position.Stowed
         },
         Commands.parallel(
             Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
             Commands.sequence(
-                Commands.runOnce({
-                    Manipulator.isIntakeRunning = true
-                }),
                 Commands.race(
                     Manipulator.intakeAlgae(),
                     Commands.waitSeconds(0.4),
