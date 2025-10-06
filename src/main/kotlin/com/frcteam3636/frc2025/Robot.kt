@@ -168,12 +168,9 @@ object Robot : LoggedRobot() {
     }
 
     private fun tossAlgae(): Command = Commands.sequence(
-        Commands.runOnce({
-            Manipulator.isIntakeRunning = true
-        }),
         Commands.race(
             Elevator.setTargetHeight(Elevator.Position.Stowed),
-            Manipulator.intakeAlgae()
+            Manipulator.intakeAlgaeAuto()
         ).onlyIf {
             Elevator.position != Elevator.Position.Stowed
         },
@@ -181,12 +178,9 @@ object Robot : LoggedRobot() {
             Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
             Commands.sequence(
                 Commands.race(
-                    Manipulator.intakeAlgae(),
+                    Manipulator.intakeAlgaeAuto(),
                     Commands.waitSeconds(0.4),
                 ),
-                Commands.runOnce({
-                    Manipulator.isIntakeRunning = false
-                }),
                 Manipulator.outtakeAlgae().withTimeout(0.75),
             )
         ),

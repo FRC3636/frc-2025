@@ -131,6 +131,13 @@ object Manipulator : Subsystem {
     ).onlyWhile {
         isIntakeRunning
     }.withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf)
+
+    fun intakeAlgaeAuto(): Command = startEnd(
+        { io.setVoltage(3.0.volts) },
+        {
+            io.setSpeed(0.0)
+        }
+    ).withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
 }
 
 enum class CoralState {
