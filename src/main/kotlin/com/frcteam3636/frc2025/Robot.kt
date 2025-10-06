@@ -168,6 +168,9 @@ object Robot : LoggedRobot() {
     }
 
     private fun tossAlgae(): Command = Commands.sequence(
+        Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf {
+            Elevator.position != Elevator.Position.Stowed
+        },
         Commands.parallel(
             Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
             Commands.sequence(
@@ -313,6 +316,22 @@ object Robot : LoggedRobot() {
                 AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
                 AutoModes.None -> Commands.none()
             }
+        }
+    }
+
+    override fun driverStationConnected() {
+        val selectedAuto = lastSelectedAuto
+        startingPosition = determineStartingPosition()
+        autoCommand = when (selectedAuto) {
+            AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
+            AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
+            AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
+            AutoModes.FourPieceCoral -> FourPieceCoral(startingPosition).autoSequence()
+            AutoModes.OnePieceCoralMiddle -> OnePieceCoralMiddle().autoSequence()
+            AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
+            AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
+            AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+            AutoModes.None -> Commands.none()
         }
     }
 

@@ -16,13 +16,15 @@ class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
         val firstReefPose = if (side == StartingPosition.Left) LEFT_PIECE_ONE else RIGHT_PIECE_ONE
         val pickupPose = if (side == StartingPosition.Left) LEFT_PICKUP else RIGHT_PICKUP
 
+        val thresholdPose = calculateAlliancePose(pickupPose)
+
         return Commands.sequence(
             OnePieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Commands.sequence(
                     Drivetrain.driveToPointAllianceRelativeWithMiddlePoint(
                         pickupPose,
-                        DEFAULT_AUTO_CONSTRAINTS,
+                        AUTO_CONSTRAINTS_PICKUP,
                         firstReefPose.backup(REEF_BACKUP_DISTANCE)
                     ),
                     Commands.waitUntil {
@@ -38,7 +40,7 @@ class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Commands.sequence(
                     Commands.waitUntil {
-                        Drivetrain.estimatedPose.translation.getDistance(pickupPose.translation).feet < INTAKE_START_DISTANCE
+                        Drivetrain.estimatedPose.translation.getDistance(thresholdPose.translation).feet < INTAKE_START_DISTANCE
                     },
                     Commands.race(
                         Manipulator.intakeAuto(),

@@ -289,7 +289,7 @@ object Drivetrain : Subsystem {
     }
 
     private fun calculateInputCurve(input: Double): Double {
-        val exponent = 2.25
+        val exponent = 1.7
 
         return input.absoluteValue.pow(exponent).withSign(input)
     }
