@@ -5,6 +5,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.FIELD_LAYOUT
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.AprilTagTarget
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.utils.math.feet
+import com.frcteam3636.frc2025.utils.math.inMeters
 import com.frcteam3636.frc2025.utils.math.inMetersPerSecond
 import com.frcteam3636.frc2025.utils.math.inches
 import com.frcteam3636.frc2025.utils.math.metersPerSecond
@@ -34,6 +35,7 @@ open class AutoMode {
     }
 
     companion object Constants {
+        val ALGAE_ONE = AprilTagTarget(21, Translation2d(1.5.inches.inMeters(), 0.0)).pose
         val SLOW_ZONE_DISTANCE = 2.feet
         val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
         val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(10.0, 4.0, 2 * Math.PI, 4 * Math.PI)

@@ -167,7 +167,7 @@ object Robot : LoggedRobot() {
         }
     }
 
-    private fun tossAlgae(): Command = Commands.sequence(
+    fun tossAlgae(): Command = Commands.sequence(
         Commands.race(
             Elevator.setTargetHeight(Elevator.Position.Stowed),
             Manipulator.intakeAlgaeAuto()
