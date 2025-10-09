@@ -15,7 +15,6 @@ class OneAlgae(val side: StartingPosition) : AutoMode() {
         val reefPose = ALGAE_ONE
 
         return Commands.parallel(
-            Manipulator.intakeAlgae(),
             Commands.sequence(
                 Drivetrain.driveToPointAllianceRelativeWithSlowZone(
                     reefPose,
@@ -25,6 +24,8 @@ class OneAlgae(val side: StartingPosition) : AutoMode() {
                     SLOW_ZONE_ENTER_VELOCITY,
                     raisePoint = Elevator.Position.Stowed,
                 ),
+                Manipulator.intakeAlgae(),
+                delay(1000),
                 Commands.parallel(
                     Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
                     Drivetrain.alignToBarge(),
