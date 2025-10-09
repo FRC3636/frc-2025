@@ -25,7 +25,7 @@ class OneAlgae(val side: StartingPosition) : AutoMode() {
                     raisePoint = Elevator.Position.Stowed,
                 ),
                 Manipulator.intakeAlgae(),
-                delay(1000),
+                Commands.waitSeconds(1.0),
                 Commands.parallel(
                     Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
                     Drivetrain.alignToBarge(),
