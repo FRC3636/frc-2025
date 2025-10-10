@@ -23,6 +23,7 @@ class TwoAlgae(val side: StartingPosition) : AutoMode() {
                         DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
                         SLOW_ZONE_DISTANCE,
                         SLOW_ZONE_ENTER_VELOCITY,
+                        raisePoint = Elevator.Position.AlgaeMidBar,
                     ),
                     Commands.race(
                         Manipulator.intakeAlgae(),
