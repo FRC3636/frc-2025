@@ -23,12 +23,10 @@ class TwoAlgae(val side: StartingPosition) : AutoMode() {
                         DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
                         SLOW_ZONE_DISTANCE,
                         SLOW_ZONE_ENTER_VELOCITY,
-                        raisePoint = Elevator.Position.Stowed,
                     ),
                     Commands.race(
                         Manipulator.intakeAlgae(),
                         Commands.sequence(
-                            Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
                             Commands.waitSeconds(1.0),
                             Drivetrain.alignToBarge(
                                 usePathfinding = false,
