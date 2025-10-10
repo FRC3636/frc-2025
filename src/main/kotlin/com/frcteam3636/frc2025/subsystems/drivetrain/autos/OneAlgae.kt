@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.Commands
 
 class OneAlgae(val side: StartingPosition) : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
-        val reefPose = ALGAE_ONE
 
         return Commands.sequence(
             OnePieceCoralMiddle().autoSequence(),
@@ -20,7 +19,7 @@ class OneAlgae(val side: StartingPosition) : AutoMode() {
                 Manipulator.intakeAlgae(),
                 Commands.sequence(
                     Drivetrain.driveToPointAllianceRelativeWithSlowZone(
-                        reefPose,
+                        ALGAE_ONE,
                         DEFAULT_AUTO_CONSTRAINTS,
                         DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
                         SLOW_ZONE_DISTANCE,

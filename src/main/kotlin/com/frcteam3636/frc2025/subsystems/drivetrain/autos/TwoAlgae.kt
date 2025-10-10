@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.Commands
 
 class TwoAlgae(val side: StartingPosition) : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
-        val reefPose = ALGAE_ONE
 
         return Commands.sequence(
             OneAlgae(side).autoSequence(),
@@ -20,17 +19,19 @@ class TwoAlgae(val side: StartingPosition) : AutoMode() {
                 Manipulator.intakeAlgae(),
                 Commands.sequence(
                     Drivetrain.driveToPointAllianceRelativeWithSlowZone(
-                        reefPose,
+                        ALGAE_TWO,
                         DEFAULT_AUTO_CONSTRAINTS,
                         DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
                         SLOW_ZONE_DISTANCE,
                         SLOW_ZONE_ENTER_VELOCITY,
                         raisePoint = Elevator.Position.Stowed,
                     ),
-
+                    Commands.waitSeconds(1.0),
                     Commands.parallel(
                         Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
-                        Drivetrain.alignToBarge(),
+                        Drivetrain.alignToBarge(
+                            usePathfinding = false
+                        ),
                     ),
                     Robot.tossAlgae(),
                 ),
