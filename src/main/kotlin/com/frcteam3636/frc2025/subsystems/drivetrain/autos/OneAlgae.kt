@@ -16,7 +16,6 @@ class OneAlgae(val side: StartingPosition) : AutoMode() {
         return Commands.sequence(
             OnePieceCoralMiddle().autoSequence(),
             Commands.parallel(
-                Manipulator.intakeAlgae(),
                 Commands.sequence(
                     Drivetrain.driveToPointAllianceRelativeWithSlowZone(
                         ALGAE_ONE,
@@ -26,11 +25,14 @@ class OneAlgae(val side: StartingPosition) : AutoMode() {
                         SLOW_ZONE_ENTER_VELOCITY,
                         raisePoint = Elevator.Position.Stowed,
                     ),
-                    Commands.waitSeconds(1.0),
-                    Commands.parallel(
-                        Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
-                        Drivetrain.alignToBarge(
-                            usePathfinding = false,
+                    Commands.race(
+                        Manipulator.intakeAlgae(),
+                        Commands.sequence(
+                            Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf { shouldAutoStow },
+                            Commands.waitSeconds(1.0),
+                            Drivetrain.alignToBarge(
+                                usePathfinding = false,
+                            ),
                         ),
                     ),
                     Robot.tossAlgae(),
