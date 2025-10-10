@@ -303,6 +303,8 @@ object Robot : LoggedRobot() {
             lastSelectedAuto = selectedAuto
             lastSelectedStartingPosition = startingPosition
             autoCommand = when (selectedAuto) {
+                AutoModes.OneAlgae -> OneAlgae(startingPosition).autoSequence()
+                AutoModes.TwoAlgae -> TwoAlgae(startingPosition).autoSequence()
                 AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
                 AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
                 AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
@@ -320,6 +322,8 @@ object Robot : LoggedRobot() {
         val selectedAuto = lastSelectedAuto
         startingPosition = determineStartingPosition()
         autoCommand = when (selectedAuto) {
+            AutoModes.OneAlgae -> OneAlgae(startingPosition).autoSequence()
+            AutoModes.TwoAlgae -> TwoAlgae(startingPosition).autoSequence()
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
             AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
