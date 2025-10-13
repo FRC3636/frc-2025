@@ -283,4 +283,4 @@ private enum class FieldOffset(val distance: Distance) {
     }
 }
 
-private val REEF_DISTANCE_OFFSET = (1.5).inches
+private val REEF_DISTANCE_OFFSET = (0.75).inches

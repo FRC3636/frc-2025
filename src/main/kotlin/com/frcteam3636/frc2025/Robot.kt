@@ -96,6 +96,9 @@ object Robot : LoggedRobot() {
 
         Diagnostics.timer.start()
         threadCommand().schedule()
+
+        statusSignals += Drivetrain.getStatusSignals()
+        statusSignals += Elevator.getStatusSignals()
     }
 
     /** Start logging or pull replay logs from a file */
@@ -319,6 +322,8 @@ object Robot : LoggedRobot() {
         }
     }
 
+    // This is only here out of paranoia.
+    // We could probably delete this and be fine but eh whatever
     override fun driverStationConnected() {
         val selectedAuto = lastSelectedAuto
         startingPosition = determineStartingPosition()
@@ -359,12 +364,8 @@ object Robot : LoggedRobot() {
     }
 
     override fun robotPeriodic() {
-        statusSignals += Drivetrain.getStatusSignals()
-        statusSignals += Elevator.getStatusSignals()
-
         BaseStatusSignal.refreshAll(*statusSignals.toTypedArray())
         BaseStatusSignal.refreshAll(*Manipulator.getStatusSignals().toTypedArray())
-        statusSignals.clear()
 
         if (Diagnostics.timer.hasElapsed(1.0)) {
             reportDiagnostics()
@@ -372,7 +373,6 @@ object Robot : LoggedRobot() {
         }
 
         CommandScheduler.getInstance().run()
-
     }
 
     override fun autonomousInit() {

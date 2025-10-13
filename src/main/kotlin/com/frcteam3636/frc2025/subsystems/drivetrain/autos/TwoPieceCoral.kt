@@ -6,6 +6,7 @@ import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.math.backup
+import com.frcteam3636.frc2025.utils.math.calculateAlliancePose
 import com.frcteam3636.frc2025.utils.math.feet
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
@@ -29,7 +30,7 @@ class TwoPieceCoral(val side: StartingPosition) : AutoMode() {
                     ),
                     Commands.waitUntil {
                         Manipulator.coralState != CoralState.NONE
-                    },
+                    }.withTimeout(INTAKE_TIMEOUT),
                     Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(
                         reefPose,
                         DEFAULT_AUTO_CONSTRAINTS,

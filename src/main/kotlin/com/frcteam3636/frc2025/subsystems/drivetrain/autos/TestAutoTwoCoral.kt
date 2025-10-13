@@ -30,7 +30,7 @@ class TestAutoTwoCoral() : AutoMode() {
                         Commands.waitUntil {
                             Manipulator.coralState != CoralState.NONE
                         },
-                        Commands.waitSeconds(5.0)
+                        Commands.waitSeconds(INTAKE_TIMEOUT)
                     ),
                     Drivetrain.driveToPointAllianceRelativeWithSlowZone(
                         reefPose,

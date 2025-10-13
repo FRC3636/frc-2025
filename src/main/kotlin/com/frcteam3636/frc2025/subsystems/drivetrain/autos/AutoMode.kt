@@ -9,7 +9,6 @@ import com.frcteam3636.frc2025.utils.math.inMetersPerSecond
 import com.frcteam3636.frc2025.utils.math.inches
 import com.frcteam3636.frc2025.utils.math.metersPerSecond
 import com.pathplanner.lib.path.PathConstraints
-import com.pathplanner.lib.util.FlippingUtil
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
@@ -27,17 +26,11 @@ open class AutoMode {
         return Commands.none()
     }
 
-    fun calculateAlliancePose(pose: Pose2d): Pose2d {
-        return if (DriverStation.getAlliance()
-                .getOrDefault(DriverStation.Alliance.Blue) == DriverStation.Alliance.Blue
-        ) pose else FlippingUtil.flipFieldPose(pose)
-    }
-
     companion object Constants {
         val SLOW_ZONE_DISTANCE = 2.feet
         val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
-        val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(10.0, 4.0, 2 * Math.PI, 4 * Math.PI)
-        val AUTO_CONSTRAINTS_PICKUP = PathConstraints(4.75, 2.0, 2 * Math.PI, 4 * Math.PI)
+        val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(2.9, 4.0, 2 * Math.PI, 4 * Math.PI)
+        val AUTO_CONSTRAINTS_PICKUP = PathConstraints(2.5, 8.0, 2 * Math.PI, 4 * Math.PI)
         val DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE =
             PathConstraints(SLOW_ZONE_ENTER_VELOCITY.inMetersPerSecond(), 2.0, 2 * Math.PI, 4 * Math.PI)
         val LEFT_PIECE_ONE = AprilTagTarget(20, ReefBranchSide.Right).pose
@@ -56,6 +49,7 @@ open class AutoMode {
         val RIGHT_STARTING_POSE = Pose2d(7.277, 1.869, Rotation2d.fromDegrees(180.0))
         val REEF_BACKUP_DISTANCE = 8.inches
         val INTAKE_START_DISTANCE = 2.feet
+        const val INTAKE_TIMEOUT = 3.0
         const val OUTTAKE_TIMEOUT = 0.3
     }
 }
