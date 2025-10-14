@@ -668,7 +668,7 @@ object Drivetrain : Subsystem {
                 Pose2d(target.translation, heading)
             )
 
-            val constraints = PathConstraints(10.0, 3.0, 2 * Math.PI, 4 * Math.PI)
+            val constraints = AutoMode.DEFAULT_AUTO_CONSTRAINTS
 
             val constraintZone = ConstraintsZone(
                 0.85, 1.0, AutoMode.DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE
@@ -859,7 +859,7 @@ object Drivetrain : Subsystem {
         val BRAKE_POSITION = MODULE_POSITIONS.map { position -> SwerveModuleState(0.0, position.translation.angle) }
 
 
-        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(16.0)
+        val ALIGN_TRANSLATION_PID_GAINS = PIDGains(21.0)
         val ALIGN_ROTATION_PID_GAINS = PIDGains(5.0)
     }
 }

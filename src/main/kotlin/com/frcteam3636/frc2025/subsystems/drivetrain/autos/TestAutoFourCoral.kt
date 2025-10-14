@@ -13,13 +13,13 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
-class TestAutoTwoCoral() : AutoMode() {
+class TestAutoFourCoral : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
-        val reefPose = AprilTagTarget(18, ReefBranchSide.Left).pose
+        val reefPose = AprilTagTarget(18, ReefBranchSide.Right).pose
         val pickupPose = Pose2d(1.251.meters, 4.034.meters, Rotation2d.kZero)
 
         return Commands.sequence(
-            TestAuto().autoSequence(false),
+            TestAutoThreeCoral().autoSequence(false),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS)
@@ -30,13 +30,14 @@ class TestAutoTwoCoral() : AutoMode() {
                         Commands.waitUntil {
                             Manipulator.coralState != CoralState.NONE
                         },
-                        Commands.waitSeconds(INTAKE_TIMEOUT)
+                        Commands.waitSeconds(5.0)
                     ),
                     Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(
                         reefPose,
                         DEFAULT_AUTO_CONSTRAINTS,
                         DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
                         SLOW_ZONE_DISTANCE,
+                        raisePoint = Elevator.Position.MidBar
                     ),
                 ),
                 Commands.race(

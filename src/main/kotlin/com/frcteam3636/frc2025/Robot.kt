@@ -317,6 +317,7 @@ object Robot : LoggedRobot() {
                 AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
                 AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
                 AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+                AutoModes.TestAutoFourCoral -> TestAutoFourCoral().autoSequence()
                 AutoModes.None -> Commands.none()
             }
         }
@@ -336,6 +337,7 @@ object Robot : LoggedRobot() {
             AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
             AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
             AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+            AutoModes.TestAutoFourCoral -> TestAutoFourCoral().autoSequence()
             AutoModes.None -> Commands.none()
         }
     }
