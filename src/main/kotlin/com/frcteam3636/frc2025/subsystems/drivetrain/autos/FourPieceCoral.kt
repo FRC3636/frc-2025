@@ -21,16 +21,25 @@ class FourPieceCoral(val side: StartingPosition) : AutoMode() {
             ThreePieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Commands.sequence(
-                    Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS),
+                    Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS).alongWith(
+                        Elevator.setTargetHeight(Elevator.Position.Stowed)
+                    ),
                     Commands.waitUntil {
                         Manipulator.coralState != CoralState.NONE
                     }.withTimeout(INTAKE_TIMEOUT),
-                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(
-                        reefPose, DEFAULT_AUTO_CONSTRAINTS, DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE, SLOW_ZONE_DISTANCE,
-                        raisePoint = Elevator.Position.MidBar
+                    Commands.parallel(
+                        Drivetrain.driveToPointAllianceRelative(
+                            reefPose,
+                            DEFAULT_AUTO_CONSTRAINTS,
+                        ),
+                        Commands.sequence(
+                            Commands.waitUntil {
+                                Drivetrain.estimatedPose.translation.getDistance(reefPose.translation).feet < 1.feet && Manipulator.coralState == CoralState.HELD
+                            },
+                            Elevator.setTargetHeight(Elevator.Position.MidBar)
+                        )
                     ),
                 ),
-                Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Commands.sequence(
                     Commands.waitUntil {
                         Drivetrain.estimatedPose.translation.getDistance(thresholdPose.translation).feet < INTAKE_START_DISTANCE
@@ -38,6 +47,17 @@ class FourPieceCoral(val side: StartingPosition) : AutoMode() {
                     Commands.race(
                         Manipulator.intakeAuto(),
                         Funnel.intake(),
+                    ).withTimeout(INTAKE_TIMEOUT),
+                    Commands.either(
+                        Commands.none(),
+                        Commands.sequence(
+                            Commands.waitSeconds(0.5),
+                            Commands.race(
+                                Manipulator.intakeAuto(),
+                                Funnel.intake(),
+                            ),
+                        ),
+                        { Manipulator.coralState == CoralState.HELD }
                     )
                 )
             ),
