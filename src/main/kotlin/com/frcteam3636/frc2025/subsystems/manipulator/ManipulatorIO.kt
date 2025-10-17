@@ -34,6 +34,7 @@ interface ManipulatorIO {
     fun setSpeed(percent: Double)
     fun setCurrent(current: Current)
     fun setVoltage(voltage: Voltage)
+    fun setVoltageFOC(voltage: Voltage)
     fun updateInputs(inputs: ManipulatorInputs)
     fun getStatusSignals(): MutableList<BaseStatusSignal> {
         return mutableListOf()
@@ -98,6 +99,11 @@ class ManipulatorIOReal : ManipulatorIO {
         manipulatorMotor.setControl(voltageControl.withOutput(voltage))
     }
 
+    override fun setVoltageFOC(voltage: Voltage) {
+        assert(voltage.inVolts() in -12.0..12.0)
+        manipulatorMotor.setControl(voltageControl.withOutput(voltage).withEnableFOC(true))
+    }
+
     override fun updateInputs(inputs: ManipulatorInputs) {
 //        inputs.velocity = manipulatorMotor.velocity.value
 //        inputs.current = manipulatorMotor.supplyCurrent.value
@@ -124,6 +130,10 @@ class ManipulatorIOSim : ManipulatorIO {
     }
 
     override fun setVoltage(voltage: Voltage) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setVoltageFOC(voltage: Voltage) {
         TODO("Not yet implemented")
     }
 

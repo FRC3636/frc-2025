@@ -241,6 +241,7 @@ object Robot : LoggedRobot() {
         controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
         controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
         controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
+        controller.povDown().onTrue(Elevator.setTargetHeight(Elevator.Position.Trough))
         joystickLeft.button(2).onTrue(
             tossAlgae()
         )
