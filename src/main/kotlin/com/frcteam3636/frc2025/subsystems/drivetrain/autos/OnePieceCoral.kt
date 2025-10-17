@@ -23,7 +23,7 @@ class OnePieceCoral(val side: StartingPosition) : AutoMode() {
                 ),
                 Commands.sequence(
                     Commands.waitUntil {
-                        Drivetrain.estimatedPose.translation.getDistance(reefPose.translation).feet < 1.feet
+                        Drivetrain.estimatedPose.translation.getDistance(reefPose.translation).feet < ELEVATOR_DEPLOY_DISTANCE
                     },
                     Elevator.setTargetHeight(Elevator.Position.HighBar)
                 )

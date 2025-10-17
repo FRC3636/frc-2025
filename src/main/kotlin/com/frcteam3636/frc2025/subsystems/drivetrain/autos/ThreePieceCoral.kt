@@ -21,7 +21,7 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
             TwoPieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Commands.sequence(
-                    Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS).alongWith(
+                    Drivetrain.driveToPointAllianceRelative(pickupPose, AUTO_CONSTRAINTS_PICKUP).alongWith(
                         Elevator.setTargetHeight(Elevator.Position.Stowed)
                     ),
                     Commands.waitUntil {
@@ -34,7 +34,7 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
                         ),
                         Commands.sequence(
                             Commands.waitUntil {
-                                Drivetrain.estimatedPose.translation.getDistance(reefPose.translation).feet < 1.feet && Manipulator.coralState == CoralState.HELD
+                                Drivetrain.estimatedPose.translation.getDistance(reefPose.translation).feet < ELEVATOR_DEPLOY_DISTANCE && Manipulator.coralState == CoralState.HELD
                             },
                             Elevator.setTargetHeight(Elevator.Position.HighBar)
                         )
@@ -51,7 +51,7 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
                     Commands.either(
                         Commands.none(),
                         Commands.sequence(
-                            Commands.waitSeconds(0.5),
+                            Commands.waitSeconds(INTAKE_RESTART_TIME),
                             Commands.race(
                                 Manipulator.intakeAuto(),
                                 Funnel.intake(),

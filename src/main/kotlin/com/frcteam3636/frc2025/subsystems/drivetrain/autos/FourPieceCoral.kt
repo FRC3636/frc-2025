@@ -7,12 +7,13 @@ import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.math.calculateAlliancePose
 import com.frcteam3636.frc2025.utils.math.feet
+import com.pathplanner.lib.path.PathConstraints
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
 class FourPieceCoral(val side: StartingPosition) : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
-        val reefPose = if (side == StartingPosition.Left) LEFT_PIECE_THREE else RIGHT_PIECE_THREE
+        val reefPose = if (side == StartingPosition.Left) LEFT_PIECE_FOUR else RIGHT_PIECE_FOUR
         val pickupPose = if (side == StartingPosition.Left) LEFT_PICKUP else RIGHT_PICKUP
 
         val thresholdPose = calculateAlliancePose(pickupPose)
@@ -21,7 +22,7 @@ class FourPieceCoral(val side: StartingPosition) : AutoMode() {
             ThreePieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Commands.sequence(
-                    Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS).alongWith(
+                    Drivetrain.driveToPointAllianceRelative(pickupPose, AUTO_CONSTRAINTS_PICKUP).alongWith(
                         Elevator.setTargetHeight(Elevator.Position.Stowed)
                     ),
                     Commands.waitUntil {
@@ -30,13 +31,13 @@ class FourPieceCoral(val side: StartingPosition) : AutoMode() {
                     Commands.parallel(
                         Drivetrain.driveToPointAllianceRelative(
                             reefPose,
-                            DEFAULT_AUTO_CONSTRAINTS,
+                            PathConstraints(2.6, 4.0, 2 * Math.PI, 4 * Math.PI),
                         ),
                         Commands.sequence(
                             Commands.waitUntil {
-                                Drivetrain.estimatedPose.translation.getDistance(reefPose.translation).feet < 1.feet && Manipulator.coralState == CoralState.HELD
+                                Drivetrain.estimatedPose.translation.getDistance(reefPose.translation).feet < ELEVATOR_DEPLOY_DISTANCE && Manipulator.coralState == CoralState.HELD
                             },
-                            Elevator.setTargetHeight(Elevator.Position.MidBar)
+                            Elevator.setTargetHeight(Elevator.Position.HighBar)
                         )
                     ),
                 ),
@@ -51,7 +52,7 @@ class FourPieceCoral(val side: StartingPosition) : AutoMode() {
                     Commands.either(
                         Commands.none(),
                         Commands.sequence(
-                            Commands.waitSeconds(0.5),
+                            Commands.waitSeconds(INTAKE_RESTART_TIME),
                             Commands.race(
                                 Manipulator.intakeAuto(),
                                 Funnel.intake(),

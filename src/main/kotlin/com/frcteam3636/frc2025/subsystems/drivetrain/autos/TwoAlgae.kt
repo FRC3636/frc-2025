@@ -29,8 +29,10 @@ class TwoAlgae(val side: StartingPosition) : AutoMode() {
             Commands.race(
                 Manipulator.intakeAlgaeAuto(),
                 Commands.sequence(
-                    Commands.waitSeconds(1.5),
-                    Drivetrain.alignToBarge(false),
+                    Commands.waitSeconds(1.0),
+                    Drivetrain.alignToBarge(false).alongWith(
+                        Elevator.setTargetHeight(Elevator.Position.Stowed),
+                    ),
                 ),
             ),
             Robot.tossAlgae(),

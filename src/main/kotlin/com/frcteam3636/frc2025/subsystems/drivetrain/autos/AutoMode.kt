@@ -34,18 +34,20 @@ open class AutoMode {
         val ALGAE_TWO = AprilTagTarget(20, Translation2d()).pose
         val SLOW_ZONE_DISTANCE = 2.feet
         val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
-        val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(2.9, 4.0, 2 * Math.PI, 4 * Math.PI)
-        val AUTO_CONSTRAINTS_PICKUP = PathConstraints(2.75, 8.0, 2 * Math.PI, 4 * Math.PI)
+        val DEFAULT_AUTO_CONSTRAINTS = PathConstraints(3.0, 4.0, 2 * Math.PI, 4 * Math.PI)
+        val AUTO_CONSTRAINTS_PICKUP = PathConstraints(2.9, 8.0, 2 * Math.PI, 4 * Math.PI)
         val DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE =
             PathConstraints(SLOW_ZONE_ENTER_VELOCITY.inMetersPerSecond(), 2.0, 2 * Math.PI, 4 * Math.PI)
         val LEFT_PIECE_ONE = AprilTagTarget(20, ReefBranchSide.Right).pose.backup(REEF_DISTANCE_OFFSET)
         val LEFT_PIECE_TWO = AprilTagTarget(19, ReefBranchSide.Left).pose
         val LEFT_PIECE_THREE = AprilTagTarget(19, ReefBranchSide.Right).pose
+        val LEFT_PIECE_FOUR = AprilTagTarget(18, ReefBranchSide.Left).pose
         val LEFT_PICKUP_APRILTAG = AprilTagTarget(13, Translation2d.kZero).pose
         val LEFT_PICKUP = Pose2d(LEFT_PICKUP_APRILTAG.translation, LEFT_PICKUP_APRILTAG.rotation + Rotation2d.k180deg)
         val RIGHT_PIECE_ONE = AprilTagTarget(22, ReefBranchSide.Right).pose.backup(REEF_DISTANCE_OFFSET)
         val RIGHT_PIECE_TWO = AprilTagTarget(17, ReefBranchSide.Left).pose
         val RIGHT_PIECE_THREE = AprilTagTarget(17, ReefBranchSide.Right).pose
+        val RIGHT_PIECE_FOUR = AprilTagTarget(18, ReefBranchSide.Right).pose
         val RIGHT_PICKUP_APRILTAG = AprilTagTarget(12, Translation2d.kZero).pose
         val RIGHT_PICKUP =
             Pose2d(RIGHT_PICKUP_APRILTAG.translation, RIGHT_PICKUP_APRILTAG.rotation + Rotation2d.k180deg)
@@ -54,6 +56,8 @@ open class AutoMode {
         val RIGHT_STARTING_POSE = Pose2d(7.277, 1.869, Rotation2d.fromDegrees(180.0))
         val REEF_BACKUP_DISTANCE = 8.inches
         val INTAKE_START_DISTANCE = 2.feet
+        val ELEVATOR_DEPLOY_DISTANCE = 1.feet
+        const val INTAKE_RESTART_TIME = 0.5
         const val INTAKE_TIMEOUT = 3.0
         const val OUTTAKE_TIMEOUT = 0.3
     }

@@ -22,7 +22,7 @@ class OneAlgae(val side: StartingPosition) : AutoMode() {
             Commands.race(
                 Manipulator.intakeAlgaeAuto(),
                 Commands.sequence(
-                    Commands.waitSeconds(1.5),
+                    Commands.waitSeconds(1.0),
                     Drivetrain.alignToBarge(false),
                 ),
             ),
