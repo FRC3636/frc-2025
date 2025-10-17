@@ -15,22 +15,22 @@ class TwoAlgae(val side: StartingPosition) : AutoMode() {
 
         return Commands.sequence(
             OneAlgae(side).autoSequence(),
-            Elevator.setTargetHeight(Elevator.Position.Stowed),
-            Drivetrain.driveToPointAllianceRelativeWithSlowZone(
-                ALGAE_TWO,
-                DEFAULT_AUTO_CONSTRAINTS,
-                DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
-                SLOW_ZONE_DISTANCE,
-                SLOW_ZONE_ENTER_VELOCITY,
-                raisePoint = Elevator.Position.AlgaeMidBar,
+            Commands.parallel(
+                Elevator.setTargetHeight(Elevator.Position.Stowed),
+                Drivetrain.driveToPointAllianceRelativeWithSlowZone(
+                    ALGAE_TWO,
+                    DEFAULT_AUTO_CONSTRAINTS,
+                    DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
+                    SLOW_ZONE_DISTANCE,
+                    SLOW_ZONE_ENTER_VELOCITY,
+                    raisePoint = Elevator.Position.AlgaeMidBar,
+                ),
             ),
             Commands.race(
-                Manipulator.intakeAlgae(),
+                Manipulator.intakeAlgaeAuto(),
                 Commands.sequence(
-                    Commands.waitSeconds(1.0),
-                    Drivetrain.alignToBarge(
-                        usePathfinding = false,
-                    ),
+                    Commands.waitSeconds(1.5),
+                    Drivetrain.alignToBarge(false),
                 ),
             ),
             Robot.tossAlgae(),

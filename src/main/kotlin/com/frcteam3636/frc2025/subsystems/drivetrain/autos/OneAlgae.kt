@@ -14,22 +14,16 @@ class OneAlgae(val side: StartingPosition) : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
 
         return Commands.sequence(
-            OnePieceCoralMiddle().autoSequence(),
-            Elevator.setTargetHeight(Elevator.Position.Stowed),
-            Drivetrain.driveToPointAllianceRelativeWithSlowZone(
-                ALGAE_ONE,
-                DEFAULT_AUTO_CONSTRAINTS,
-                DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
-                SLOW_ZONE_DISTANCE,
-                SLOW_ZONE_ENTER_VELOCITY,
+            OnePieceCoralMiddle().autoSequence(false),
+            Commands.parallel(
+                Elevator.setTargetHeight(Elevator.Position.Stowed),
+                Drivetrain.alignToReefAlgae(false),
             ),
             Commands.race(
-                Manipulator.intakeAlgae(),
+                Manipulator.intakeAlgaeAuto(),
                 Commands.sequence(
-                    Commands.waitSeconds(1.0),
-                    Drivetrain.alignToBarge(
-                        usePathfinding = false,
-                    ),
+                    Commands.waitSeconds(1.5),
+                    Drivetrain.alignToBarge(false),
                 ),
             ),
             Robot.tossAlgae(),
