@@ -170,23 +170,20 @@ object Robot : LoggedRobot() {
         }
     }
 
-    private fun tossAlgae(): Command = Commands.sequence(
-        Elevator.setTargetHeight(Elevator.Position.Stowed).onlyIf {
+    fun tossAlgae(): Command = Commands.sequence(
+        Commands.race(
+            Elevator.setTargetHeight(Elevator.Position.Stowed),
+            Manipulator.intakeAlgaeAuto()
+        ).onlyIf {
             Elevator.position != Elevator.Position.Stowed
         },
         Commands.parallel(
             Elevator.setTargetHeightAlgae(Elevator.Position.HighBar),
             Commands.sequence(
-                Commands.runOnce({
-                    Manipulator.isIntakeRunning = true
-                }),
                 Commands.race(
-                    Manipulator.intakeAlgae(),
+                    Manipulator.intakeAlgaeAuto(),
                     Commands.waitSeconds(0.4),
                 ),
-                Commands.runOnce({
-                    Manipulator.isIntakeRunning = false
-                }),
                 Manipulator.outtakeAlgae().withTimeout(0.75),
             )
         ),
@@ -309,6 +306,8 @@ object Robot : LoggedRobot() {
             lastSelectedAuto = selectedAuto
             lastSelectedStartingPosition = startingPosition
             autoCommand = when (selectedAuto) {
+                AutoModes.OneAlgae -> OneAlgae(startingPosition).autoSequence()
+                AutoModes.TwoAlgae -> TwoAlgae(startingPosition).autoSequence()
                 AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
                 AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
                 AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
@@ -329,6 +328,8 @@ object Robot : LoggedRobot() {
         val selectedAuto = lastSelectedAuto
         startingPosition = determineStartingPosition()
         autoCommand = when (selectedAuto) {
+            AutoModes.OneAlgae -> OneAlgae(startingPosition).autoSequence()
+            AutoModes.TwoAlgae -> TwoAlgae(startingPosition).autoSequence()
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
             AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()

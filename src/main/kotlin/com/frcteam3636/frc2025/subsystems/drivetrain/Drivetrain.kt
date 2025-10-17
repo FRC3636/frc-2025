@@ -136,7 +136,6 @@ object Drivetrain : Subsystem {
             VecBuilder.fill(0.0, 0.0, 0.0)
         )
 
-
     init {
         Pathfinding.setPathfinder(
             LocalADStarAK()
@@ -217,7 +216,7 @@ object Drivetrain : Subsystem {
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
 
         Logger.recordOutput(
-            "Drivetrain/TagPoses", *FIELD_LAYOUT.tags
+            "Drivetrain/TagPoses", *FIELD_TAGS
                 .filter { tag ->
                     absolutePoseIOs.values.any { it.second.observedTags.contains(tag.ID) }
                 }

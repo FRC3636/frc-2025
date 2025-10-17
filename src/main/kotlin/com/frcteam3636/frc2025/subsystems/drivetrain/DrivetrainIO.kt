@@ -187,3 +187,5 @@ class DrivetrainIOSim : DrivetrainIO() {
 val FIELD_LAYOUT = AprilTagFieldLayout.loadFromResource(
     AprilTagFields.k2025ReefscapeWelded.m_resourceFile
 )!!
+
+val FIELD_TAGS = FIELD_LAYOUT.tags
