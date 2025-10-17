@@ -96,6 +96,9 @@ object Robot : LoggedRobot() {
 
         Diagnostics.timer.start()
         threadCommand().schedule()
+
+        statusSignals += Drivetrain.getStatusSignals()
+        statusSignals += Elevator.getStatusSignals()
     }
 
     /** Start logging or pull replay logs from a file */
@@ -167,7 +170,7 @@ object Robot : LoggedRobot() {
         }
     }
 
-    private fun tossAlgae(): Command = Commands.sequence(
+    fun tossAlgae(): Command = Commands.sequence(
         Commands.race(
             Elevator.setTargetHeight(Elevator.Position.Stowed),
             Manipulator.intakeAlgaeAuto()
@@ -303,6 +306,8 @@ object Robot : LoggedRobot() {
             lastSelectedAuto = selectedAuto
             lastSelectedStartingPosition = startingPosition
             autoCommand = when (selectedAuto) {
+                AutoModes.OneAlgae -> OneAlgae(startingPosition).autoSequence()
+                AutoModes.TwoAlgae -> TwoAlgae(startingPosition).autoSequence()
                 AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
                 AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
                 AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
@@ -311,15 +316,20 @@ object Robot : LoggedRobot() {
                 AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
                 AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
                 AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+                AutoModes.TestAutoFourCoral -> TestAutoFourCoral().autoSequence()
                 AutoModes.None -> Commands.none()
             }
         }
     }
 
+    // This is only here out of paranoia.
+    // We could probably delete this and be fine but eh whatever
     override fun driverStationConnected() {
         val selectedAuto = lastSelectedAuto
         startingPosition = determineStartingPosition()
         autoCommand = when (selectedAuto) {
+            AutoModes.OneAlgae -> OneAlgae(startingPosition).autoSequence()
+            AutoModes.TwoAlgae -> TwoAlgae(startingPosition).autoSequence()
             AutoModes.OnePieceCoral -> OnePieceCoral(startingPosition).autoSequence()
             AutoModes.TwoPieceCoral -> TwoPieceCoral(startingPosition).autoSequence()
             AutoModes.ThreePieceCoral -> ThreePieceCoral(startingPosition).autoSequence()
@@ -328,6 +338,7 @@ object Robot : LoggedRobot() {
             AutoModes.TestAutoOneCoral -> TestAuto().autoSequence()
             AutoModes.TestAutoTwoCoral -> TestAutoTwoCoral().autoSequence()
             AutoModes.TestAutoThreeCoral -> TestAutoThreeCoral().autoSequence()
+            AutoModes.TestAutoFourCoral -> TestAutoFourCoral().autoSequence()
             AutoModes.None -> Commands.none()
         }
     }
@@ -356,12 +367,8 @@ object Robot : LoggedRobot() {
     }
 
     override fun robotPeriodic() {
-        statusSignals += Drivetrain.getStatusSignals()
-        statusSignals += Elevator.getStatusSignals()
-
         BaseStatusSignal.refreshAll(*statusSignals.toTypedArray())
         BaseStatusSignal.refreshAll(*Manipulator.getStatusSignals().toTypedArray())
-        statusSignals.clear()
 
         if (Diagnostics.timer.hasElapsed(1.0)) {
             reportDiagnostics()
@@ -369,7 +376,6 @@ object Robot : LoggedRobot() {
         }
 
         CommandScheduler.getInstance().run()
-
     }
 
     override fun autonomousInit() {

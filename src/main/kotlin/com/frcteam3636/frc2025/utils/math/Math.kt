@@ -2,11 +2,14 @@
 
 package com.frcteam3636.frc2025.utils.math
 
+import com.pathplanner.lib.util.FlippingUtil
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.wpilibj.DriverStation
+import kotlin.jvm.optionals.getOrDefault
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -23,4 +26,10 @@ fun Translation2d.dot(other: Translation2d): Double {
 
 fun Pose2d.backup(distance: Distance): Pose2d {
     return this + Transform2d(Translation2d(-distance, 0.meters), Rotation2d.kZero)
+}
+
+fun calculateAlliancePose(pose: Pose2d): Pose2d {
+    return if (DriverStation.getAlliance()
+            .getOrDefault(DriverStation.Alliance.Blue) == DriverStation.Alliance.Blue
+    ) pose else FlippingUtil.flipFieldPose(pose)
 }

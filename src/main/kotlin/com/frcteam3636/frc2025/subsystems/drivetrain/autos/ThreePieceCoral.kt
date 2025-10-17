@@ -5,6 +5,7 @@ import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
 import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
+import com.frcteam3636.frc2025.utils.math.calculateAlliancePose
 import com.frcteam3636.frc2025.utils.math.feet
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
@@ -20,18 +21,25 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
             TwoPieceCoral(side).autoSequence(false),
             Commands.parallel(
                 Commands.sequence(
-                    Drivetrain.driveToPointAllianceRelative(pickupPose, DEFAULT_AUTO_CONSTRAINTS),
+                    Drivetrain.driveToPointAllianceRelative(pickupPose, AUTO_CONSTRAINTS_PICKUP).alongWith(
+                        Elevator.setTargetHeight(Elevator.Position.Stowed)
+                    ),
                     Commands.waitUntil {
                         Manipulator.coralState != CoralState.NONE
-                    },
-                    Drivetrain.driveToPointAllianceRelativeWithSlowConstraintZone(
-                        reefPose,
-                        DEFAULT_AUTO_CONSTRAINTS,
-                        DEFAULT_AUTO_CONSTRAINTS_SLOW_ZONE,
-                        SLOW_ZONE_DISTANCE
+                    }.withTimeout(INTAKE_TIMEOUT),
+                    Commands.parallel(
+                        Drivetrain.driveToPointAllianceRelative(
+                            reefPose,
+                            DEFAULT_AUTO_CONSTRAINTS,
+                        ),
+                        Commands.sequence(
+                            Commands.waitUntil {
+                                Drivetrain.estimatedPose.translation.getDistance(reefPose.translation).feet < ELEVATOR_DEPLOY_DISTANCE && Manipulator.coralState == CoralState.HELD
+                            },
+                            Elevator.setTargetHeight(Elevator.Position.HighBar)
+                        )
                     ),
                 ),
-                Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Commands.sequence(
                     Commands.waitUntil {
                         Drivetrain.estimatedPose.translation.getDistance(thresholdPose.translation).feet < INTAKE_START_DISTANCE
@@ -39,6 +47,17 @@ class ThreePieceCoral(val side: StartingPosition) : AutoMode() {
                     Commands.race(
                         Manipulator.intakeAuto(),
                         Funnel.intake(),
+                    ).withTimeout(INTAKE_TIMEOUT),
+                    Commands.either(
+                        Commands.none(),
+                        Commands.sequence(
+                            Commands.waitSeconds(INTAKE_RESTART_TIME),
+                            Commands.race(
+                                Manipulator.intakeAuto(),
+                                Funnel.intake(),
+                            ),
+                        ),
+                        { Manipulator.coralState == CoralState.HELD }
                     )
                 )
             ),
