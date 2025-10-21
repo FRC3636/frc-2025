@@ -10,11 +10,11 @@ import com.frcteam3636.frc2025.utils.math.feet
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
-class TwoAlgae(val side: StartingPosition) : AutoMode() {
+class TwoAlgae() : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
 
         return Commands.sequence(
-            OneAlgae(side).autoSequence(),
+            OneAlgae().autoSequence(),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Drivetrain.driveToPointAllianceRelativeWithSlowZone(

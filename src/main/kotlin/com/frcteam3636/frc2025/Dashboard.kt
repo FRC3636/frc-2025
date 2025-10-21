@@ -28,8 +28,8 @@ object Dashboard {
 
 enum class AutoModes(val autoName: String, val developerAuto: Boolean = false, val sideRequired: Boolean = true) {
     None("None", sideRequired = false),
-    OneAlgae("One Algae"),
-    TwoAlgae("Two Algae"),
+    OneAlgae("One Algae Middle", sideRequired = false),
+    TwoAlgae("Two Algae Middle", sideRequired = false),
     OnePieceCoral("One Piece Coral"),
     TwoPieceCoral("Two Piece Coral"),
     ThreePieceCoral("Three Piece Coral"),

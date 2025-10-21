@@ -10,7 +10,7 @@ import com.frcteam3636.frc2025.utils.math.feet
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
-class OneAlgae(val side: StartingPosition) : AutoMode() {
+class OneAlgae() : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
 
         return Commands.sequence(
