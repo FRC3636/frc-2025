@@ -4,9 +4,10 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser
 
 object Dashboard {
-    val autoChooser = SendableChooser<AutoModes>().apply {
+    val autoChooser = LoggedDashboardChooser("Auto Chooser", SendableChooser<AutoModes>().apply {
         for (autoMode in AutoModes.entries) {
             if (autoMode == AutoModes.None)
                 setDefaultOption(autoMode.autoName, autoMode)
@@ -19,10 +20,10 @@ object Dashboard {
             } else if (!autoMode.developerAuto)
                 addOption(autoMode.autoName, autoMode)
         }
-    }
+    })
 
     fun initialize() {
-        SmartDashboard.putData(autoChooser)
+        SmartDashboard.putData(autoChooser.sendableChooser)
     }
 }
 
