@@ -99,8 +99,10 @@ object Manipulator : Subsystem {
 
     fun outtake(): Command = startEnd(
         {
-            if (Elevator.position != Elevator.Position.HighBar) {
+            if (Elevator.position != Elevator.Position.HighBar && Elevator.position != Elevator.Position.Trough) {
                 io.setCurrent(40.amps)
+            } else if (Elevator.position == Elevator.Position.Trough) {
+                io.setVoltage(0.433.volts)
             } else {
                 io.setCurrent(50.amps)
             }
