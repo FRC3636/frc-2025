@@ -30,7 +30,8 @@ open class AutoMode {
     }
 
     companion object Constants {
-        val Algae_Three = AprilTagTarget(aprilTagId = 19)
+        val Algae_Three_Leaving_Align = Pose2d(4.5,6.7, Rotation2d.fromDegrees(-37.0))
+        val Algae_Three_Approach_Align = Pose2d(3.1, 6.5, Rotation2d.fromDegrees(-62.0))
         val ALGAE_TWO = AprilTagTarget(20, Translation2d()).pose
         val SLOW_ZONE_DISTANCE = 2.feet
         val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
