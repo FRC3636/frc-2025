@@ -8,6 +8,7 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.autos.*
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.subsystems.elevator.Elevator
 import com.frcteam3636.frc2025.subsystems.funnel.Funnel
+import com.frcteam3636.frc2025.subsystems.manipulator.CoralState
 import com.frcteam3636.frc2025.subsystems.manipulator.Manipulator
 import com.frcteam3636.frc2025.utils.math.seconds
 import com.frcteam3636.frc2025.utils.math.volts
@@ -237,11 +238,21 @@ object Robot : LoggedRobot() {
         joystickLeft.button(14).onTrue(Elevator.runHoming())
 
         controller.a().onTrue(Elevator.setTargetHeight(Elevator.Position.Stowed))
-        controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar))
-        controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar))
-        controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar))
-        controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar))
-        controller.povDown().onTrue(Elevator.setTargetHeight(Elevator.Position.Trough))
+        controller.b().onTrue(Elevator.setTargetHeight(Elevator.Position.MidBar).onlyIf {
+            Manipulator.coralState != CoralState.TRANSIT
+        })
+        controller.x().onTrue(Elevator.setTargetHeight(Elevator.Position.LowBar).onlyIf {
+            Manipulator.coralState != CoralState.TRANSIT
+        })
+        controller.y().onTrue(Elevator.setTargetHeight(Elevator.Position.HighBar).onlyIf {
+            Manipulator.coralState != CoralState.TRANSIT
+        })
+        controller.pov(0).onTrue(Elevator.setTargetHeight(Elevator.Position.AlgaeMidBar).onlyIf {
+            Manipulator.coralState != CoralState.TRANSIT
+        })
+        controller.povDown().onTrue(Elevator.setTargetHeight(Elevator.Position.Trough).onlyIf {
+            Manipulator.coralState != CoralState.TRANSIT
+        })
         joystickLeft.button(2).onTrue(
             tossAlgae()
         )
