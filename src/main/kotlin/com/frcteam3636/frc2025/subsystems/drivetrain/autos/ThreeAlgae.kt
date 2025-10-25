@@ -11,11 +11,11 @@ class ThreeAlgae() : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
 
         return Commands.sequence(
-            TwoAlgae().autoSequence(),
+            TwoAlgae().autoSequence(false),
             Commands.parallel(
                 Elevator.setTargetHeight(Elevator.Position.Stowed),
                 Drivetrain.driveToPointAllianceRelative(
-                    Algae_Three_Approach_Align,
+                    ALGAE_THREE_APPROACH_ALIGN,
                 ),
                 Drivetrain.alignToReefAlgae(
                     false,
@@ -25,7 +25,7 @@ class ThreeAlgae() : AutoMode() {
                 Manipulator.intakeAlgaeAuto(),
                 Commands.sequence(
                     Commands.waitSeconds(1.0),
-                    Drivetrain.driveToPointAllianceRelative(Algae_Three_Leaving_Align).alongWith(
+                    Drivetrain.driveToPointAllianceRelative(ALGAE_THREE_LEAVING_ALIGN).alongWith(
                         Elevator.setTargetHeight(Elevator.Position.Stowed),
                     ),
                     Drivetrain.alignToBarge(false)

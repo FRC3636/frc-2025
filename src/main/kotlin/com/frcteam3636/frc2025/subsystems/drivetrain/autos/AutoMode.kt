@@ -7,7 +7,6 @@ import com.frcteam3636.frc2025.subsystems.drivetrain.poi.REEF_DISTANCE_OFFSET
 import com.frcteam3636.frc2025.subsystems.drivetrain.poi.ReefBranchSide
 import com.frcteam3636.frc2025.utils.math.backup
 import com.frcteam3636.frc2025.utils.math.feet
-import com.frcteam3636.frc2025.utils.math.inMeters
 import com.frcteam3636.frc2025.utils.math.inMetersPerSecond
 import com.frcteam3636.frc2025.utils.math.inches
 import com.frcteam3636.frc2025.utils.math.metersPerSecond
@@ -30,8 +29,8 @@ open class AutoMode {
     }
 
     companion object Constants {
-        val Algae_Three_Leaving_Align = Pose2d(4.5,6.7, Rotation2d.fromDegrees(-37.0))
-        val Algae_Three_Approach_Align = Pose2d(3.1, 6.5, Rotation2d.fromDegrees(-62.0))
+        val ALGAE_THREE_LEAVING_ALIGN = Pose2d(4.5,6.7, Rotation2d.fromDegrees(-37.0))
+        val ALGAE_THREE_APPROACH_ALIGN = Pose2d(3.1, 6.5, Rotation2d.fromDegrees(-62.0))
         val ALGAE_TWO = AprilTagTarget(20, Translation2d()).pose
         val SLOW_ZONE_DISTANCE = 2.feet
         val SLOW_ZONE_ENTER_VELOCITY = 1.0.metersPerSecond
