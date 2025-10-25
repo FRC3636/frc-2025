@@ -279,11 +279,11 @@ private enum class FieldOffset(val distance: Distance) {
     DCMP(0.375.inches),
 
     @Suppress("unused")
-    StormSurge(0.25.inches);
+    StormSurge(0.75.inches);
 
     companion object {
         val current = StormSurge
     }
 }
 
-val REEF_DISTANCE_OFFSET = 0.5.inches
+val REEF_DISTANCE_OFFSET = 0.75.inches

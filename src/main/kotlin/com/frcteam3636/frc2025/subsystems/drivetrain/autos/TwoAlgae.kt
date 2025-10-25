@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.Commands
 
 class TwoAlgae() : AutoMode() {
     override fun autoSequence(shouldAutoStow: Boolean): Command {
-
         return Commands.sequence(
             OneAlgae().autoSequence(),
             Commands.parallel(
@@ -35,7 +34,14 @@ class TwoAlgae() : AutoMode() {
                     ),
                 ),
             ),
-            Robot.tossAlgae(),
+            Commands.parallel(
+                Robot.tossAlgae(),
+                Commands.sequence(
+                    Commands.waitSeconds(.3),
+                    Commands.waitUntil { Elevator.position == Elevator.Position.Stowed },
+                    Drivetrain.alignToReefAlgae(false),
+                )
+            )
         )
     }
 }
