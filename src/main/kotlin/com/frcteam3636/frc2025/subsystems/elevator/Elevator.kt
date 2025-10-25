@@ -101,7 +101,7 @@ object Elevator : Subsystem {
     enum class Position(val height: Distance) {
         Stowed(0.meters),
         Trough(0.79.rotations.toLinear(SPOOL_RADIUS)),
-        LowBar(0.79.rotations.toLinear(SPOOL_RADIUS)),
+        LowBar(0.825.rotations.toLinear(SPOOL_RADIUS)),
         AlgaeMidBar(1.5.rotations.toLinear(SPOOL_RADIUS)),
         MidBar(2.2.rotations.toLinear(SPOOL_RADIUS)),
 
