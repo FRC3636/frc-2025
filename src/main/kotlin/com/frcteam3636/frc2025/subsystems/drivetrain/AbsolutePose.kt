@@ -127,6 +127,8 @@ class LimelightPoseProvider(
 
     private var currentAlgorithm: LimelightAlgorithm = LimelightAlgorithm.MegaTag
 
+    private var isDefaultPipelineActive = true
+
     init {
         thread(isDaemon = true) {
             while (true) {
@@ -186,6 +188,14 @@ class LimelightPoseProvider(
                     measurement.observedTags = estimate.rawFiducials.mapNotNull { it?.id }.toIntArray()
                     val highSpeed = algorithm.gyroVelocity.abs(DegreesPerSecond) > 720.0
                     if (estimate.tagCount == 0 || highSpeed) return measurement
+
+                    if (estimate.rawFiducials[0]!!.distToCamera <= 1.meters && isDefaultPipelineActive) {
+                        LimelightHelpers.setPipelineIndex(name, 1)
+                        isDefaultPipelineActive = false
+                    } else if (estimate.rawFiducials[0]!!.distToCamera > 1.meters && !isDefaultPipelineActive) {
+                        LimelightHelpers.setPipelineIndex(name, 0)
+                        isDefaultPipelineActive = true
+                    }
 
                     measurement.poseMeasurement = AbsolutePoseMeasurement(
                         estimate.pose,
